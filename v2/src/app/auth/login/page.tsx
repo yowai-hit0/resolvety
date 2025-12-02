@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon, { faEye, faEyeSlash, faEnvelope, faLock } from '@/app/components/Icon';
+import DigitalClock from '@/app/components/DigitalClock';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -218,6 +219,10 @@ export default function LoginPage() {
           <div className="absolute inset-0 bg-accent/40"></div>
         </div>
         
+        {/* Digital Clock and Date */}
+        <div className="relative z-10 flex items-center justify-center w-full">
+          <DigitalClock />
+        </div>
       </div>
     </div>
   );

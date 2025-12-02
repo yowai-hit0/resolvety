@@ -6,6 +6,7 @@ import Link from 'next/link';
 import PhoneInput, { type Value } from 'react-phone-number-input';
 import 'react-phone-number-input/style.css';
 import Icon, { faEnvelope, faLock, faUser, faEye, faEyeSlash, faPhone } from '@/app/components/Icon';
+import DigitalClock from '@/app/components/DigitalClock';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -306,6 +307,10 @@ export default function RegisterPage() {
           <div className="absolute inset-0 bg-accent/40"></div>
         </div>
         
+        {/* Digital Clock and Date */}
+        <div className="relative z-10 flex items-center justify-center w-full">
+          <DigitalClock />
+        </div>
       </div>
     </div>
   );

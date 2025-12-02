@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon, { faEnvelope, faCheckCircle, faArrowLeft } from '@/app/components/Icon';
+import DigitalClock from '@/app/components/DigitalClock';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -116,6 +117,10 @@ export default function ForgotPasswordPage() {
             <div className="absolute inset-0 bg-accent/40"></div>
           </div>
           
+          {/* Digital Clock and Date */}
+          <div className="relative z-10 flex items-center justify-center w-full">
+            <DigitalClock />
+          </div>
         </div>
       </div>
     );
