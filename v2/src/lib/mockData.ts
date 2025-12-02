@@ -113,15 +113,17 @@ const locations = [
   'Rubavu',
 ];
 
-// Get agent users for ticket assignment (will be set after mockUsers is created)
-let agentUsers: User[] = [];
+// Get agent users for ticket assignment
+const agentUsers = mockUsers.filter(u => u.role === 'agent');
 
 export const mockTickets: Ticket[] = Array.from({ length: 200 }, (_, i) => {
   const status = statuses[Math.floor(Math.random() * statuses.length)];
   const subject = subjects[Math.floor(Math.random() * subjects.length)];
   const createdBy = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-  const assignee = status !== 'New' && agentUsers.length > 0 
-    ? agentUsers[Math.floor(Math.random() * agentUsers.length)] 
+  // Assign tickets to agents (except for 'New' status, but we'll assign some anyway for chart data)
+  // Distribute tickets evenly among agents for better chart visualization
+  const assignee = agentUsers.length > 0 
+    ? agentUsers[i % agentUsers.length] 
     : undefined;
   const priority = mockPriorities[Math.floor(Math.random() * mockPriorities.length)];
   const createdAt = randomDate(new Date(2024, 0, 1), new Date());
@@ -151,9 +153,6 @@ export const mockTickets: Ticket[] = Array.from({ length: 200 }, (_, i) => {
     attachments_count: Math.floor(Math.random() * 5),
   };
 });
-
-// Set agent users after mockUsers is created
-agentUsers = mockUsers.filter(u => u.role === 'agent');
 
 // Mock Dashboard Stats
 export const mockDashboardStats: DashboardStats = {
