@@ -223,24 +223,24 @@ export default function UserAnalyticsPage() {
           label="Active Users"
           value={stats.activeUsers}
           icon={faUserCheck}
-          iconColor="#10b981"
-          iconBgColor="#d1fae5"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           subtitle={`${Math.round((stats.activeUsers / stats.totalUsers) * 100)}% active rate`}
         />
         <StatCard
           label="Users with Tickets"
           value={stats.usersWithTickets}
           icon={faTicketAlt}
-          iconColor="#f59e0b"
-          iconBgColor="#fef3c7"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           subtitle={`${stats.ticketsPerUser} tickets/user avg`}
         />
         <StatCard
           label="Inactive Users"
           value={stats.inactiveUsers}
           icon={faUserTimes}
-          iconColor="#ef4444"
-          iconBgColor="#fee2e2"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           subtitle={`${Math.round((stats.inactiveUsers / stats.totalUsers) * 100)}% inactive`}
         />
       </div>

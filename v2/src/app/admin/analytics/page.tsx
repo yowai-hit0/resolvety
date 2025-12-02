@@ -212,23 +212,23 @@ export default function AdminAnalyticsPage() {
           label="Resolved Tickets"
           value={stats.resolvedTickets}
           icon={faCheckCircle}
-          iconColor="#10b981"
-          iconBgColor="#d1fae5"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           subtitle={`${resolutionRate}% resolution rate`}
         />
         <StatCard
           label="Active Tickets"
           value={stats.activeTickets}
           icon={faChartLine}
-          iconColor="#f59e0b"
-          iconBgColor="#fef3c7"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
         />
         <StatCard
           label="Avg Resolution Time"
           value={`${stats.avgResolutionTime}h`}
           icon={faClock}
-          iconColor="#8b5cf6"
-          iconBgColor="#ede9fe"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
         />
       </div>
 
