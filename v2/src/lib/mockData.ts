@@ -1,5 +1,5 @@
 // Mock data for ResolveIt v2
-import { User, Ticket, TicketPriority, DashboardStats, UserRole, TicketStatus } from '@/types';
+import { User, Ticket, TicketPriority, DashboardStats, UserRole, TicketStatus, Invitation, InviteStatus } from '@/types';
 
 const firstNames = ['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'James', 'Emma', 'Robert', 'Olivia', 'William', 'Sophia', 'Richard', 'Isabella', 'Joseph', 'Mia', 'Thomas', 'Charlotte', 'Charles', 'Amelia'];
 const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee'];
@@ -81,6 +81,28 @@ export const mockPriorities: TicketPriority[] = [
   { id: 3, name: 'High' },
   { id: 4, name: 'Critical' },
 ];
+
+// Mock Invitations
+export const mockInvitations: Invitation[] = Array.from({ length: 15 }, (_, i) => {
+  const roles: UserRole[] = ['admin', 'agent'];
+  const statuses: InviteStatus[] = ['PENDING', 'ACCEPTED', 'REVOKED', 'EXPIRED'];
+  const role = roles[Math.floor(Math.random() * roles.length)];
+  const status = statuses[Math.floor(Math.random() * statuses.length)];
+  const createdDate = randomDate(new Date(2024, 0, 1), new Date());
+  const expiresDate = new Date(new Date(createdDate).getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from creation
+  const acceptedDate = status === 'ACCEPTED' ? randomDate(new Date(createdDate), new Date()) : undefined;
+  
+  return {
+    id: i + 1,
+    email: `invite${i + 1}@resolveit.rw`,
+    role: role,
+    token: `token-${i + 1}-${Math.random().toString(36).substring(7)}`,
+    expires_at: expiresDate.toISOString(),
+    status: status,
+    created_at: createdDate,
+    accepted_at: acceptedDate,
+  };
+});
 
 // Mock Tickets
 const statuses: TicketStatus[] = ['New', 'Assigned', 'In_Progress', 'On_Hold', 'Resolved', 'Closed', 'Reopened'];

@@ -82,6 +82,19 @@ export interface TicketEvent {
   user?: User;
 }
 
+export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'REVOKED' | 'EXPIRED';
+
+export interface Invitation {
+  id: number;
+  email: string;
+  role: UserRole;
+  token: string;
+  expires_at: string;
+  status: InviteStatus;
+  created_at: string;
+  accepted_at?: string;
+}
+
 export interface DashboardStats {
   totalTickets: number;
   activeTickets: number;

@@ -53,6 +53,7 @@ export {
   faArrowLeft,
   faCheck,
   faTimes as faX,
+  faRotateRight as faRefresh,
   faEdit,
   faTrash,
   faPlus,
@@ -138,6 +139,7 @@ export {
   faArrowUp,
   faArrowDown,
   faArrowsUpDown,
+  faRotateRight,
 } from '@fortawesome/free-solid-svg-icons';
 
 // Import for legacy exports
