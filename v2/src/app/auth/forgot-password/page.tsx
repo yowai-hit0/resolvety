@@ -116,14 +116,6 @@ export default function ForgotPasswordPage() {
             <div className="absolute inset-0 bg-accent/40"></div>
           </div>
           
-          <div className="relative z-10 flex items-end justify-center w-full p-12 pb-24">
-            <div className="text-center">
-              <h2 className="text-4xl font-bold mb-4 text-white" style={{ color: '#ffffff' }}>Password Reset</h2>
-              <p className="text-xl text-white" style={{ color: '#ffffff', opacity: 0.95 }}>
-                Follow the instructions in your email to reset your password
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -226,15 +218,6 @@ export default function ForgotPasswordPage() {
           <div className="absolute inset-0 bg-accent/40"></div>
         </div>
         
-        {/* Optional overlay content */}
-          <div className="relative z-10 flex items-end justify-center w-full p-12 pb-24">
-            <div className="text-center">
-              <h2 className="text-4xl font-bold mb-4 text-white" style={{ color: '#ffffff' }}>Reset Your Password</h2>
-              <p className="text-xl text-white" style={{ color: '#ffffff', opacity: 0.95 }}>
-                Enter your email and we'll help you regain access to your account
-              </p>
-            </div>
-          </div>
       </div>
     </div>
   );

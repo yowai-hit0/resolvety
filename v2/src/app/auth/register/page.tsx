@@ -306,15 +306,6 @@ export default function RegisterPage() {
           <div className="absolute inset-0 bg-accent/40"></div>
         </div>
         
-        {/* Optional overlay content */}
-        <div className="relative z-10 flex items-end justify-center w-full p-12 pb-24">
-          <div className="text-center">
-            <h2 className="text-4xl font-bold mb-4 text-white" style={{ color: '#ffffff' }}>Join ResolveIt</h2>
-            <p className="text-xl text-white" style={{ color: '#ffffff', opacity: 0.95 }}>
-              Start managing your support tickets efficiently with our comprehensive system
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
