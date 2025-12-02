@@ -40,15 +40,15 @@ export default function DigitalClock() {
       {/* Digital Clock */}
       <div className="bg-black/60 backdrop-blur-sm rounded-lg p-6 mb-4 border border-white/20">
         <div className="flex items-center gap-2">
-          <div className="text-6xl font-bold text-white tabular-nums">
+          <div className="text-6xl font-bold tabular-nums" style={{ color: '#ffffff' }}>
             {hours}
           </div>
-          <div className="text-6xl font-bold text-white/70 tabular-nums">:</div>
-          <div className="text-6xl font-bold text-white tabular-nums">
+          <div className="text-6xl font-bold tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>:</div>
+          <div className="text-6xl font-bold tabular-nums" style={{ color: '#ffffff' }}>
             {minutes}
           </div>
-          <div className="text-6xl font-bold text-white/70 tabular-nums">:</div>
-          <div className="text-4xl font-bold text-white/80 tabular-nums">
+          <div className="text-6xl font-bold tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.7)' }}>:</div>
+          <div className="text-4xl font-bold tabular-nums" style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
             {seconds}
           </div>
         </div>
@@ -56,7 +56,7 @@ export default function DigitalClock() {
       
       {/* Date */}
       <div className="bg-black/60 backdrop-blur-sm rounded-lg px-6 py-3 border border-white/20">
-        <p className="text-xl font-medium text-white text-center">
+        <p className="text-xl font-medium text-center" style={{ color: '#ffffff' }}>
           {dateString}
         </p>
       </div>

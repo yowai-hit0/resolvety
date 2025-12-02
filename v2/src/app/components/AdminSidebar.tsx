@@ -128,6 +128,11 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
           label: 'Tickets',
           href: '/agent/tickets',
         },
+        { 
+          icon: faCog, 
+          label: 'Settings', 
+          href: '/agent/settings' 
+        },
       ];
     }
     
