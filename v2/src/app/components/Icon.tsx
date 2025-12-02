@@ -63,6 +63,7 @@ export {
   faFolder,
   faImage,
   faBook,
+  faBookmark,
   faCalendar,
   faClock,
   faBell,

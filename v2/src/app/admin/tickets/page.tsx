@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities } from '@/lib/mockData';
 import { Ticket, TicketStatus, TicketPriority, User } from '@/types';
-import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faPlus, faTable, faTh, faTimes } from '@/app/components/Icon';
+import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faPlus, faTable, faTh, faTimes, faDownload, faSave, faBookmark, faCheck, faX } from '@/app/components/Icon';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const STATUSES: { value: TicketStatus | ''; label: string; class: string }[] = [
@@ -232,9 +232,120 @@ export default function AdminTicketsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [statusModalOpen, setStatusModalOpen] = useState(false);
+  const [savedViewsOpen, setSavedViewsOpen] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState<number | ''>('');
+  const [selectedStatus, setSelectedStatus] = useState<TicketStatus | ''>('');
+  const [savedViews, setSavedViews] = useState<Array<{ name: string; params: any }>>([]);
+  const [newViewName, setNewViewName] = useState('');
 
   // Get agents for assignee filter
   const agents = useMemo(() => mockUsers.filter(u => u.role === 'agent' || u.role === 'admin'), []);
+
+  // Load saved views from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('resolveit_saved_views');
+      if (saved) {
+        try {
+          setSavedViews(JSON.parse(saved));
+        } catch (e) {
+          console.error('Failed to load saved views', e);
+        }
+      }
+    }
+  }, []);
+
+  // Save current view
+  const saveCurrentView = () => {
+    if (!newViewName.trim()) return;
+    
+    const view = {
+      name: newViewName.trim(),
+      params: {
+        search,
+        statusFilter,
+        priorityFilter,
+        assigneeFilter,
+        pageSize,
+        sortField,
+        sortDirection,
+      }
+    };
+    
+    const updated = [...savedViews, view];
+    setSavedViews(updated);
+    localStorage.setItem('resolveit_saved_views', JSON.stringify(updated));
+    setNewViewName('');
+    setSavedViewsOpen(false);
+  };
+
+  // Apply saved view
+  const applyView = (view: { name: string; params: any }) => {
+    setSearch(view.params.search || '');
+    setStatusFilter(view.params.statusFilter || '');
+    setPriorityFilter(view.params.priorityFilter || '');
+    setAssigneeFilter(view.params.assigneeFilter || '');
+    setPageSize(view.params.pageSize || 10);
+    setSortField(view.params.sortField || 'updated_at');
+    setSortDirection(view.params.sortDirection || 'desc');
+    setPage(1);
+    setSavedViewsOpen(false);
+  };
+
+  // Delete saved view
+  const deleteView = (name: string) => {
+    const updated = savedViews.filter(v => v.name !== name);
+    setSavedViews(updated);
+    localStorage.setItem('resolveit_saved_views', JSON.stringify(updated));
+  };
+
+  // CSV Export
+  const exportCsv = () => {
+    const selectedTickets = filteredAndSortedTickets.filter(t => selectedIds.size === 0 || selectedIds.has(t.id));
+    const headers = ['ID', 'Ticket Code', 'Subject', 'Requester Email', 'Requester Name', 'Assignee', 'Priority', 'Status', 'Created At', 'Updated At'];
+    const rows = selectedTickets.map((t) => [
+      t.id,
+      t.ticket_code,
+      `"${t.subject.replace(/"/g, '""')}"`,
+      t.requester_email || '',
+      t.requester_name || '',
+      t.assignee ? `${t.assignee.first_name} ${t.assignee.last_name}` : 'Unassigned',
+      t.priority?.name || 'N/A',
+      t.status,
+      new Date(t.created_at).toISOString(),
+      new Date(t.updated_at).toISOString(),
+    ]);
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tickets_${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Bulk Assign
+  const handleBulkAssign = () => {
+    if (selectedIds.size === 0 || !selectedAssignee) return;
+    // Mock implementation - in real app, this would call an API
+    console.log('Bulk assign:', Array.from(selectedIds), 'to', selectedAssignee);
+    setSelectedIds(new Set());
+    setAssignModalOpen(false);
+    setSelectedAssignee('');
+  };
+
+  // Bulk Status Update
+  const handleBulkStatus = () => {
+    if (selectedIds.size === 0 || !selectedStatus) return;
+    // Mock implementation - in real app, this would call an API
+    console.log('Bulk status update:', Array.from(selectedIds), 'to', selectedStatus);
+    setSelectedIds(new Set());
+    setStatusModalOpen(false);
+    setSelectedStatus('');
+  };
 
   // Filter and sort tickets
   const filteredAndSortedTickets = useMemo(() => {
@@ -435,7 +546,8 @@ export default function AdminTicketsPage() {
 
       {/* Filters Bar - Desktop */}
       <div className="hidden md:block bg-white border border-gray-200 rounded-sm p-4">
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 justify-between">
+          <div className="flex flex-wrap items-center gap-3 flex-1">
           {/* Search */}
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
@@ -550,6 +662,197 @@ export default function AdminTicketsPage() {
         </div>
       </div>
 
+      {/* Bulk Assign Modal */}
+      {assignModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-sm p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Bulk Assign Tickets</h3>
+              <button
+                onClick={() => {
+                  setAssignModalOpen(false);
+                  setSelectedAssignee('');
+                }}
+                className="p-1 hover:bg-gray-100 rounded-sm"
+              >
+                <Icon icon={faTimes} className="text-gray-500" size="sm" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Assign to
+                </label>
+                <select
+                  value={selectedAssignee}
+                  onChange={(e) => setSelectedAssignee(e.target.value ? Number(e.target.value) : '')}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Select assignee...</option>
+                  {agents.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.first_name} {a.last_name} ({a.email})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setAssignModalOpen(false);
+                    setSelectedAssignee('');
+                  }}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkAssign}
+                  disabled={!selectedAssignee}
+                  className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#0f36a5' }}
+                >
+                  Assign {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Status Modal */}
+      {statusModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-sm p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Update Status</h3>
+              <button
+                onClick={() => {
+                  setStatusModalOpen(false);
+                  setSelectedStatus('');
+                }}
+                className="p-1 hover:bg-gray-100 rounded-sm"
+              >
+                <Icon icon={faTimes} className="text-gray-500" size="sm" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  New Status
+                </label>
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value as TicketStatus | '')}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                >
+                  <option value="">Select status...</option>
+                  {STATUSES.filter(s => s.value).map(s => (
+                    <option key={s.value} value={s.value}>{s.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center gap-2 justify-end">
+                <button
+                  onClick={() => {
+                    setStatusModalOpen(false);
+                    setSelectedStatus('');
+                  }}
+                  className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleBulkStatus}
+                  disabled={!selectedStatus}
+                  className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ backgroundColor: '#0f36a5' }}
+                >
+                  Update {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Views Modal */}
+      {savedViewsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-sm p-6 w-full max-w-md mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Saved Views</h3>
+              <button
+                onClick={() => {
+                  setSavedViewsOpen(false);
+                  setNewViewName('');
+                }}
+                className="p-1 hover:bg-gray-100 rounded-sm"
+              >
+                <Icon icon={faTimes} className="text-gray-500" size="sm" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {/* Save Current View */}
+              <div className="border-b border-gray-200 pb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Save Current View
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={newViewName}
+                    onChange={(e) => setNewViewName(e.target.value)}
+                    placeholder="View name..."
+                    className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                  />
+                  <button
+                    onClick={saveCurrentView}
+                    disabled={!newViewName.trim()}
+                    className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    style={{ backgroundColor: '#0f36a5' }}
+                  >
+                    <Icon icon={faSave} size="sm" />
+                    Save
+                  </button>
+                </div>
+              </div>
+
+              {/* Saved Views List */}
+              <div>
+                <h4 className="text-sm font-medium text-gray-700 mb-2">Saved Views</h4>
+                {savedViews.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-4 text-center">No saved views</p>
+                ) : (
+                  <div className="space-y-2">
+                    {savedViews.map((view, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 bg-gray-50 rounded-sm hover:bg-gray-100"
+                      >
+                        <button
+                          onClick={() => applyView(view)}
+                          className="flex-1 text-left text-sm text-gray-900 hover:text-primary-500"
+                        >
+                          <Icon icon={faBookmark} className="inline mr-2 text-primary-500" size="xs" />
+                          {view.name}
+                        </button>
+                        <button
+                          onClick={() => deleteView(view.name)}
+                          className="p-1 hover:bg-gray-200 rounded-sm text-gray-500 hover:text-red-600"
+                        >
+                          <Icon icon={faX} size="sm" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Filter Sheet */}
       <MobileFilterSheet
         isOpen={mobileFiltersOpen}
@@ -590,13 +893,25 @@ export default function AdminTicketsPage() {
             {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'} selected
           </span>
           <div className="flex items-center gap-2 flex-wrap">
-            <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50">
+            <button
+              onClick={() => setAssignModalOpen(true)}
+              disabled={selectedIds.size === 0}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Assign
             </button>
-            <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50">
+            <button
+              onClick={() => setStatusModalOpen(true)}
+              disabled={selectedIds.size === 0}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               Update Status
             </button>
-            <button className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50">
+            <button
+              onClick={exportCsv}
+              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 flex items-center gap-1"
+            >
+              <Icon icon={faDownload} size="xs" />
               Export CSV
             </button>
             <button
@@ -833,6 +1148,7 @@ export default function AdminTicketsPage() {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
