@@ -35,7 +35,7 @@ export default function OrganizationDetailPage() {
   const [search, setSearch] = useState('');
   const [userSearch, setUserSearch] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
+  const [pageSize, setPageSize] = useState(10);
   const [formData, setFormData] = useState({
     name: '',
     domain: '',
