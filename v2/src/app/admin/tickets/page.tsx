@@ -1559,9 +1559,10 @@ export default function AdminTicketsPage() {
                         key={tag.id}
                         className={`px-3 py-1.5 rounded-sm text-sm cursor-pointer transition-colors flex items-center gap-2 ${
                           checked
-                            ? 'bg-primary-500 text-white'
+                            ? 'text-white border border-primary-500'
                             : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
+                        style={checked ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
                       >
                         <input
                           type="checkbox"
