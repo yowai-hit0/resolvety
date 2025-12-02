@@ -59,6 +59,29 @@ export interface Tag {
   name: string;
 }
 
+export interface Attachment {
+  id: number;
+  original_filename: string;
+  stored_filename: string;
+  mime_type: string;
+  size?: number;
+  uploaded_at: string;
+  ticket_id: number;
+  uploaded_by_id: number;
+  uploaded_by?: User;
+}
+
+export interface TicketEvent {
+  id: number;
+  ticket_id: number;
+  user_id: number;
+  change_type: string;
+  old_value?: string;
+  new_value?: string;
+  created_at: string;
+  user?: User;
+}
+
 export interface DashboardStats {
   totalTickets: number;
   activeTickets: number;

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
-import { Ticket, TicketStatus, Comment, Tag } from '@/types';
-import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock } from '@/app/components/Icon';
+import { Ticket, TicketStatus, Comment, Tag, Attachment, TicketEvent } from '@/types';
+import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faImage, faFile, faTrash, faUpload } from '@/app/components/Icon';
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = [
   { value: 'New', label: 'New', class: 'status-new' },
@@ -61,6 +61,105 @@ const generateMockTags = (ticketId: number): Tag[] => {
   return selectedTags;
 };
 
+// Mock attachments for tickets
+const generateMockAttachments = (ticketId: number): Attachment[] => {
+  const attachments: Attachment[] = [];
+  const attachmentCount = Math.floor(Math.random() * 4); // 0-3 attachments
+  
+  const fileTypes = [
+    { type: 'image', mime: 'image/jpeg', ext: 'jpg', name: 'screenshot' },
+    { type: 'image', mime: 'image/png', ext: 'png', name: 'error-log' },
+    { type: 'audio', mime: 'audio/mpeg', ext: 'mp3', name: 'recording' },
+    { type: 'video', mime: 'video/mp4', ext: 'mp4', name: 'demo' },
+  ];
+  
+  for (let i = 0; i < attachmentCount; i++) {
+    const fileType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+    const uploadedBy = mockUsers[Math.floor(Math.random() * mockUsers.length)];
+    const date = new Date();
+    date.setDate(date.getDate() - (attachmentCount - i));
+    
+    attachments.push({
+      id: ticketId * 1000 + i + 1,
+      original_filename: `${fileType.name}-${ticketId}-${i + 1}.${fileType.ext}`,
+      stored_filename: `https://via.placeholder.com/400x300?text=${fileType.name}`,
+      mime_type: fileType.mime,
+      size: fileType.type === 'image' ? 1024 * 500 : 1024 * 1024 * 5, // 500KB for images, 5MB for media
+      uploaded_at: date.toISOString(),
+      ticket_id: ticketId,
+      uploaded_by_id: uploadedBy.id,
+      uploaded_by: uploadedBy,
+    });
+  }
+  
+  return attachments;
+};
+
+// Mock ticket events/history
+const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
+  const events: TicketEvent[] = [];
+  const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
+  
+  // Ticket created event
+  events.push({
+    id: ticket.id * 10000 + 1,
+    ticket_id: ticket.id,
+    user_id: ticket.created_by_id,
+    change_type: 'ticket_created',
+    new_value: ticket.subject,
+    created_at: ticket.created_at,
+    user: ticket.created_by,
+  });
+  
+  // Status changes
+  if (ticket.status !== 'New') {
+    const statusChangeDate = new Date(ticket.created_at);
+    statusChangeDate.setHours(statusChangeDate.getHours() + 1);
+    events.push({
+      id: ticket.id * 10000 + 2,
+      ticket_id: ticket.id,
+      user_id: ticket.assignee_id || ticket.created_by_id,
+      change_type: 'status_changed',
+      old_value: 'New',
+      new_value: ticket.status,
+      created_at: statusChangeDate.toISOString(),
+      user: ticket.assignee || ticket.created_by,
+    });
+  }
+  
+  // Assignment
+  if (ticket.assignee_id) {
+    const assignDate = new Date(ticket.created_at);
+    assignDate.setHours(assignDate.getHours() + 2);
+    events.push({
+      id: ticket.id * 10000 + 3,
+      ticket_id: ticket.id,
+      user_id: ticket.assignee_id,
+      change_type: 'assigned',
+      new_value: `${ticket.assignee?.first_name} ${ticket.assignee?.last_name}`,
+      created_at: assignDate.toISOString(),
+      user: ticket.assignee,
+    });
+  }
+  
+  // Priority set
+  if (ticket.priority_id) {
+    const priorityDate = new Date(ticket.created_at);
+    priorityDate.setMinutes(priorityDate.getMinutes() + 30);
+    events.push({
+      id: ticket.id * 10000 + 4,
+      ticket_id: ticket.id,
+      user_id: ticket.created_by_id,
+      change_type: 'priority_changed',
+      new_value: ticket.priority?.name || 'Medium',
+      created_at: priorityDate.toISOString(),
+      user: ticket.created_by,
+    });
+  }
+  
+  return events.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+};
+
 export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -69,12 +168,17 @@ export default function TicketDetailPage() {
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [comment, setComment] = useState('');
   const [isInternal, setIsInternal] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [editData, setEditData] = useState({
     status: '' as TicketStatus | '',
@@ -99,12 +203,15 @@ export default function TicketDetailPage() {
       if (foundTicket) {
         setTicket(foundTicket);
         setComments(generateMockComments(ticketId));
-        setTags(generateMockTags(ticketId));
+        const mockTags = generateMockTags(ticketId);
+        setTags(mockTags);
+        setAttachments(generateMockAttachments(ticketId));
+        setEvents(generateMockEvents(foundTicket));
         setEditData({
           status: foundTicket.status,
           priority_id: foundTicket.priority_id,
           assignee_id: foundTicket.assignee_id || '',
-          tag_ids: generateMockTags(ticketId).map(t => t.id),
+          tag_ids: mockTags.map(t => t.id),
         });
       }
       setLoading(false);
@@ -179,6 +286,73 @@ export default function TicketDetailPage() {
       setIsInternal(false);
       setSaving(false);
     }, 300);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0 || !ticket) return;
+    
+    // Validate media files
+    const mediaFiles = files.filter(file => 
+      file.type.startsWith('image/') || 
+      file.type.startsWith('audio/') || 
+      file.type.startsWith('video/')
+    );
+    
+    if (mediaFiles.length !== files.length) {
+      alert('Only image, audio, and video files are allowed');
+      return;
+    }
+    
+    setUploading(true);
+    
+    // Mock API call
+    setTimeout(() => {
+      const newAttachments: Attachment[] = mediaFiles.map((file, index) => {
+        const uploadedBy = mockUsers.find(u => u.role === 'admin') || mockUsers[0];
+        return {
+          id: attachments.length + index + 1,
+          original_filename: file.name,
+          stored_filename: URL.createObjectURL(file),
+          mime_type: file.type,
+          size: file.size,
+          uploaded_at: new Date().toISOString(),
+          ticket_id: ticket.id,
+          uploaded_by_id: uploadedBy.id,
+          uploaded_by: uploadedBy,
+        };
+      });
+      
+      setAttachments(prev => [...prev, ...newAttachments]);
+      setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }, 500);
+  };
+
+  const handleRemoveAttachment = (attachmentId: number) => {
+    setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+  };
+
+  const getFileType = (mimeType: string): 'image' | 'audio' | 'video' => {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    if (mimeType.startsWith('video/')) return 'video';
+    return 'image';
+  };
+
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const formatEventType = (changeType: string): string => {
+    return changeType
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   const formatDate = (dateString: string) => {
@@ -548,8 +722,182 @@ export default function TicketDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Attachments */}
+          <div className="bg-white rounded-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="font-semibold text-gray-900">Attachments</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,audio/*,video/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <label
+                  htmlFor="file-upload"
+                  className={`inline-flex items-center gap-2 px-4 py-2 bg-gray-100 border border-gray-200 rounded-sm hover:bg-gray-200 cursor-pointer text-sm text-gray-700 transition-colors ${
+                    uploading ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  <Icon icon={faUpload} size="sm" />
+                  {uploading ? 'Uploading...' : 'Upload Media'}
+                </label>
+                <span className="ml-3 text-xs text-gray-500">
+                  Images (5MB), Audio/Video (50MB)
+                </span>
+              </div>
+
+              {attachments.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {attachments.map((attachment) => {
+                    const fileType = getFileType(attachment.mime_type);
+                    return (
+                      <div key={attachment.id} className="border border-gray-200 rounded-sm p-3 text-xs group relative">
+                        <button
+                          onClick={() => setPreviewUrl(attachment.stored_filename)}
+                          className="block w-full"
+                          disabled={uploading}
+                        >
+                          {fileType === 'image' ? (
+                            <img
+                              src={attachment.stored_filename}
+                              alt={attachment.original_filename}
+                              className="w-full h-24 object-cover rounded-sm"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="100" height="100"%3E%3Crect width="100" height="100" fill="%23e5e7eb"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%239ca3af" font-size="12"%3EImage%3C/text%3E%3C/svg%3E';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-24 bg-gray-100 rounded-sm flex items-center justify-center">
+                              {fileType === 'audio' ? (
+                                <Icon icon={faFile} className="text-gray-600" size="lg" />
+                              ) : fileType === 'video' ? (
+                                <Icon icon={faImage} className="text-gray-600" size="lg" />
+                              ) : (
+                                <Icon icon={faFile} className="text-gray-600" size="lg" />
+                              )}
+                            </div>
+                          )}
+                        </button>
+                        <div className="mt-2 truncate text-gray-900">{attachment.original_filename}</div>
+                        <div className="text-xs text-gray-500">
+                          {attachment.size ? formatFileSize(attachment.size) : 'Unknown size'}
+                        </div>
+                        <button
+                          onClick={() => handleRemoveAttachment(attachment.id)}
+                          disabled={uploading}
+                          className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                        >
+                          <Icon icon={faTrash} size="xs" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-4 text-sm">No attachments</p>
+              )}
+            </div>
+          </div>
+
+          {/* History */}
+          <div className="bg-white rounded-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="font-semibold text-gray-900">History</h2>
+            </div>
+            <div className="p-6">
+              {events.length === 0 ? (
+                <p className="text-gray-500 text-sm">No history yet</p>
+              ) : (
+                <div className="space-y-4">
+                  {events.map((event, index) => (
+                    <div key={event.id} className="relative pl-6 pb-4">
+                      {/* Timeline line */}
+                      {index < events.length - 1 && (
+                        <div className="absolute left-2 top-6 bottom-0 w-0.5 bg-gray-200"></div>
+                      )}
+                      {/* Timeline dot */}
+                      <div className="absolute left-0 top-1.5 w-4 h-4 bg-primary-500 rounded-full border-2 border-white"></div>
+                      {/* Event content */}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-gray-900">
+                            {formatEventType(event.change_type)}
+                          </span>
+                          {event.old_value && event.new_value && (
+                            <span className="text-xs text-gray-500">
+                              ({event.old_value} → {event.new_value})
+                            </span>
+                          )}
+                          {!event.old_value && event.new_value && (
+                            <span className="text-xs text-gray-500">{event.new_value}</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {formatDate(event.created_at)} • {event.user ? `${event.user.first_name} ${event.user.last_name}` : 'System'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {previewUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+          onClick={() => setPreviewUrl(null)}
+        >
+          <div className="max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-end mb-2">
+              <button
+                onClick={() => setPreviewUrl(null)}
+                className="px-4 py-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 text-sm text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+            <div className="bg-white rounded-sm p-4">
+              {getFileType(attachments.find(a => a.stored_filename === previewUrl)?.mime_type || '') === 'image' ? (
+                <img
+                  src={previewUrl}
+                  alt="Preview"
+                  className="w-full max-h-[80vh] object-contain rounded-sm"
+                />
+              ) : getFileType(attachments.find(a => a.stored_filename === previewUrl)?.mime_type || '') === 'video' ? (
+                <video
+                  src={previewUrl}
+                  controls
+                  className="w-full max-h-[80vh] rounded-sm"
+                  preload="metadata"
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <audio
+                  src={previewUrl}
+                  controls
+                  className="w-full"
+                  preload="metadata"
+                >
+                  Your browser does not support the audio tag.
+                </audio>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
