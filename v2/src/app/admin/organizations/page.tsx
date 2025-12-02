@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { mockOrganizations } from '@/lib/mockData';
 import { Organization } from '@/types';
-import Icon, { faSearch, faPlus, faEdit, faTrash, faBuilding, faCheckCircle, faTimesCircle } from '@/app/components/Icon';
+import Icon, { faSearch, faPlus, faEdit, faTrash, faBuilding, faCheckCircle, faTimesCircle, faEye } from '@/app/components/Icon';
 import Pagination from '@/app/components/Pagination';
 import { useToast } from '@/app/components/Toaster';
 
@@ -273,6 +273,13 @@ export default function AdminOrganizationsPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
+                      <a
+                        href={`/admin/organizations/${org.id}`}
+                        className="text-primary-500 hover:text-primary-700 transition-colors"
+                        title="View Details & Manage Users"
+                      >
+                        <Icon icon={faEye} size="sm" />
+                      </a>
                       <button
                         onClick={() => handleEdit(org)}
                         className="text-primary-500 hover:text-primary-700 transition-colors"
@@ -341,6 +348,27 @@ export default function AdminOrganizationsPage() {
                 </div>
               </div>
               <div className="mt-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <a
+                    href={`/admin/organizations/${org.id}`}
+                    className="text-primary-500 hover:text-primary-700 transition-colors"
+                    title="View Details & Manage Users"
+                  >
+                    <Icon icon={faEye} size="xs" />
+                  </a>
+                  <button
+                    onClick={() => handleEdit(org)}
+                    className="text-primary-500 hover:text-primary-700 transition-colors"
+                  >
+                    <Icon icon={faEdit} size="xs" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(org)}
+                    className="text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    <Icon icon={faTrash} size="xs" />
+                  </button>
+                </div>
                 {org.is_active ? (
                   <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                     <Icon icon={faCheckCircle} size="xs" />
@@ -352,6 +380,8 @@ export default function AdminOrganizationsPage() {
                     Inactive
                   </span>
                 )}
+              </div>
+              <div className="mt-2">
                 <span className="text-xs text-gray-500">{formatDate(org.created_at)}</span>
               </div>
             </div>

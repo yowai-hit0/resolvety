@@ -29,9 +29,10 @@ const mockAgents = [
   { first_name: 'TCP', last_name: '' },
 ];
 
-// Mock Users
+// Mock Users - Note: mockOrganizations must be defined before this
+// We'll assign users to organizations after organizations are created
 export const mockUsers: User[] = [
-  // Super Admin (specific user for testing)
+  // Super Admin (specific user for testing) - no organization
   {
     id: 1,
     email: 'superadmin@resolveit.rw',
@@ -39,10 +40,11 @@ export const mockUsers: User[] = [
     last_name: 'Admin',
     role: 'super_admin' as UserRole,
     is_active: true,
+    organization_id: undefined,
     created_at: randomDate(new Date(2024, 0, 1), new Date()),
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   },
-  // Regular Admin (specific user for testing)
+  // Regular Admin (specific user for testing) - assigned to first org
   {
     id: 2,
     email: 'admin@resolveit.rw',
@@ -50,10 +52,11 @@ export const mockUsers: User[] = [
     last_name: 'User',
     role: 'admin' as UserRole,
     is_active: true,
+    organization_id: 1, // First organization
     created_at: randomDate(new Date(2024, 0, 1), new Date()),
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   },
-  // Create specific agents first
+  // Create specific agents first - assign to different organizations
   ...mockAgents.map((agent, i) => ({
     id: i + 3,
     email: `${agent.first_name.toLowerCase()}@resolveit.rw`,
@@ -61,15 +64,18 @@ export const mockUsers: User[] = [
     last_name: agent.last_name,
     role: 'agent' as UserRole,
     is_active: true,
+    organization_id: (i % 3) + 1, // Distribute across first 3 orgs
     created_at: randomDate(new Date(2024, 0, 1), new Date()),
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   })),
-  // Add other users (admins, customers, etc.)
+  // Add other users (admins, customers, etc.) - assign to organizations
   ...Array.from({ length: 43 }, (_, i) => {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
-    const roles: UserRole[] = ['super_admin', 'admin', 'customer'];
+    const roles: UserRole[] = ['admin', 'customer'];
     const role = roles[Math.floor(Math.random() * roles.length)];
+    // Assign to random organization (1-3) or no organization
+    const orgId = Math.random() > 0.2 ? Math.floor(Math.random() * 3) + 1 : undefined;
     
     return {
       id: mockAgents.length + i + 3,
@@ -78,6 +84,7 @@ export const mockUsers: User[] = [
       last_name: lastName,
       role: role,
       is_active: Math.random() > 0.1, // 90% active
+      organization_id: orgId,
       created_at: randomDate(new Date(2024, 0, 1), new Date()),
       updated_at: randomDate(new Date(2024, 0, 1), new Date()),
     };
@@ -261,39 +268,46 @@ export const mockChartData = {
   }).sort((a, b) => b.value - a.value),
 };
 
-// Mock Organizations
-const organizationNames = [
-  'Rwanda ICT Chamber',
-  'Kigali Innovation City',
-  'Rwanda Development Board',
-  'Ministry of ICT',
-  'Bank of Kigali',
-  'MTN Rwanda',
-  'Airtel Rwanda',
-  'Kigali City Council',
-  'Rwanda Revenue Authority',
-  'Rwanda Utilities Regulatory Authority',
-  'Rwanda Energy Group',
-  'Rwanda Transport Development Agency',
-  'Rwanda Biomedical Center',
-  'Rwanda Education Board',
-  'Rwanda Governance Board',
-];
-
-export const mockOrganizations: Organization[] = organizationNames.map((name, i) => {
-  const domain = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
-  return {
-    id: i + 1,
-    name: name,
-    domain: `${domain}.rw`,
-    email: `contact@${domain}.rw`,
-    phone: `+250788${Math.floor(100000 + Math.random() * 900000)}`,
-    address: `Kigali, Rwanda`,
-    is_active: Math.random() > 0.1, // 90% active
+// Mock Organizations - Only 3 organizations including TCP
+export const mockOrganizations: Organization[] = [
+  {
+    id: 1,
+    name: 'The Commons Project',
+    domain: 'thecommonsproject.org',
+    email: 'contact@thecommonsproject.org',
+    phone: '+1-212-555-0100',
+    address: '745 5th Ave Ste 5, New York, NY 10151, USA',
+    is_active: true,
     created_at: randomDate(new Date(2023, 0, 1), new Date()),
     updated_at: randomDate(new Date(2023, 0, 1), new Date()),
-    users_count: Math.floor(Math.random() * 50) + 5,
-    tickets_count: Math.floor(Math.random() * 200) + 10,
-  };
-});
+    users_count: 25,
+    tickets_count: 150,
+  },
+  {
+    id: 2,
+    name: 'Rwanda ICT Chamber',
+    domain: 'rwandaictchamber.rw',
+    email: 'contact@rwandaictchamber.rw',
+    phone: '+250788123456',
+    address: 'Kigali, Rwanda',
+    is_active: true,
+    created_at: randomDate(new Date(2023, 0, 1), new Date()),
+    updated_at: randomDate(new Date(2023, 0, 1), new Date()),
+    users_count: 18,
+    tickets_count: 120,
+  },
+  {
+    id: 3,
+    name: 'Kigali Innovation City',
+    domain: 'kigalinnovationcity.rw',
+    email: 'contact@kigalinnovationcity.rw',
+    phone: '+250788654321',
+    address: 'Kigali, Rwanda',
+    is_active: true,
+    created_at: randomDate(new Date(2023, 0, 1), new Date()),
+    updated_at: randomDate(new Date(2023, 0, 1), new Date()),
+    users_count: 15,
+    tickets_count: 95,
+  },
+];
 
