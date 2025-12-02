@@ -36,10 +36,12 @@ export default function AdminHeader({
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [userRole, setUserRole] = useState<string>('admin');
   const [userName, setUserName] = useState<string>(adminName);
+  const [mounted, setMounted] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setMounted(true);
     try {
       const authRaw = sessionStorage.getItem('resolveitAuth');
       if (authRaw) {
@@ -100,41 +102,35 @@ export default function AdminHeader({
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="flex items-center h-20">
-        {/* Left: Menu Toggle & Logo - Fixed width matching sidebar */}
-        <div className={`flex items-center gap-4 px-4 sm:px-6 lg:px-8 flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}>
-          <button
-            onClick={onMenuToggle}
-            className="p-2 hover:bg-gray-100 transition-colors lg:hidden"
-            aria-label="Toggle menu"
-          >
-            <Icon icon={sidebarOpen ? faTimes : faBars} className="text-gray-700" />
-          </button>
-          <Link href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'} className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-              <span className="text-white font-bold text-sm">R</span>
-            </div>
-          </Link>
+      <div className="flex items-center h-20 w-full">
+        {/* Mobile Menu Toggle */}
+        <button
+          onClick={onMenuToggle}
+          className="p-2 hover:bg-gray-100 transition-colors lg:hidden ml-6"
+          aria-label="Toggle menu"
+        >
+          <Icon icon={sidebarOpen ? faTimes : faBars} className="text-gray-700" />
+        </button>
+
+        {/* Search Input - Left side */}
+        <div className="flex-shrink-0 pl-6 pr-4 hidden md:block">
+          <div className="relative w-80 max-w-md">
+            <Icon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 z-10" size="sm" />
+            <input
+              type="text"
+              placeholder="Search tickets, users..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-accent focus:ring-1 focus:ring-accent"
+            />
+          </div>
         </div>
 
-        {/* Main Content Area - Search on left, actions on right */}
-        <div className="flex-1 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
-          {/* Search Input - Left side */}
-          <div className="w-80 max-w-md hidden md:block flex-shrink-0">
-            <div className="relative">
-              <Icon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size="sm" />
-              <input
-                type="text"
-                placeholder="Search tickets, users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-accent focus:ring-1 focus:ring-accent"
-              />
-            </div>
-          </div>
+        {/* Spacer to push right content to the right */}
+        <div className="flex-1"></div>
 
-          {/* Right: Notifications & User Menu */}
-          <div className="flex items-center gap-3 ml-auto flex-shrink-0">
+        {/* Right: Notifications & User Menu */}
+        <div className="flex items-center gap-3 flex-shrink-0 px-4 sm:px-6 lg:px-8">
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
               <button
@@ -261,7 +257,6 @@ export default function AdminHeader({
               )}
             </div>
           </div>
-        </div>
       </div>
     </header>
   );
