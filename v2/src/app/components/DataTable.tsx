@@ -41,7 +41,7 @@ export default function DataTable({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-sm border border-gray-200 p-6">
         <div className="flex items-center justify-center h-64">
           <Icon icon={faSpinner} spin className="text-accent" size="2x" />
         </div>
@@ -51,7 +51,7 @@ export default function DataTable({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+      <div className="bg-white rounded-sm border border-gray-200 p-6">
         <div className="text-center py-12">
           <p className="text-gray-500">No data available</p>
         </div>
@@ -60,7 +60,7 @@ export default function DataTable({
   }
 
   return (
-    <div className="bg-white rounded-sm shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-sm border border-gray-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50 border-b border-gray-200">

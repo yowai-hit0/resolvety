@@ -76,7 +76,7 @@ export default function AdminHeader({
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="flex items-center h-20">
         {/* Left: Menu Toggle & Logo - Fixed width matching sidebar */}
         <div className={`flex items-center gap-4 px-4 sm:px-6 lg:px-8 flex-shrink-0 transition-all duration-300 ${sidebarCollapsed ? 'lg:w-20' : 'lg:w-64'}`}>
@@ -127,7 +127,7 @@ export default function AdminHeader({
 
               {/* Notifications Dropdown */}
               {notificationsOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 shadow-lg z-50 max-h-96 overflow-y-auto rounded-sm">
+                <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 z-50 max-h-96 overflow-y-auto rounded-sm">
                   <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                     <Link
@@ -210,7 +210,7 @@ export default function AdminHeader({
 
               {/* Dropdown Menu */}
               {userMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 shadow-lg z-50 rounded-sm">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 z-50 rounded-sm">
                   <div className="py-1">
                     <Link
                       href="/admin/settings"

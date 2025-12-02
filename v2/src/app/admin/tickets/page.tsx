@@ -515,7 +515,7 @@ export default function AdminTicketsPage() {
               onClick={() => setViewMode('table')}
               className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${
                 viewMode === 'table'
-                  ? 'bg-white text-primary-500 shadow-sm'
+                  ? 'bg-white text-primary-500'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               aria-label="Table view"
@@ -526,7 +526,7 @@ export default function AdminTicketsPage() {
               onClick={() => setViewMode('cards')}
               className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${
                 viewMode === 'cards'
-                  ? 'bg-white text-primary-500 shadow-sm'
+                  ? 'bg-white text-primary-500'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
               aria-label="Card view"
@@ -649,7 +649,7 @@ export default function AdminTicketsPage() {
             onClick={() => setViewMode('table')}
             className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${
               viewMode === 'table'
-                ? 'bg-white text-primary-500 shadow-sm'
+                ? 'bg-white text-primary-500'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
             aria-label="Table view"
@@ -660,7 +660,7 @@ export default function AdminTicketsPage() {
             onClick={() => setViewMode('cards')}
             className={`px-3 py-1.5 text-sm rounded-sm transition-colors ${
               viewMode === 'cards'
-                ? 'bg-white text-primary-500 shadow-sm'
+                ? 'bg-white text-primary-500'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
             aria-label="Card view"

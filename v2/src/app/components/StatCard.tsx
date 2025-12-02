@@ -31,7 +31,7 @@ export default function StatCard({
   iconBgColor = '#f9fafb'
 }: StatCardProps) {
   const content = (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-all group">
+    <div className="bg-white rounded-sm border border-gray-200 p-4 hover:border-gray-300 transition-all group">
       <div className="flex items-center justify-between">
         <div className="flex-1 min-w-0">
           <div className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-0.5">{label}</div>
