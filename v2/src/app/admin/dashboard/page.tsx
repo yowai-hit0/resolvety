@@ -56,8 +56,8 @@ export default function AdminDashboard() {
       </div>
 
       {/* Charts Grid */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-white rounded-sm border border-gray-200 p-6">
+      <div className="grid gap-6 grid-cols-1 md:grid-cols-12">
+        <div className="bg-white rounded-sm border border-gray-200 p-6 md:col-span-8">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets per Day (Last 30 Days)</h3>
           <AreaChart
             data={mockChartData.ticketsByDay}
@@ -67,7 +67,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="bg-white rounded-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-sm border border-gray-200 p-6 md:col-span-4">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Status</h3>
           <DonutChart
             data={mockChartData.ticketsByStatus}
