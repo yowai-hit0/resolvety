@@ -70,7 +70,7 @@ export default function StatCard({
       </div>
       {href && (
         <div className="pt-3 mt-3 border-t border-gray-100">
-          <div className="flex items-center text-xs text-gray-600 group-hover:text-primary transition-colors">
+          <div className="flex items-center text-xs text-gray-600 group-hover:text-accent transition-colors">
             <span>View details</span>
             <Icon icon={faArrowRight} className="ml-1.5" size="xs" />
           </div>

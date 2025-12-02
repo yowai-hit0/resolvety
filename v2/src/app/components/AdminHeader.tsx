@@ -88,7 +88,7 @@ export default function AdminHeader({
             <Icon icon={sidebarOpen ? faTimes : faBars} className="text-gray-700" />
           </button>
           <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             {!sidebarCollapsed && (
@@ -108,7 +108,7 @@ export default function AdminHeader({
                 placeholder="Search tickets, users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary"
+                className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:border-accent focus:ring-1 focus:ring-accent"
               />
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function AdminHeader({
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setNotificationsOpen(false)}
-                      className="text-sm text-primary hover:text-primary-600"
+                      className="text-sm text-accent hover:text-accent-600"
                     >
                       View All
                     </Link>
@@ -153,15 +153,15 @@ export default function AdminHeader({
                           href="/admin/dashboard"
                           onClick={() => setNotificationsOpen(false)}
                           className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
-                            !notification.read ? 'bg-primary/5' : ''
+                            !notification.read ? 'bg-accent/5' : ''
                           }`}
                         >
                           <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full ${
-                            !notification.read ? 'bg-primary/10' : 'bg-gray-100'
+                            !notification.read ? 'bg-accent/10' : 'bg-gray-100'
                           }`}>
                             <Icon
                               icon={notification.icon}
-                              className={!notification.read ? 'text-primary' : 'text-gray-600'}
+                              className={!notification.read ? 'text-accent' : 'text-gray-600'}
                               size="sm"
                             />
                           </div>
@@ -172,7 +172,7 @@ export default function AdminHeader({
                             <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
                           </div>
                           {!notification.read && (
-                            <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0 mt-2"></div>
+                            <div className="w-2 h-2 bg-accent rounded-full flex-shrink-0 mt-2"></div>
                           )}
                         </Link>
                       ))
@@ -183,7 +183,7 @@ export default function AdminHeader({
                       <Link
                         href="/admin/dashboard"
                         onClick={() => setNotificationsOpen(false)}
-                        className="text-sm text-primary hover:text-primary-600 flex items-center justify-center gap-1"
+                        className="text-sm text-accent hover:text-accent-600 flex items-center justify-center gap-1"
                       >
                         View all notifications
                         <Icon icon={faArrowRight} size="xs" />
@@ -205,8 +205,8 @@ export default function AdminHeader({
                 className="flex items-center gap-2 p-2 hover:bg-gray-100 transition-colors rounded-sm"
                 aria-label="User menu"
               >
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Icon icon={faUserShield} className="text-primary" />
+                <div className="w-10 h-10 bg-accent/10 rounded-full flex items-center justify-center">
+                  <Icon icon={faUserShield} className="text-accent" />
                 </div>
                 <Icon icon={faChevronDown} className={`text-gray-500 transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} size="sm" />
               </button>

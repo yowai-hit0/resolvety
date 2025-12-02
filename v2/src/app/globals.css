@@ -4,6 +4,7 @@
   --background: #ffffff;
   --foreground: #171717;
   --primary: #181E29;
+  --accent: #f24d12;
   --font-source-sans-pro: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -49,8 +50,8 @@ body {
 .input:focus {
   outline: none;
   background: white;
-  border-color: #181E29;
-  box-shadow: 0 0 0 1px #181E29;
+  border-color: #f24d12;
+  box-shadow: 0 0 0 1px #f24d12;
 }
 
 .select {
@@ -66,8 +67,8 @@ body {
 .select:focus {
   outline: none;
   background: white;
-  border-color: #181E29;
-  box-shadow: 0 0 0 1px #181E29;
+  border-color: #f24d12;
+  box-shadow: 0 0 0 1px #f24d12;
 }
 
 .textarea {
@@ -87,8 +88,8 @@ body {
 .textarea:focus {
   outline: none;
   background: white;
-  border-color: #181E29;
-  box-shadow: 0 0 0 1px #181E29;
+  border-color: #f24d12;
+  box-shadow: 0 0 0 1px #f24d12;
 }
 
 /* Status badges */
@@ -138,4 +139,64 @@ body {
   50% {
     opacity: 0.5;
   }
+}
+
+/* Phone Input Styling */
+.phone-input-wrapper {
+  position: relative;
+}
+
+.phone-input-wrapper .PhoneInput {
+  width: 100%;
+}
+
+.phone-input-wrapper .PhoneInputInput {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.125rem;
+  font-size: 0.875rem;
+  color: #111827;
+  transition: all 0.15s;
+}
+
+.phone-input-wrapper .PhoneInputInput:focus {
+  outline: none;
+  background: white;
+  border-color: #f24d12;
+  box-shadow: 0 0 0 1px #f24d12;
+}
+
+.phone-input-wrapper.error .PhoneInputInput {
+  border-color: #fca5a5;
+}
+
+.phone-input-wrapper.error .PhoneInputInput:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+.phone-input-wrapper .PhoneInputCountry {
+  margin-right: 0.5rem;
+}
+
+.phone-input-wrapper .PhoneInputCountryIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.125rem;
+}
+
+.phone-input-wrapper .PhoneInputCountrySelect {
+  padding: 0.625rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.125rem;
+  font-size: 0.875rem;
+}
+
+.phone-input-wrapper .PhoneInputCountrySelect:focus {
+  outline: none;
+  border-color: #f24d12;
+  box-shadow: 0 0 0 1px #f24d12;
 }

@@ -43,7 +43,7 @@ export default function DataTable({
     return (
       <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
         <div className="flex items-center justify-center h-64">
-          <Icon icon={faSpinner} spin className="text-primary" size="2x" />
+          <Icon icon={faSpinner} spin className="text-accent" size="2x" />
         </div>
       </div>
     );
@@ -78,7 +78,7 @@ export default function DataTable({
                     {column.sortable && sortKey === column.key && (
                       <Icon
                         icon={sortDirection === 'asc' ? faChevronUp : faChevronDown}
-                        className="text-primary"
+                        className="text-accent"
                         size="xs"
                       />
                     )}

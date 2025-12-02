@@ -1,5 +1,5 @@
 // Icon component wrapper for Font Awesome
-// Usage: <Icon icon={faHome} /> or <Icon icon={faHome} className="text-primary" />
+// Usage: <Icon icon={faHome} /> or <Icon icon={faHome} className="text-accent" />
 
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

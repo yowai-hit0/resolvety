@@ -32,7 +32,7 @@ export default function FormInput({
   const inputClasses = `
     w-full px-4 py-3 bg-gray-50 border rounded-sm
     text-gray-900 placeholder-gray-500
-    focus:outline-none focus:bg-white focus:border-primary focus:ring-1 focus:ring-primary
+    focus:outline-none focus:bg-white focus:border-accent focus:ring-1 focus:ring-accent
     ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200'}
     ${icon ? 'pl-10' : ''}
   `;

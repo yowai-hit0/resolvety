@@ -172,7 +172,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         {/* Logo Section */}
         <div className="p-5 border-b border-gray-200 flex-shrink-0">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="w-10 h-10 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-white font-bold text-sm">R</span>
             </div>
             {!collapsed && (
@@ -209,9 +209,9 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
           `}>
             <div className={`
               ${collapsed ? 'w-12 h-12' : 'w-24 h-24'}
-              rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 ${collapsed ? '' : 'mx-auto mb-3'}
+              rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 ${collapsed ? '' : 'mx-auto mb-3'}
             `}>
-              <Icon icon={faUserShield} className="text-primary" size={collapsed ? 'sm' : '2x'} />
+              <Icon icon={faUserShield} className="text-accent" size={collapsed ? 'sm' : '2x'} />
             </div>
             {!collapsed && (
               <div className="text-center">
@@ -223,7 +223,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                     {userInfo.email}
                   </div>
                 )}
-                <div className="text-xs text-primary font-medium">
+                <div className="text-xs text-accent font-medium">
                   {userInfo.role}
                 </div>
               </div>
@@ -251,8 +251,8 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                         ${collapsed ? 'justify-center' : 'justify-between'}
                         ${
                           item.children?.some(child => isActive(child.href))
-                            ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                            ? 'bg-accent/10 text-accent border-l-4 border-accent'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-accent'
                         }
                       `}
                       title={collapsed ? item.label : undefined}
@@ -260,7 +260,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                       <div className="flex items-center gap-3">
                         <Icon
                           icon={item.icon}
-                          className={item.children?.some(child => isActive(child.href)) ? 'text-primary' : 'text-gray-500'}
+                          className={item.children?.some(child => isActive(child.href)) ? 'text-accent' : 'text-gray-500'}
                           size="sm"
                         />
                         {!collapsed && (
@@ -289,14 +289,14 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                                   transition-all duration-200
                                   ${
                                     childActive
-                                      ? 'bg-primary/5 text-primary border-l-2 border-primary'
-                                      : 'text-gray-600 hover:bg-gray-50 hover:text-primary'
+                                      ? 'bg-accent/5 text-accent border-l-2 border-accent'
+                                      : 'text-gray-600 hover:bg-gray-50 hover:text-accent'
                                   }
                                 `}
                               >
                                 <Icon
                                   icon={child.icon}
-                                  className={childActive ? 'text-primary' : 'text-gray-400'}
+                                  className={childActive ? 'text-accent' : 'text-gray-400'}
                                   size="xs"
                                 />
                                 <span className="text-sm">{child.label}</span>
@@ -321,15 +321,15 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                       ${collapsed ? 'justify-center' : ''}
                       ${
                         active
-                          ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-primary'
+                          ? 'bg-accent/10 text-accent border-l-4 border-accent'
+                          : 'text-gray-700 hover:bg-gray-50 hover:text-accent'
                       }
                     `}
                     title={collapsed ? item.label : undefined}
                   >
                     <Icon
                       icon={item.icon}
-                      className={active ? 'text-primary' : 'text-gray-500'}
+                      className={active ? 'text-accent' : 'text-gray-500'}
                       size="sm"
                     />
                     {!collapsed && (
@@ -347,7 +347,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
           <Link
             href="/"
             className={`
-              flex items-center gap-2 text-xs text-gray-600 hover:text-primary transition-colors
+              flex items-center gap-2 text-xs text-gray-600 hover:text-accent transition-colors
               ${collapsed ? 'justify-center' : ''}
             `}
             title={collapsed ? 'Back to Website' : undefined}
