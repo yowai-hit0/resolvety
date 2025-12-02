@@ -107,3 +107,17 @@ export interface DashboardStats {
   onHoldTickets: number;
 }
 
+export interface Organization {
+  id: number;
+  name: string;
+  domain?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  users_count?: number;
+  tickets_count?: number;
+}
+

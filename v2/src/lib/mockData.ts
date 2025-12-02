@@ -1,5 +1,5 @@
 // Mock data for ResolveIt v2
-import { User, Ticket, TicketPriority, DashboardStats, UserRole, TicketStatus, Invitation, InviteStatus } from '@/types';
+import { User, Ticket, TicketPriority, DashboardStats, UserRole, TicketStatus, Invitation, InviteStatus, Organization } from '@/types';
 
 const firstNames = ['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'James', 'Emma', 'Robert', 'Olivia', 'William', 'Sophia', 'Richard', 'Isabella', 'Joseph', 'Mia', 'Thomas', 'Charlotte', 'Charles', 'Amelia'];
 const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez', 'Hernandez', 'Lopez', 'Wilson', 'Anderson', 'Thomas', 'Taylor', 'Moore', 'Jackson', 'Martin', 'Lee'];
@@ -238,4 +238,40 @@ export const mockChartData = {
     };
   }).sort((a, b) => b.value - a.value),
 };
+
+// Mock Organizations
+const organizationNames = [
+  'Rwanda ICT Chamber',
+  'Kigali Innovation City',
+  'Rwanda Development Board',
+  'Ministry of ICT',
+  'Bank of Kigali',
+  'MTN Rwanda',
+  'Airtel Rwanda',
+  'Kigali City Council',
+  'Rwanda Revenue Authority',
+  'Rwanda Utilities Regulatory Authority',
+  'Rwanda Energy Group',
+  'Rwanda Transport Development Agency',
+  'Rwanda Biomedical Center',
+  'Rwanda Education Board',
+  'Rwanda Governance Board',
+];
+
+export const mockOrganizations: Organization[] = organizationNames.map((name, i) => {
+  const domain = name.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+  return {
+    id: i + 1,
+    name: name,
+    domain: `${domain}.rw`,
+    email: `contact@${domain}.rw`,
+    phone: `+250788${Math.floor(100000 + Math.random() * 900000)}`,
+    address: `Kigali, Rwanda`,
+    is_active: Math.random() > 0.1, // 90% active
+    created_at: randomDate(new Date(2023, 0, 1), new Date()),
+    updated_at: randomDate(new Date(2023, 0, 1), new Date()),
+    users_count: Math.floor(Math.random() * 50) + 5,
+    tickets_count: Math.floor(Math.random() * 200) + 10,
+  };
+});
 

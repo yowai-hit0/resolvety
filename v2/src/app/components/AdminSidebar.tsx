@@ -19,6 +19,7 @@ import Icon, {
   faChevronUp,
   faList,
   faUserPlus,
+  faBuilding,
 } from './Icon';
 
 interface AdminSidebarProps {
@@ -159,6 +160,11 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         label: 'Tags',
         href: '/admin/tags',
       },
+      ...(userRole === 'super_admin' ? [{
+        icon: faBuilding,
+        label: 'Organizations',
+        href: '/admin/organizations',
+      }] : []),
       { 
         icon: faCog, 
         label: 'Settings', 
