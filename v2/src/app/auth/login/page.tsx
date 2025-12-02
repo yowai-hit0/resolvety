@@ -45,12 +45,26 @@ export default function LoginPage() {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Mock user data
+      // Mock user data - check for specific emails
+      let role = 'agent';
+      let name = 'User';
+      
+      if (email === 'superadmin@resolveit.rw') {
+        role = 'super_admin';
+        name = 'Super Admin';
+      } else if (email === 'admin@resolveit.rw' || email.includes('admin')) {
+        role = 'admin';
+        name = 'Admin';
+      } else if (email.includes('agent')) {
+        role = 'agent';
+        name = 'Agent';
+      }
+      
       const mockUser = {
         id: 1,
         email: email,
-        role: email.includes('admin') ? 'admin' : 'agent',
-        name: 'User'
+        role: role,
+        name: name
       };
 
       // Store in sessionStorage

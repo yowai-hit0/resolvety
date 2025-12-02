@@ -31,9 +31,31 @@ const mockAgents = [
 
 // Mock Users
 export const mockUsers: User[] = [
+  // Super Admin (specific user for testing)
+  {
+    id: 1,
+    email: 'superadmin@resolveit.rw',
+    first_name: 'Super',
+    last_name: 'Admin',
+    role: 'super_admin' as UserRole,
+    is_active: true,
+    created_at: randomDate(new Date(2024, 0, 1), new Date()),
+    updated_at: randomDate(new Date(2024, 0, 1), new Date()),
+  },
+  // Regular Admin (specific user for testing)
+  {
+    id: 2,
+    email: 'admin@resolveit.rw',
+    first_name: 'Admin',
+    last_name: 'User',
+    role: 'admin' as UserRole,
+    is_active: true,
+    created_at: randomDate(new Date(2024, 0, 1), new Date()),
+    updated_at: randomDate(new Date(2024, 0, 1), new Date()),
+  },
   // Create specific agents first
   ...mockAgents.map((agent, i) => ({
-    id: i + 1,
+    id: i + 3,
     email: `${agent.first_name.toLowerCase()}@resolveit.rw`,
     first_name: agent.first_name,
     last_name: agent.last_name,
@@ -43,14 +65,14 @@ export const mockUsers: User[] = [
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   })),
   // Add other users (admins, customers, etc.)
-  ...Array.from({ length: 45 }, (_, i) => {
+  ...Array.from({ length: 43 }, (_, i) => {
     const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
     const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
     const roles: UserRole[] = ['super_admin', 'admin', 'customer'];
     const role = roles[Math.floor(Math.random() * roles.length)];
     
     return {
-      id: mockAgents.length + i + 1,
+      id: mockAgents.length + i + 3,
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@resolveit.rw`,
       first_name: firstName,
       last_name: lastName,
