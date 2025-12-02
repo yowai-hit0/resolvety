@@ -298,9 +298,9 @@ export const mockOrganizations: Organization[] = [
   },
   {
     id: 3,
-    name: 'Kigali Innovation City',
-    domain: 'kigalinnovationcity.rw',
-    email: 'contact@kigalinnovationcity.rw',
+    name: 'Hanga Hubs',
+    domain: 'hangahubs.rw',
+    email: 'contact@hangahubs.rw',
     phone: '+250788654321',
     address: 'Kigali, Rwanda',
     is_active: true,
