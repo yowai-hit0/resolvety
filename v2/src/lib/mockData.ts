@@ -202,5 +202,18 @@ export const mockChartData = {
     { name: 'Medium', value: mockTickets.filter(t => t.priority_id === 2).length },
     { name: 'Low', value: mockTickets.filter(t => t.priority_id === 1).length },
   ],
+  ticketsByCategory: mockTags.map(tag => {
+    // Distribute tickets evenly among tags for visualization
+    const ticketsPerTag = Math.floor(mockTickets.length / mockTags.length);
+    const remainder = mockTickets.length % mockTags.length;
+    const baseCount = ticketsPerTag;
+    // Add remainder to first few tags
+    const tagIndex = mockTags.indexOf(tag);
+    const count = baseCount + (tagIndex < remainder ? 1 : 0);
+    return {
+      name: tag.name,
+      value: count,
+    };
+  }).sort((a, b) => b.value - a.value),
 };
 

@@ -77,7 +77,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Additional Charts */}
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-3">
         <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Priority</h3>
           <DonutChart
@@ -93,6 +93,14 @@ export default function AdminDashboard() {
               name: agent.name,
               value: agent.count,
             }))}
+            height={300}
+          />
+        </div>
+
+        <div className="bg-white rounded-sm border border-gray-200 p-6">
+          <h3 className="font-semibold text-gray-900 mb-4">Tickets by Category</h3>
+          <DonutChart
+            data={mockChartData.ticketsByCategory}
             height={300}
           />
         </div>
