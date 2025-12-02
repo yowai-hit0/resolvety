@@ -56,49 +56,51 @@ export default function Pagination({
   const pageNumbers = getPageNumbers();
 
   return (
-    <div className={`flex items-center justify-between flex-wrap gap-4 ${className}`}>
-      {showInfo && (
-        <div className="text-sm text-gray-600">
-          Showing {startItem} to {endItem} of {totalItems} results
+    <div className={`bg-white border border-gray-200 rounded-sm p-4 ${className}`}>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        {showInfo && (
+          <div className="text-sm text-gray-600">
+            Showing {startItem} to {endItem} of {totalItems} results
+          </div>
+        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            Previous
+          </button>
+          
+          <div className="flex items-center gap-1">
+            {pageNumbers.map((pageNum) => (
+              <button
+                key={pageNum}
+                onClick={() => onPageChange(pageNum)}
+                className={`px-3 py-2 text-sm border rounded-sm transition-colors ${
+                  currentPage === pageNum
+                    ? 'bg-primary-500 text-white border-primary-500'
+                    : 'bg-white border-gray-300 hover:bg-gray-50'
+                }`}
+                style={currentPage === pageNum ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
+                aria-label={`Go to page ${pageNum}`}
+                aria-current={currentPage === pageNum ? 'page' : undefined}
+              >
+                {pageNum}
+              </button>
+            ))}
+          </div>
+          
+          <button
+            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-2 text-sm bg-white border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            Next
+          </button>
         </div>
-      )}
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Previous page"
-        >
-          Previous
-        </button>
-        
-        <div className="flex items-center gap-1">
-          {pageNumbers.map((pageNum) => (
-            <button
-              key={pageNum}
-              onClick={() => onPageChange(pageNum)}
-              className={`px-3 py-2 text-sm border rounded-sm transition-colors ${
-                currentPage === pageNum
-                  ? 'bg-primary-500 text-white border-primary-500'
-                  : 'border-gray-300 hover:bg-gray-50'
-              }`}
-              style={currentPage === pageNum ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
-              aria-label={`Go to page ${pageNum}`}
-              aria-current={currentPage === pageNum ? 'page' : undefined}
-            >
-              {pageNum}
-            </button>
-          ))}
-        </div>
-        
-        <button
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className="px-3 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Next page"
-        >
-          Next
-        </button>
       </div>
     </div>
   );

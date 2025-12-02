@@ -501,15 +501,13 @@ export default function AdminInvitationsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="bg-white border border-gray-200 rounded-sm p-4">
-          <Pagination
-            currentPage={page}
-            totalPages={totalPages}
-            totalItems={filteredInvitations.length}
-            pageSize={pageSize}
-            onPageChange={setPage}
-          />
-        </div>
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          totalItems={filteredInvitations.length}
+          pageSize={pageSize}
+          onPageChange={setPage}
+        />
       )}
 
       {/* Create Invite Modal */}

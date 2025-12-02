@@ -381,7 +381,7 @@ export default function OrganizationDetailPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-gray-200">
+          <div className="border-t border-gray-200 pt-4">
             <Pagination
               currentPage={page}
               totalPages={totalPages}
