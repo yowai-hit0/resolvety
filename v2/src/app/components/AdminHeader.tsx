@@ -118,9 +118,9 @@ export default function AdminHeader({
         </div>
 
         {/* Main Content Area - Search on left, actions on right */}
-        <div className="flex-1 flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
           {/* Search Input - Left side */}
-          <div className="w-80 max-w-md hidden md:block">
+          <div className="w-80 max-w-md hidden md:block flex-shrink-0">
             <div className="relative">
               <Icon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size="sm" />
               <input
@@ -134,7 +134,7 @@ export default function AdminHeader({
           </div>
 
           {/* Right: Notifications & User Menu */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 ml-auto flex-shrink-0">
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
               <button
