@@ -2,9 +2,8 @@
 
 import { useState } from 'react';
 import StatCard from '@/app/components/StatCard';
-import LineChart from '@/app/components/charts/LineChart';
-import PieChart from '@/app/components/charts/PieChart';
-import BarChart from '@/app/components/charts/BarChart';
+import AreaChart from '@/app/components/charts/AreaChart';
+import DonutChart from '@/app/components/charts/DonutChart';
 import { mockDashboardStats, mockChartData } from '@/lib/mockData';
 import Icon, { faTicketAlt, faCheckCircle, faClock, faExclamationCircle } from '@/app/components/Icon';
 
@@ -60,17 +59,17 @@ export default function AdminDashboard() {
       <div className="grid gap-6 md:grid-cols-2">
         <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets per Day (Last 30 Days)</h3>
-          <LineChart
+          <AreaChart
             data={mockChartData.ticketsByDay}
             dataKey="date"
-            lines={[{ key: 'count', name: 'Tickets' }]}
+            series={[{ key: 'count', name: 'Tickets' }]}
             height={300}
           />
         </div>
 
         <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Status</h3>
-          <PieChart
+          <DonutChart
             data={mockChartData.ticketsByStatus}
             height={300}
           />
@@ -80,19 +79,20 @@ export default function AdminDashboard() {
       {/* Additional Charts */}
       <div className="grid gap-6 md:grid-cols-2">
         <div className="bg-white rounded-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Tickets by Agent</h3>
-          <BarChart
-            data={mockChartData.ticketsByAgent}
-            dataKey="name"
-            bars={[{ key: 'count', name: 'Tickets' }]}
+          <h3 className="font-semibold text-gray-900 mb-4">Tickets by Priority</h3>
+          <DonutChart
+            data={mockChartData.ticketsByPriority}
             height={300}
           />
         </div>
 
         <div className="bg-white rounded-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Tickets by Priority</h3>
-          <PieChart
-            data={mockChartData.ticketsByPriority}
+          <h3 className="font-semibold text-gray-900 mb-4">Tickets by Agent</h3>
+          <DonutChart
+            data={mockChartData.ticketsByAgent.map(agent => ({
+              name: agent.name,
+              value: agent.count,
+            }))}
             height={300}
           />
         </div>
