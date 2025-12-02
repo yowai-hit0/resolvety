@@ -546,8 +546,7 @@ export default function AdminTicketsPage() {
 
       {/* Filters Bar - Desktop */}
       <div className="hidden md:block bg-white border border-gray-200 rounded-sm p-4">
-        <div className="flex flex-wrap items-center gap-3 justify-between">
-          <div className="flex flex-wrap items-center gap-3 flex-1">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Search */}
           <div className="flex-1 min-w-[200px]">
             <div className="relative">
@@ -624,6 +623,15 @@ export default function AdminTicketsPage() {
               <option key={size} value={size}>{size} / page</option>
             ))}
           </select>
+
+          {/* Saved Views */}
+          <button
+            onClick={() => setSavedViewsOpen(true)}
+            className="px-3 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 flex items-center gap-2"
+          >
+            <Icon icon={faBookmark} size="sm" />
+            Saved Views
+          </button>
         </div>
       </div>
 
@@ -888,7 +896,7 @@ export default function AdminTicketsPage() {
 
       {/* Bulk Actions */}
       {selectedIds.size > 0 && (
-        <div className="bg-primary/10 border border-primary/20 rounded-sm p-3 flex items-center justify-between flex-wrap gap-3">
+        <div className="bg-white border border-gray-200 rounded-sm p-4 flex items-center justify-between flex-wrap gap-3">
           <span className="text-sm text-gray-700">
             {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'} selected
           </span>
@@ -896,27 +904,27 @@ export default function AdminTicketsPage() {
             <button
               onClick={() => setAssignModalOpen(true)}
               disabled={selectedIds.size === 0}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm border border-gray-200 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
             >
               Assign
             </button>
             <button
               onClick={() => setStatusModalOpen(true)}
               disabled={selectedIds.size === 0}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-sm border border-gray-200 rounded-sm hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-gray-700"
             >
               Update Status
             </button>
             <button
               onClick={exportCsv}
-              className="px-3 py-1.5 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 flex items-center gap-1"
+              className="px-3 py-2 text-sm border border-gray-200 rounded-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
             >
               <Icon icon={faDownload} size="xs" />
               Export CSV
             </button>
             <button
               onClick={() => setSelectedIds(new Set())}
-              className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900"
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900"
             >
               Clear
             </button>
@@ -1148,7 +1156,6 @@ export default function AdminTicketsPage() {
           </div>
         </div>
       )}
-    </div>
     </div>
   );
 }
