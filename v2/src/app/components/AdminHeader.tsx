@@ -118,7 +118,7 @@ export default function AdminHeader({
         </div>
 
         {/* Main Content Area - Search on left, actions on right */}
-        <div className="flex-1 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 flex items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           {/* Search Input - Left side */}
           <div className="w-80 max-w-md hidden md:block">
             <div className="relative">
@@ -134,7 +134,7 @@ export default function AdminHeader({
           </div>
 
           {/* Right: Notifications & User Menu */}
-          <div className="flex items-center gap-3 ml-auto">
+          <div className="flex items-center gap-3">
             {/* Notifications */}
             <div className="relative" ref={notificationsRef}>
               <button
