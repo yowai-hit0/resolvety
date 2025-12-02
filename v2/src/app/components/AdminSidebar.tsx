@@ -74,61 +74,106 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
       const authRaw = sessionStorage.getItem('resolveitAuth');
       if (authRaw) {
         const auth = JSON.parse(authRaw) as { role?: string; name?: string; email?: string } | null;
-        if (auth?.role === 'admin' || auth?.role === 'super_admin') {
+        if (auth) {
+          let roleLabel = 'User';
+          if (auth.role === 'super_admin') roleLabel = 'Super Admin';
+          else if (auth.role === 'admin') roleLabel = 'Admin';
+          else if (auth.role === 'agent') roleLabel = 'Agent';
+          else if (auth.role === 'customer') roleLabel = 'Customer';
+          
           setUserInfo({
-            name: auth.name || 'Administrator',
+            name: auth.name || (auth.role === 'agent' ? 'Agent' : 'Administrator'),
             email: auth.email || '',
-            role: auth.role === 'super_admin' ? 'Super Admin' : 'Admin',
+            role: roleLabel,
           });
           return;
         }
       }
       setUserInfo({ name: 'Administrator', email: 'admin@resolveit.rw', role: 'Admin' });
     } catch (error) {
-      console.error('Unable to load admin info', error);
+      console.error('Unable to load user info', error);
       setUserInfo({ name: 'Administrator', email: 'admin@resolveit.rw', role: 'Admin' });
     }
   }, []);
 
-  const menuItems: MenuItem[] = [
-    { 
-      icon: faHome, 
-      label: 'Dashboard', 
-      href: '/admin/dashboard' 
-    },
-    {
-      icon: faTicketAlt,
-      label: 'Tickets',
-      children: [
-        { icon: faList, label: 'All Tickets', href: '/admin/tickets' },
-        { icon: faChartLine, label: 'Ticket Analytics', href: '/admin/tickets/analytics' },
-      ],
-    },
-    {
-      icon: faUsers,
-      label: 'Users',
-      children: [
-        { icon: faList, label: 'All Users', href: '/admin/users' },
-        { icon: faUserPlus, label: 'Invitations', href: '/admin/users/invitations' },
-        { icon: faChartLine, label: 'User Analytics', href: '/admin/users/analytics' },
-      ],
-    },
-    {
-      icon: faTag,
-      label: 'Tags',
-      href: '/admin/tags',
-    },
-    { 
-      icon: faCog, 
-      label: 'Settings', 
-      href: '/admin/settings' 
-    },
-  ];
+  // Get user role for menu items
+  const [userRole, setUserRole] = useState<string>('admin');
+  
+  useEffect(() => {
+    try {
+      const authRaw = sessionStorage.getItem('resolveitAuth');
+      if (authRaw) {
+        const auth = JSON.parse(authRaw) as { role?: string } | null;
+        if (auth?.role) {
+          setUserRole(auth.role);
+        }
+      }
+    } catch (error) {
+      console.error('Unable to load user role', error);
+    }
+  }, []);
+
+  // Menu items based on role
+  const getMenuItems = (): MenuItem[] => {
+    if (userRole === 'agent') {
+      return [
+        { 
+          icon: faHome, 
+          label: 'Dashboard', 
+          href: '/agent/dashboard' 
+        },
+        {
+          icon: faTicketAlt,
+          label: 'Tickets',
+          href: '/agent/tickets',
+        },
+      ];
+    }
+    
+    // Admin/Super Admin menu
+    return [
+      { 
+        icon: faHome, 
+        label: 'Dashboard', 
+        href: '/admin/dashboard' 
+      },
+      {
+        icon: faTicketAlt,
+        label: 'Tickets',
+        children: [
+          { icon: faList, label: 'All Tickets', href: '/admin/tickets' },
+          { icon: faChartLine, label: 'Ticket Analytics', href: '/admin/tickets/analytics' },
+        ],
+      },
+      {
+        icon: faUsers,
+        label: 'Users',
+        children: [
+          { icon: faList, label: 'All Users', href: '/admin/users' },
+          { icon: faUserPlus, label: 'Invitations', href: '/admin/users/invitations' },
+          { icon: faChartLine, label: 'User Analytics', href: '/admin/users/analytics' },
+        ],
+      },
+      {
+        icon: faTag,
+        label: 'Tags',
+        href: '/admin/tags',
+      },
+      { 
+        icon: faCog, 
+        label: 'Settings', 
+        href: '/admin/settings' 
+      },
+    ];
+  };
+
+  const menuItems = getMenuItems();
 
   const isActive = (href?: string) => {
     if (!href) return false;
-    if (href === '/admin/dashboard') {
-      return pathname === href;
+    const dashboardHref = userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard';
+    if (href === dashboardHref || href === '/admin/dashboard' || href === '/agent/dashboard') {
+      return pathname === href || pathname === dashboardHref;
     }
     return pathname?.startsWith(href);
   };
@@ -171,7 +216,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         {/* Logo Section */}
         <div className="p-5 border-b border-primary-800 flex-shrink-0">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <Link href="/admin/dashboard" className="flex items-center gap-3 flex-1">
+            <Link href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'} className="flex items-center gap-3 flex-1">
               <div className="w-10 h-10 bg-primary-800 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#091c5a' }}>
                 <span className="text-white font-bold text-lg">R</span>
               </div>

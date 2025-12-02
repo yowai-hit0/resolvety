@@ -34,8 +34,31 @@ export default function AdminHeader({
   const [searchTerm, setSearchTerm] = useState('');
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string>('admin');
+  const [userName, setUserName] = useState<string>(adminName);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      const authRaw = sessionStorage.getItem('resolveitAuth');
+      if (authRaw) {
+        const auth = JSON.parse(authRaw) as { role?: string; name?: string; email?: string } | null;
+        if (auth) {
+          if (auth.role) {
+            setUserRole(auth.role);
+          }
+          if (auth.name) {
+            setUserName(auth.name);
+          } else if (auth.email) {
+            setUserName(auth.email.split('@')[0]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Unable to load user info', error);
+    }
+  }, []);
 
   // Mock notifications data
   const notifications = [
@@ -87,7 +110,7 @@ export default function AdminHeader({
           >
             <Icon icon={sidebarOpen ? faTimes : faBars} className="text-gray-700" />
           </button>
-          <Link href="/admin/dashboard" className="flex items-center gap-2">
+          <Link href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'} className="flex items-center gap-2">
             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
@@ -131,7 +154,7 @@ export default function AdminHeader({
                   <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                     <h3 className="font-semibold text-gray-900">Notifications</h3>
                     <Link
-                      href="/admin/dashboard"
+                      href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'}
                       onClick={() => setNotificationsOpen(false)}
                       className="text-sm text-accent hover:text-accent-600"
                     >
@@ -147,7 +170,7 @@ export default function AdminHeader({
                       notifications.slice(0, 5).map((notification) => (
                         <Link
                           key={notification.id}
-                          href="/admin/dashboard"
+                          href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'}
                           onClick={() => setNotificationsOpen(false)}
                           className={`flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors ${
                             !notification.read ? 'bg-accent/5' : ''
@@ -178,7 +201,7 @@ export default function AdminHeader({
                   {notifications.length > 5 && (
                     <div className="p-3 border-t border-gray-200 text-center">
                       <Link
-                        href="/admin/dashboard"
+                        href={userRole === 'agent' ? '/agent/dashboard' : '/admin/dashboard'}
                         onClick={() => setNotificationsOpen(false)}
                         className="text-sm text-accent hover:text-accent-600 flex items-center justify-center gap-1"
                       >
@@ -194,8 +217,10 @@ export default function AdminHeader({
             {/* User Menu */}
             <div className="flex items-center gap-3 pl-3 border-l border-gray-200 relative" ref={userMenuRef}>
               <div className="hidden sm:block text-right">
-                <p className="text-sm font-medium text-gray-900">{adminName}</p>
-                <p className="text-xs text-gray-600">Administrator</p>
+                <p className="text-sm font-medium text-gray-900">{userName}</p>
+                <p className="text-xs text-gray-600">
+                  {userRole === 'agent' ? 'Agent' : userRole === 'super_admin' ? 'Super Admin' : 'Administrator'}
+                </p>
               </div>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -213,7 +238,7 @@ export default function AdminHeader({
                 <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 z-50 rounded-sm">
                   <div className="py-1">
                     <Link
-                      href="/admin/settings"
+                      href={userRole === 'agent' ? '/agent/settings' : '/admin/settings'}
                       onClick={() => setUserMenuOpen(false)}
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
