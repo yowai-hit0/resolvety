@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities } from '@/lib/mockData';
 import { Ticket, TicketStatus } from '@/types';
 import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faTable, faTh, faTimes, faDownload } from '@/app/components/Icon';
+import { TableSkeleton, TicketCardSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 
@@ -185,6 +186,7 @@ function MobileFilterSheet({
 }
 
 export default function AgentTicketsPage() {
+  const [loading, setLoading] = useState(true);
   const [currentAgent, setCurrentAgent] = useState<{ id: number } | null>(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
@@ -204,6 +206,7 @@ export default function AgentTicketsPage() {
         const auth = JSON.parse(authRaw) as { id?: number; role?: string } | null;
         if (auth?.role === 'agent' && auth?.id) {
           setCurrentAgent({ id: auth.id });
+          setLoading(false);
           return;
         }
       }
@@ -212,12 +215,14 @@ export default function AgentTicketsPage() {
       if (firstAgent) {
         setCurrentAgent({ id: firstAgent.id });
       }
+      setLoading(false);
     } catch (error) {
       console.error('Error loading agent info', error);
       const firstAgent = mockUsers.find(u => u.role === 'agent');
       if (firstAgent) {
         setCurrentAgent({ id: firstAgent.id });
       }
+      setLoading(false);
     }
   }, []);
 
@@ -369,13 +374,28 @@ export default function AgentTicketsPage() {
     );
   };
 
-  if (!currentAgent) {
+  if (loading || !currentAgent) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading tickets...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-24" />
         </div>
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
+          <div className="flex gap-3 flex-wrap">
+            <Skeleton className="h-10 flex-1 min-w-[200px]" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        {viewMode === 'table' ? (
+          <TableSkeleton rows={10} cols={7} />
+        ) : (
+          <TicketCardSkeleton count={10} />
+        )}
       </div>
     );
   }

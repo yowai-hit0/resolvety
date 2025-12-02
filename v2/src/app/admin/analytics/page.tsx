@@ -1,17 +1,26 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { mockTickets, mockUsers, mockTags, mockChartData } from '@/lib/mockData';
 import AreaChart from '@/app/components/charts/AreaChart';
 import BarChart from '@/app/components/charts/BarChart';
 import DonutChart from '@/app/components/charts/DonutChart';
 import StatCard from '@/app/components/StatCard';
 import Icon, { faChartLine, faUsers, faTicketAlt, faClock, faCheckCircle, faTimesCircle } from '@/app/components/Icon';
+import { StatCardSkeleton, ChartSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 type TimePeriod = '7d' | '30d' | '90d' | 'all';
 
 export default function AdminAnalyticsPage() {
+  const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Calculate date range based on time period
   const dateRange = useMemo(() => {
@@ -176,6 +185,27 @@ export default function AdminAnalyticsPage() {
   const resolutionRate = stats.totalTickets > 0 
     ? ((stats.resolvedTickets / stats.totalTickets) * 100).toFixed(1)
     : '0';
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <ChartSkeleton key={i} height={300} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

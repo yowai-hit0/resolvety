@@ -6,6 +6,7 @@ import { Invitation, InviteStatus, UserRole } from '@/types';
 import Icon, { faPlus, faRefresh, faPaperPlane, faTimes, faCheckCircle, faSearch, faFilter } from '@/app/components/Icon';
 import Pagination from '@/app/components/Pagination';
 import { useToast } from '@/app/components/Toaster';
+import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
@@ -321,14 +322,15 @@ export default function AdminInvitationsPage() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center">
-                    <div className="flex items-center justify-center gap-2 text-gray-600">
-                      <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                      Loading...
-                    </div>
-                  </td>
-                </tr>
+                Array.from({ length: pageSize }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 7 }).map((_, j) => (
+                      <td key={j} className="px-6 py-4">
+                        <Skeleton className="h-4 w-full" />
+                      </td>
+                    ))}
+                  </tr>
+                ))
               ) : paginatedInvitations.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
@@ -422,11 +424,14 @@ export default function AdminInvitationsPage() {
         {/* Mobile Card View */}
         <div className="md:hidden divide-y divide-gray-200">
           {loading ? (
-            <div className="p-12 text-center">
-              <div className="flex items-center justify-center gap-2 text-gray-600">
-                <div className="w-4 h-4 border-2 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-                Loading...
-              </div>
+            <div className="space-y-3 p-4">
+              {Array.from({ length: pageSize }).map((_, i) => (
+                <div key={i} className="bg-white border border-gray-200 rounded-sm p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                  <Skeleton className="h-3 w-1/3" />
+                </div>
+              ))}
             </div>
           ) : paginatedInvitations.length === 0 ? (
             <div className="p-12 text-center text-gray-500">

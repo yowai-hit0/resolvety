@@ -7,9 +7,11 @@ import AreaChart from '@/app/components/charts/AreaChart';
 import DonutChart from '@/app/components/charts/DonutChart';
 import BarChart from '@/app/components/charts/BarChart';
 import Icon, { faTicketAlt, faCheckCircle, faClock, faChartLine } from '@/app/components/Icon';
+import { StatCardSkeleton, ChartSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 export default function AgentDashboard() {
   const [currentAgent, setCurrentAgent] = useState<{ id: number; name: string } | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Get current agent from session storage (mock)
@@ -19,6 +21,7 @@ export default function AgentDashboard() {
         const auth = JSON.parse(authRaw) as { id?: number; name?: string; email?: string; role?: string } | null;
         if (auth?.role === 'agent' && auth?.id) {
           setCurrentAgent({ id: auth.id, name: auth.name || 'Agent' });
+          setLoading(false);
           return;
         }
       }
@@ -27,12 +30,14 @@ export default function AgentDashboard() {
       if (firstAgent) {
         setCurrentAgent({ id: firstAgent.id, name: `${firstAgent.first_name} ${firstAgent.last_name}`.trim() || firstAgent.email });
       }
+      setLoading(false);
     } catch (error) {
       console.error('Error loading agent info', error);
       const firstAgent = mockUsers.find(u => u.role === 'agent');
       if (firstAgent) {
         setCurrentAgent({ id: firstAgent.id, name: `${firstAgent.first_name} ${firstAgent.last_name}`.trim() || firstAgent.email });
       }
+      setLoading(false);
     }
   }, []);
 
@@ -170,12 +175,36 @@ export default function AgentDashboard() {
     return Object.entries(byStatus).map(([name, value]) => ({ name, value }));
   }, [currentAgent]);
 
-  if (!currentAgent) {
+  if (loading || !currentAgent) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading dashboard...</p>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-5 w-48" />
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Charts Grid Skeleton */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <ChartSkeleton key={i} height={300} />
+          ))}
+        </div>
+
+        {/* Additional Charts Skeleton */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <ChartSkeleton key={i} height={300} />
+          ))}
         </div>
       </div>
     );

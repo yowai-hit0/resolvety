@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
 import { Ticket, TicketStatus, Comment, Tag, Attachment, TicketEvent } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faImage, faFile, faTrash, faUpload } from '@/app/components/Icon';
+import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = [
   { value: 'New', label: 'New', class: 'status-new' },
@@ -381,14 +382,7 @@ export default function TicketDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading ticket...</p>
-        </div>
-      </div>
-    );
+    return <TicketDetailSkeleton />;
   }
 
   if (!ticket) {

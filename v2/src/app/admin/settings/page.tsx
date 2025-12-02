@@ -15,6 +15,7 @@ import Icon, {
 } from '@/app/components/Icon';
 import { useToast } from '@/app/components/Toaster';
 import { UserRole } from '@/types';
+import { DetailPageSkeleton } from '@/app/components/Skeleton';
 
 interface SettingsData {
   general: {
@@ -231,11 +232,7 @@ export default function AdminSettingsPage() {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading settings...</div>
-      </div>
-    );
+    return <DetailPageSkeleton showHeader showTabs />;
   }
 
   return (

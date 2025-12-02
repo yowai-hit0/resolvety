@@ -10,6 +10,7 @@ import Icon, {
   faLock,
 } from '@/app/components/Icon';
 import { useToast } from '@/app/components/Toaster';
+import { DetailPageSkeleton } from '@/app/components/Skeleton';
 
 interface AgentSettingsData {
   profile: {
@@ -215,11 +216,7 @@ export default function AgentSettingsPage() {
   ];
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading settings...</div>
-      </div>
-    );
+    return <DetailPageSkeleton showHeader showTabs />;
   }
 
   return (

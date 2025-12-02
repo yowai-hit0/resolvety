@@ -1,7 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
-import Icon, { faSpinner, faChevronUp, faChevronDown } from './Icon';
+import Icon, { faChevronUp, faChevronDown } from './Icon';
+import { TableSkeleton } from './Skeleton';
 
 interface Column {
   key: string;
@@ -40,13 +41,7 @@ export default function DataTable({
   };
 
   if (loading) {
-    return (
-      <div className="bg-white rounded-sm border border-gray-200 p-6">
-        <div className="flex items-center justify-center h-64">
-          <Icon icon={faSpinner} spin className="text-accent" size="2x" />
-        </div>
-      </div>
-    );
+    return <TableSkeleton rows={5} cols={columns.length} />;
   }
 
   if (data.length === 0) {

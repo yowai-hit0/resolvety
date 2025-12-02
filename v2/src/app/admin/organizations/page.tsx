@@ -1,14 +1,16 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { mockOrganizations } from '@/lib/mockData';
 import { Organization } from '@/types';
 import Icon, { faSearch, faPlus, faEdit, faTrash, faBuilding, faCheckCircle, faTimesCircle, faEye } from '@/app/components/Icon';
 import Pagination from '@/app/components/Pagination';
 import { useToast } from '@/app/components/Toaster';
+import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 export default function AdminOrganizationsPage() {
   const { show } = useToast();
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -25,6 +27,13 @@ export default function AdminOrganizationsPage() {
     is_active: true,
   });
   const [organizations, setOrganizations] = useState(mockOrganizations);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter organizations
   const filteredOrganizations = useMemo(() => {
@@ -57,6 +66,24 @@ export default function AdminOrganizationsPage() {
       day: 'numeric',
     });
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <TableSkeleton rows={10} cols={6} />
+      </div>
+    );
+  }
 
   const handleCreate = () => {
     setFormData({

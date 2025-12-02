@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
 import { Ticket, TicketStatus, Comment, Tag, Attachment, TicketEvent } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faFile, faHistory, faFileAlt, faImage, faPlus, faUpload, faTrash } from '@/app/components/Icon';
+import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = [
   { value: 'New', label: 'New', class: 'status-new' },
@@ -466,6 +467,10 @@ export default function AgentTicketDetailPage() {
         </div>
       </div>
     );
+  }
+
+  if (loading) {
+    return <TicketDetailSkeleton />;
   }
 
   if (!ticket) {

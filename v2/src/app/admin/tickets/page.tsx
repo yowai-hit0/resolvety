@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
 import { Ticket, TicketStatus, TicketPriority, User } from '@/types';
 import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faPlus, faTable, faTh, faTimes, faDownload, faSave, faBookmark, faCheck, faX } from '@/app/components/Icon';
+import { TableSkeleton, TicketCardSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const RW_DISTRICTS = [
@@ -228,6 +229,7 @@ function MobileFilterSheet({
 }
 
 export default function AdminTicketsPage() {
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
   const [priorityFilter, setPriorityFilter] = useState<number | ''>('');
@@ -283,6 +285,11 @@ export default function AdminTicketsPage() {
         }
       }
     }
+    // Simulate initial data loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
   }, []);
 
   // Save current view
@@ -665,6 +672,33 @@ export default function AdminTicketsPage() {
       <Icon icon={faArrowDown} className="text-primary-500" size="xs" />
     );
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </div>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
+          <div className="flex gap-3 flex-wrap">
+            <Skeleton className="h-10 flex-1 min-w-[200px]" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        {viewMode === 'table' ? (
+          <TableSkeleton rows={10} cols={8} />
+        ) : (
+          <TicketCardSkeleton count={10} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

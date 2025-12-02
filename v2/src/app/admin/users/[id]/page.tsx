@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { mockUsers, mockTickets } from '@/lib/mockData';
 import { User } from '@/types';
 import Icon, { faArrowLeft, faCheck, faTimes } from '@/app/components/Icon';
+import { DetailPageSkeleton } from '@/app/components/Skeleton';
 
 export default function UserDetailPage() {
   const params = useParams();
@@ -60,14 +61,7 @@ export default function UserDetailPage() {
   } : null;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading user...</p>
-        </div>
-      </div>
-    );
+    return <DetailPageSkeleton showHeader showStats />;
   }
 
   if (!user) {

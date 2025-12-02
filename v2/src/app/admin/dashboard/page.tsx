@@ -1,14 +1,59 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StatCard from '@/app/components/StatCard';
 import AreaChart from '@/app/components/charts/AreaChart';
 import DonutChart from '@/app/components/charts/DonutChart';
 import { mockDashboardStats, mockChartData } from '@/lib/mockData';
 import Icon, { faTicketAlt, faCheckCircle, faClock, faExclamationCircle } from '@/app/components/Icon';
+import { StatCardSkeleton, ChartSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 export default function AdminDashboard() {
-  const [stats] = useState(mockDashboardStats);
+  const [stats, setStats] = useState(mockDashboardStats);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <StatCardSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Charts Grid Skeleton */}
+        <div className="grid gap-6 grid-cols-1 md:grid-cols-12">
+          <div className="md:col-span-8">
+            <ChartSkeleton height={300} />
+          </div>
+          <div className="md:col-span-4">
+            <ChartSkeleton height={300} />
+          </div>
+        </div>
+
+        {/* Additional Charts Skeleton */}
+        <div className="grid gap-6 md:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ChartSkeleton key={i} height={300} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

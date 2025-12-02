@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { mockUsers } from '@/lib/mockData';
 import { User, UserRole } from '@/types';
 import Icon, { faSearch, faEye } from '@/app/components/Icon';
+import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
@@ -20,6 +21,15 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate initial data loading
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Filter and search users
   const filteredUsers = useMemo(() => {
@@ -58,6 +68,25 @@ export default function AdminUsersPage() {
       day: 'numeric',
     });
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-4 w-48 mt-2" />
+        </div>
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
+          <div className="flex gap-3">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+        </div>
+        <TableSkeleton rows={10} cols={5} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -18,6 +18,7 @@ import Icon, {
 } from '@/app/components/Icon';
 import { useToast } from '@/app/components/Toaster';
 import Pagination from '@/app/components/Pagination';
+import { DetailPageSkeleton } from '@/app/components/Skeleton';
 
 export default function OrganizationDetailPage() {
   const params = useParams();
@@ -165,11 +166,7 @@ export default function OrganizationDetailPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-gray-500">Loading...</div>
-      </div>
-    );
+    return <DetailPageSkeleton showHeader />;
   }
 
   if (!organization) {

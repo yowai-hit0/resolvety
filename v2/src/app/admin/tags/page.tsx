@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { mockTags, mockPriorities } from '@/lib/mockData';
 import { Tag, TicketPriority } from '@/types';
 import Icon, { faEdit, faTrash, faCheck, faTimes, faPlus } from '@/app/components/Icon';
+import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 type TabType = 'tags' | 'priorities';
 
@@ -121,10 +122,26 @@ export default function AdminTagsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <div className="space-y-6">
+        <div>
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-4 w-48 mt-2" />
+        </div>
+        <div className="bg-white border border-gray-200 rounded-sm p-4">
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-24" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+        </div>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="bg-white border border-gray-200 rounded-sm p-6 space-y-4">
+            <Skeleton className="h-6 w-24" />
+            <TableSkeleton rows={5} cols={2} showHeader={false} />
+          </div>
+          <div className="bg-white border border-gray-200 rounded-sm p-6 space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <TableSkeleton rows={5} cols={2} showHeader={false} />
+          </div>
         </div>
       </div>
     );
