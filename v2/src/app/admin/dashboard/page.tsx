@@ -25,32 +25,32 @@ export default function AdminDashboard() {
           label="Active Tickets"
           value={stats.activeTickets}
           icon={faClock}
-          iconColor="#f59e0b"
-          iconBgColor="#fef3c7"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           href="/admin/tickets?status=active"
         />
         <StatCard
           label="Completed Tickets"
           value={stats.resolvedTickets + stats.closedTickets}
           icon={faCheckCircle}
-          iconColor="#10b981"
-          iconBgColor="#d1fae5"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           href="/admin/tickets?status=resolved"
         />
         <StatCard
           label="Total Tickets"
           value={stats.totalTickets}
           icon={faTicketAlt}
-          iconColor="#f24d12"
-          iconBgColor="#fef2f0"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           href="/admin/tickets"
         />
         <StatCard
           label="New Today"
           value={stats.newToday}
           icon={faExclamationCircle}
-          iconColor="#3b82f6"
-          iconBgColor="#dbeafe"
+          iconColor="#0f36a5"
+          iconBgColor="#eef2ff"
           href="/admin/tickets?status=new"
         />
       </div>
