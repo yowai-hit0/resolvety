@@ -223,6 +223,10 @@ export default function ForgotPasswordPage() {
           <div className="absolute inset-0 bg-accent/40"></div>
         </div>
         
+        {/* Digital Clock and Date */}
+        <div className="relative z-10 flex items-center justify-center w-full">
+          <DigitalClock />
+        </div>
       </div>
     </div>
   );
