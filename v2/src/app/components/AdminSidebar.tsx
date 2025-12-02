@@ -160,7 +160,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
 
       <aside
         className={`
-          fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-50
+          fixed top-0 left-0 h-full bg-primary-900 border-r border-primary-800 z-50
           transform transition-all duration-300 ease-in-out
           lg:translate-x-0
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
@@ -168,30 +168,36 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
           flex flex-col
           overflow-y-auto
         `}
+        style={{ backgroundColor: '#071341', borderColor: '#091c5a' }}
       >
         {/* Logo Section */}
-        <div className="p-5 border-b border-gray-200 flex-shrink-0">
-          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">R</span>
-            </div>
-            {!collapsed && (
-              <div className="flex items-center gap-2 flex-1">
-                <h2 className="text-lg font-semibold text-gray-900">ResolveIt</h2>
-                <button
-                  onClick={() => setCollapsed(true)}
-                  className="ml-auto p-1.5 hover:bg-gray-100 rounded-sm transition-colors text-gray-500 hover:text-gray-700"
-                  aria-label="Collapse sidebar"
-                  title="Collapse sidebar"
-                >
-                  <Icon icon={faBars} size="sm" />
-                </button>
+        <div className="p-5 border-b border-primary-800 flex-shrink-0">
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+            <Link href="/admin/dashboard" className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 bg-primary-800 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#091c5a' }}>
+                <span className="text-white font-bold text-lg">R</span>
               </div>
+              {!collapsed && (
+                <div className="flex flex-col">
+                  <span className="text-lg font-bold text-white leading-tight">ResolveIt</span>
+                  <span className="text-xs text-gray-400 leading-tight">Ticket Management</span>
+                </div>
+              )}
+            </Link>
+            {!collapsed && (
+              <button
+                onClick={() => setCollapsed(true)}
+                className="p-1.5 hover:bg-primary-800 rounded-sm transition-colors text-gray-300 hover:text-white"
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <Icon icon={faBars} size="sm" />
+              </button>
             )}
             {collapsed && (
               <button
                 onClick={() => setCollapsed(false)}
-                className="p-1.5 hover:bg-gray-100 rounded-sm transition-colors text-gray-500 hover:text-gray-700"
+                className="p-1.5 hover:bg-primary-800 rounded-sm transition-colors text-gray-300 hover:text-white"
                 aria-label="Expand sidebar"
                 title="Expand sidebar"
               >
@@ -204,26 +210,28 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         {/* User Information Section */}
         {userInfo && (
           <div className={`
-            border-b border-gray-200 flex-shrink-0
+            border-b border-primary-800 flex-shrink-0
             ${collapsed ? 'p-3 flex flex-col items-center' : 'p-5'}
           `}>
             <div className={`
               ${collapsed ? 'w-12 h-12' : 'w-24 h-24'}
-              rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0 ${collapsed ? '' : 'mx-auto mb-3'}
-            `}>
-              <Icon icon={faUserShield} className="text-accent" size={collapsed ? 'sm' : '2x'} />
+              rounded-full bg-primary-800 flex items-center justify-center flex-shrink-0 ${collapsed ? '' : 'mx-auto mb-3'}
+            `}
+            style={{ backgroundColor: '#091c5a' }}
+            >
+              <Icon icon={faUserShield} className="text-white" size={collapsed ? 'sm' : '2x'} />
             </div>
             {!collapsed && (
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-900 mb-1 truncate">
+                <div className="text-sm font-semibold text-white mb-1 truncate">
                   {userInfo.name}
                 </div>
                 {userInfo.email && (
-                  <div className="text-xs text-gray-600 mb-1 truncate">
+                  <div className="text-xs text-gray-300 mb-1 truncate">
                     {userInfo.email}
                   </div>
                 )}
-                <div className="text-xs text-accent font-medium">
+                <div className="text-xs text-primary-200 font-medium">
                   {userInfo.role}
                 </div>
               </div>
@@ -251,8 +259,8 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                         ${collapsed ? 'justify-center' : 'justify-between'}
                         ${
                           item.children?.some(child => isActive(child.href))
-                            ? 'bg-accent/10 text-accent border-l-4 border-accent'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-accent'
+                            ? 'bg-primary-700 text-white border-l-4 border-primary-300'
+                            : 'text-gray-300 hover:bg-primary-800 hover:text-white'
                         }
                       `}
                       title={collapsed ? item.label : undefined}
@@ -260,7 +268,7 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                       <div className="flex items-center gap-3">
                         <Icon
                           icon={item.icon}
-                          className={item.children?.some(child => isActive(child.href)) ? 'text-accent' : 'text-gray-500'}
+                          className={item.children?.some(child => isActive(child.href)) ? 'text-white' : 'text-gray-400'}
                           size="sm"
                         />
                         {!collapsed && (
@@ -289,14 +297,14 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                                   transition-all duration-200
                                   ${
                                     childActive
-                                      ? 'bg-accent/5 text-accent border-l-2 border-accent'
-                                      : 'text-gray-600 hover:bg-gray-50 hover:text-accent'
+                                      ? 'bg-primary-700 text-white border-l-2 border-primary-300'
+                                      : 'text-gray-300 hover:bg-primary-800 hover:text-white'
                                   }
                                 `}
                               >
                                 <Icon
                                   icon={child.icon}
-                                  className={childActive ? 'text-accent' : 'text-gray-400'}
+                                  className={childActive ? 'text-white' : 'text-gray-400'}
                                   size="xs"
                                 />
                                 <span className="text-sm">{child.label}</span>
@@ -321,15 +329,15 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
                       ${collapsed ? 'justify-center' : ''}
                       ${
                         active
-                          ? 'bg-accent/10 text-accent border-l-4 border-accent'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-accent'
+                          ? 'bg-primary-700 text-white border-l-4 border-primary-300'
+                          : 'text-gray-300 hover:bg-primary-800 hover:text-white'
                       }
                     `}
                     title={collapsed ? item.label : undefined}
                   >
                     <Icon
                       icon={item.icon}
-                      className={active ? 'text-accent' : 'text-gray-500'}
+                      className={active ? 'text-white' : 'text-gray-400'}
                       size="sm"
                     />
                     {!collapsed && (
@@ -343,11 +351,11 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 flex-shrink-0">
+        <div className="p-4 border-t border-primary-800 flex-shrink-0">
           <Link
             href="/"
             className={`
-              flex items-center gap-2 text-xs text-gray-600 hover:text-accent transition-colors
+              flex items-center gap-2 text-xs text-gray-300 hover:text-white transition-colors
               ${collapsed ? 'justify-center' : ''}
             `}
             title={collapsed ? 'Back to Website' : undefined}

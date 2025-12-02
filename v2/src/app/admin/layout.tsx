@@ -15,7 +15,7 @@ export default function AdminLayout({
 
   return (
     <RequireAuth allowedRoles={['admin', 'super_admin']}>
-      <div className="flex h-screen bg-background overflow-hidden">
+      <div className="flex h-screen bg-gray-100 overflow-hidden">
         <AdminSidebar
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}

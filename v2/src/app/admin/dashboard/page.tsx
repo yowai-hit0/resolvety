@@ -23,14 +23,6 @@ export default function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          label="Total Tickets"
-          value={stats.totalTickets}
-          icon={faTicketAlt}
-          iconColor="#181E29"
-          iconBgColor="#f0f1f3"
-          href="/admin/tickets"
-        />
-        <StatCard
           label="Active Tickets"
           value={stats.activeTickets}
           icon={faClock}
@@ -39,26 +31,34 @@ export default function AdminDashboard() {
           href="/admin/tickets?status=active"
         />
         <StatCard
-          label="Resolved"
-          value={stats.resolvedTickets}
+          label="Completed Tickets"
+          value={stats.resolvedTickets + stats.closedTickets}
           icon={faCheckCircle}
           iconColor="#10b981"
           iconBgColor="#d1fae5"
           href="/admin/tickets?status=resolved"
         />
         <StatCard
+          label="Total Tickets"
+          value={stats.totalTickets}
+          icon={faTicketAlt}
+          iconColor="#f24d12"
+          iconBgColor="#fef2f0"
+          href="/admin/tickets"
+        />
+        <StatCard
           label="New Today"
           value={stats.newToday}
           icon={faExclamationCircle}
-          iconColor="#ef4444"
-          iconBgColor="#fee2e2"
+          iconColor="#3b82f6"
+          iconBgColor="#dbeafe"
           href="/admin/tickets?status=new"
         />
       </div>
 
       {/* Charts Grid */}
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets per Day (Last 30 Days)</h3>
           <LineChart
             data={mockChartData.ticketsByDay}
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Status</h3>
           <PieChart
             data={mockChartData.ticketsByStatus}
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
 
       {/* Additional Charts */}
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Agent</h3>
           <BarChart
             data={mockChartData.ticketsByAgent}
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="bg-white rounded-sm shadow-sm border border-gray-200 p-6">
+        <div className="bg-white rounded-sm border border-gray-200 p-6">
           <h3 className="font-semibold text-gray-900 mb-4">Tickets by Priority</h3>
           <PieChart
             data={mockChartData.ticketsByPriority}

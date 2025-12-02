@@ -91,16 +91,13 @@ export default function AdminHeader({
             <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">R</span>
             </div>
-            {!sidebarCollapsed && (
-              <span className="font-bold text-gray-900 hidden sm:inline">ResolveIt</span>
-            )}
           </Link>
         </div>
 
-        {/* Main Content Area - Search aligned with page content */}
-        <div className="flex-1 flex items-center justify-between px-4 sm:px-6 lg:px-8">
-          {/* Search Input */}
-          <div className="flex-1 max-w-md hidden md:block">
+        {/* Main Content Area - Search on left, actions on right */}
+        <div className="flex-1 flex items-center gap-4 px-4 sm:px-6 lg:px-8">
+          {/* Search Input - Left side */}
+          <div className="w-80 max-w-md hidden md:block">
             <div className="relative">
               <Icon icon={faSearch} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size="sm" />
               <input

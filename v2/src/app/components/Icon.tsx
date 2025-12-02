@@ -134,6 +134,9 @@ export {
   faPaperPlane,
   faHistory,
   faUserTag,
+  faArrowUp,
+  faArrowDown,
+  faArrowsUpDown,
 } from '@fortawesome/free-solid-svg-icons';
 
 // Import for legacy exports

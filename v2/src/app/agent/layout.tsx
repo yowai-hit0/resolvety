@@ -9,7 +9,7 @@ export default function AgentLayout({
 }) {
   return (
     <RequireAuth allowedRoles={['agent', 'admin', 'super_admin']}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-gray-100">
         <div className="p-6">
           {children}
         </div>

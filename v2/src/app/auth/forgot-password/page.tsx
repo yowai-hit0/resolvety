@@ -91,7 +91,8 @@ export default function ForgotPasswordPage() {
             {/* Back to Login */}
             <Link
               href="/auth/login"
-              className="w-full py-2.5 bg-accent text-white rounded-sm font-medium hover:bg-accent-600 transition-colors flex items-center justify-center gap-2 text-sm"
+              className="w-full py-2.5 bg-primary-500 text-white rounded-sm font-medium hover:bg-primary-600 transition-colors flex items-center justify-center gap-2 text-sm"
+              style={{ backgroundColor: '#0f36a5' }}
             >
               <Icon icon={faArrowLeft} size="sm" />
               <span>Back to Login</span>
@@ -182,7 +183,8 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 bg-accent text-white rounded-sm font-medium hover:bg-accent-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              className="w-full py-2.5 bg-primary-500 text-white rounded-sm font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+              style={{ backgroundColor: '#0f36a5' }}
             >
               {loading ? (
                 <>
