@@ -2,11 +2,18 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
-import { mockTickets, mockUsers, mockPriorities } from '@/lib/mockData';
+import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
 import { Ticket, TicketStatus, TicketPriority, User } from '@/types';
 import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faPlus, faTable, faTh, faTimes, faDownload, faSave, faBookmark, faCheck, faX } from '@/app/components/Icon';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const RW_DISTRICTS = [
+  'Nyarugenge', 'Gasabo', 'Kicukiro', 'Musanze', 'Burera', 'Gakenke', 'Rubavu', 'Nyabihu', 
+  'Rutsiro', 'Ngororero', 'Muhanga', 'Kamonyi', 'Ruhango', 'Nyanza', 'Huye', 'Gisagara', 
+  'Nyaruguru', 'Nyamagabe', 'Karongi', 'Rusizi', 'Nyamasheke', 'Gicumbi', 'Rulindo', 
+  'Bugesera', 'Ngoma', 'Kirehe', 'Kayonza', 'Rwamagana', 'Gatsibo', 'Nyagatare'
+];
+
 const STATUSES: { value: TicketStatus | ''; label: string; class: string }[] = [
   { value: '', label: 'All Status', class: '' },
   { value: 'New', label: 'New', class: 'status-new' },
@@ -239,6 +246,27 @@ export default function AdminTicketsPage() {
   const [selectedStatus, setSelectedStatus] = useState<TicketStatus | ''>('');
   const [savedViews, setSavedViews] = useState<Array<{ name: string; params: any }>>([]);
   const [newViewName, setNewViewName] = useState('');
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [formData, setFormData] = useState({
+    subject: '',
+    description: '',
+    requester_email: '',
+    requester_name: '',
+    requester_phone: '',
+    location: '',
+    priority_id: '',
+    assignee_id: '',
+    tag_ids: [] as number[],
+  });
+  const [phoneLocal, setPhoneLocal] = useState('');
+  const [showLocationList, setShowLocationList] = useState(false);
+  const [showNewTag, setShowNewTag] = useState(false);
+  const [newTagName, setNewTagName] = useState('');
+  const [availableTags, setAvailableTags] = useState(mockTags);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ url: string; type: 'image' | 'audio' | 'video'; file: File }>>([]);
+  const [fileUploading, setFileUploading] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   // Get agents for assignee filter
   const agents = useMemo(() => mockUsers.filter(u => u.role === 'agent' || u.role === 'admin'), []);
@@ -299,6 +327,146 @@ export default function AdminTicketsPage() {
     const updated = savedViews.filter(v => v.name !== name);
     setSavedViews(updated);
     localStorage.setItem('resolveit_saved_views', JSON.stringify(updated));
+  };
+
+  // Form validation
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    if (!formData.subject.trim()) {
+      errors.subject = 'Subject is required';
+    }
+    
+    if (!formData.priority_id) {
+      errors.priority_id = 'Priority is required';
+    }
+    
+    if (formData.requester_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.requester_email)) {
+      errors.requester_email = 'Invalid email format';
+    }
+    
+    if (phoneLocal && !/^7\d{8}$/.test(phoneLocal)) {
+      errors.requester_phone = 'Phone must be 9 digits starting with 7';
+    }
+    
+    if (formData.location && !RW_DISTRICTS.includes(formData.location)) {
+      errors.location = 'Invalid district';
+    }
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setFileUploading(true);
+    
+    // Simulate file upload (mock)
+    setTimeout(() => {
+      const newFiles: Array<{ url: string; type: 'image' | 'audio' | 'video'; file: File }> = files.map(file => {
+        const type: 'image' | 'audio' | 'video' = file.type.startsWith('image/') ? 'image' : 
+                     file.type.startsWith('audio/') ? 'audio' : 
+                     file.type.startsWith('video/') ? 'video' : 'image';
+        const url = URL.createObjectURL(file);
+        return { url, type, file };
+      });
+      
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      setFileUploading(false);
+    }, 500);
+  };
+
+  // Remove uploaded file
+  const removeFile = (url: string) => {
+    setUploadedFiles(prev => {
+      const file = prev.find(f => f.url === url);
+      if (file) {
+        URL.revokeObjectURL(file.url);
+      }
+      return prev.filter(f => f.url !== url);
+    });
+  };
+
+  // Handle form submit
+  const handleCreateTicket = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Update phone number
+    const fullPhone = phoneLocal ? `+250${phoneLocal}` : '';
+    const finalFormData = { ...formData, requester_phone: fullPhone };
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setCreating(true);
+    
+    // Mock API call
+    setTimeout(() => {
+      console.log('Creating ticket:', finalFormData, uploadedFiles);
+      // Reset form
+      setFormData({
+        subject: '',
+        description: '',
+        requester_email: '',
+        requester_name: '',
+        requester_phone: '',
+        location: '',
+        priority_id: '',
+        assignee_id: '',
+        tag_ids: [],
+      });
+      setPhoneLocal('');
+      setUploadedFiles([]);
+      setFormErrors({});
+      setCreateModalOpen(false);
+      setCreating(false);
+      // In real app, would refresh tickets list here
+    }, 1000);
+  };
+
+  // Reset form when modal closes
+  const handleCloseModal = () => {
+    setFormData({
+      subject: '',
+      description: '',
+      requester_email: '',
+      requester_name: '',
+      requester_phone: '',
+      location: '',
+      priority_id: '',
+      assignee_id: '',
+      tag_ids: [],
+    });
+    setPhoneLocal('');
+    setUploadedFiles([]);
+    setFormErrors({});
+    setShowLocationList(false);
+    setShowNewTag(false);
+    setNewTagName('');
+    setCreateModalOpen(false);
+  };
+
+  // Add new tag
+  const handleAddTag = () => {
+    const name = newTagName.trim();
+    if (!name) return;
+    
+    const newTag = {
+      id: availableTags.length + 1,
+      name: name,
+    };
+    
+    setAvailableTags(prev => [...prev, newTag]);
+    setFormData(prev => ({
+      ...prev,
+      tag_ids: [...prev.tag_ids, newTag.id],
+    }));
+    setNewTagName('');
+    setShowNewTag(false);
   };
 
   // CSV Export
@@ -535,6 +703,7 @@ export default function AdminTicketsPage() {
             </button>
           </div>
           <button
+            onClick={() => setCreateModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors text-sm font-medium"
             style={{ backgroundColor: '#0f36a5' }}
           >
@@ -1154,6 +1323,385 @@ export default function AdminTicketsPage() {
               Next
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Create Ticket Modal */}
+      {createModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <form onSubmit={handleCreateTicket} className="bg-white rounded-sm border border-gray-200 w-full max-w-2xl max-h-[95vh] flex flex-col">
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Create New Ticket</h2>
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="p-1 hover:bg-gray-100 rounded-sm transition-colors"
+              >
+                <Icon icon={faTimes} className="text-gray-500" size="sm" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subject <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm ${
+                      formErrors.subject ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    placeholder="Enter ticket subject"
+                  />
+                  {formErrors.subject && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.subject}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Requester Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.requester_email}
+                    onChange={(e) => setFormData({ ...formData, requester_email: e.target.value })}
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm ${
+                      formErrors.requester_email ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                    placeholder="requester@example.com"
+                  />
+                  {formErrors.requester_email && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.requester_email}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Requester Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.requester_name}
+                    onChange={(e) => setFormData({ ...formData, requester_name: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                    placeholder="Optional"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Requester Phone (+250) <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex items-center">
+                    <span className="px-3 py-2 bg-gray-100 border border-r-0 border-gray-200 rounded-l-sm text-sm text-gray-700">
+                      +250
+                    </span>
+                    <input
+                      type="text"
+                      value={phoneLocal}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '').slice(0, 9);
+                        setPhoneLocal(digits);
+                      }}
+                      onKeyDown={(e) => {
+                        const allowed = ['Backspace', 'Delete', 'ArrowLeft', 'ArrowRight', 'Tab', 'Home', 'End'];
+                        if (allowed.includes(e.key)) return;
+                        if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+                      }}
+                      className={`flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-r-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm ${
+                        formErrors.requester_phone ? 'border-red-500' : ''
+                      }`}
+                      placeholder="7XXXXXXXX"
+                      maxLength={9}
+                    />
+                  </div>
+                  {formErrors.requester_phone && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.requester_phone}</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Enter 9 digits after +250</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Location (District)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => {
+                        setFormData({ ...formData, location: e.target.value });
+                        setShowLocationList(true);
+                      }}
+                      onFocus={() => setShowLocationList(true)}
+                      onBlur={() => setTimeout(() => setShowLocationList(false), 200)}
+                      className={`w-full px-3 py-2 bg-gray-50 border rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm ${
+                        formErrors.location ? 'border-red-500' : 'border-gray-200'
+                      }`}
+                      placeholder="Select location"
+                    />
+                    {showLocationList && (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-sm max-h-40 overflow-y-auto">
+                        {RW_DISTRICTS.filter(d => 
+                          d.toLowerCase().includes((formData.location || '').toLowerCase())
+                        ).map((district) => (
+                          <div
+                            key={district}
+                            className="px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm text-gray-700"
+                            onMouseDown={() => {
+                              setFormData({ ...formData, location: district });
+                              setShowLocationList(false);
+                            }}
+                          >
+                            {district}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {formErrors.location && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.location}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Priority <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.priority_id}
+                    onChange={(e) => setFormData({ ...formData, priority_id: e.target.value })}
+                    className={`w-full px-3 py-2 bg-gray-50 border rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm ${
+                      formErrors.priority_id ? 'border-red-500' : 'border-gray-200'
+                    }`}
+                  >
+                    <option value="">Select priority</option>
+                    {mockPriorities.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  {formErrors.priority_id && (
+                    <p className="text-xs text-red-500 mt-1">{formErrors.priority_id}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Assignee
+                  </label>
+                  <select
+                    value={formData.assignee_id}
+                    onChange={(e) => setFormData({ ...formData, assignee_id: e.target.value })}
+                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                  >
+                    <option value="">Unassigned</option>
+                    {agents.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.first_name} {a.last_name} ({a.email})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Tags Selection */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Categories
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowNewTag(!showNewTag)}
+                    className="p-1.5 hover:bg-gray-100 rounded-sm transition-colors text-gray-600"
+                    title={showNewTag ? 'Close' : 'Add tag'}
+                  >
+                    <Icon icon={showNewTag ? faTimes : faPlus} size="sm" />
+                  </button>
+                </div>
+                {showNewTag && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddTag();
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
+                      placeholder="New tag name"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddTag}
+                      className="px-3 py-2 bg-gray-100 border border-gray-200 rounded-sm hover:bg-gray-200 text-sm text-gray-700"
+                    >
+                      Add
+                    </button>
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-sm">
+                  {availableTags.map((tag) => {
+                    const checked = formData.tag_ids.includes(tag.id);
+                    return (
+                      <label
+                        key={tag.id}
+                        className={`px-3 py-1.5 rounded-sm text-sm cursor-pointer transition-colors flex items-center gap-2 ${
+                          checked
+                            ? 'bg-primary-500 text-white'
+                            : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => {
+                            const current = new Set(formData.tag_ids);
+                            if (current.has(tag.id)) {
+                              current.delete(tag.id);
+                            } else {
+                              current.add(tag.id);
+                            }
+                            setFormData({ ...formData, tag_ids: Array.from(current) });
+                          }}
+                          className="sr-only"
+                        />
+                        <span>{tag.name}</span>
+                        {checked && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const current = new Set(formData.tag_ids);
+                              current.delete(tag.id);
+                              setFormData({ ...formData, tag_ids: Array.from(current) });
+                            }}
+                            className="ml-1 hover:bg-white/20 rounded-full p-0.5"
+                          >
+                            <Icon icon={faTimes} size="xs" />
+                          </button>
+                        )}
+                      </label>
+                    );
+                  })}
+                  {availableTags.length === 0 && (
+                    <span className="text-sm text-gray-500 p-2">No categories available</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm min-h-[120px] resize-y"
+                  placeholder="Describe the issue in detail..."
+                />
+              </div>
+
+              {/* File Uploads */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Attachments
+                </label>
+                {uploadedFiles.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs text-gray-500 mb-2">
+                      {uploadedFiles.length} file{uploadedFiles.length !== 1 ? 's' : ''} selected
+                    </p>
+                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 bg-gray-50 border border-gray-200 rounded-sm">
+                      {uploadedFiles.map((file, index) => (
+                        <div key={index} className="relative group">
+                          {file.type === 'image' ? (
+                            <img
+                              src={file.url}
+                              alt={`Preview ${index + 1}`}
+                              className="w-20 h-20 object-cover rounded-sm border border-gray-200"
+                            />
+                          ) : (
+                            <div className="w-20 h-20 bg-gray-100 rounded-sm border border-gray-200 flex items-center justify-center">
+                              <Icon 
+                                icon={file.type === 'audio' ? faCheck : faCheck} 
+                                className="text-gray-600" 
+                                size="lg" 
+                              />
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => removeFile(file.url)}
+                            className="absolute -top-1 -right-1 bg-black/80 hover:bg-black text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <Icon icon={faTimes} size="xs" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="image/*,audio/*,video/*"
+                    multiple
+                    onChange={handleFileUpload}
+                    disabled={fileUploading}
+                    className="hidden"
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    className={`px-4 py-2 bg-gray-100 border border-gray-200 rounded-sm hover:bg-gray-200 cursor-pointer text-sm text-gray-700 transition-colors ${
+                      fileUploading ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                  >
+                    {fileUploading ? 'Uploading...' : 'Choose Files'}
+                  </label>
+                  <span className="text-xs text-gray-500">
+                    Images (5MB), Audio/Video (50MB)
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end gap-3">
+              <button
+                type="button"
+                onClick={handleCloseModal}
+                className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 text-sm text-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={creating || fileUploading}
+                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
+                style={{ backgroundColor: '#0f36a5' }}
+              >
+                {creating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating...</span>
+                  </>
+                ) : (
+                  'Create Ticket'
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

@@ -62,6 +62,18 @@ export const mockUsers: User[] = [
   }),
 ];
 
+// Mock Tags
+export const mockTags = [
+  { id: 1, name: 'Technical' },
+  { id: 2, name: 'Billing' },
+  { id: 3, name: 'Support' },
+  { id: 4, name: 'Feature Request' },
+  { id: 5, name: 'Bug' },
+  { id: 6, name: 'Urgent' },
+  { id: 7, name: 'Hardware' },
+  { id: 8, name: 'Software' },
+];
+
 // Mock Ticket Priorities
 export const mockPriorities: TicketPriority[] = [
   { id: 1, name: 'Low' },
