@@ -18,7 +18,6 @@ import Icon, {
   faChevronDown,
   faChevronUp,
   faList,
-  faPlus,
   faUserPlus,
 } from './Icon';
 
@@ -102,7 +101,6 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
       label: 'Tickets',
       children: [
         { icon: faList, label: 'All Tickets', href: '/admin/tickets' },
-        { icon: faPlus, label: 'Create Ticket', href: '/admin/tickets/create' },
         { icon: faChartLine, label: 'Ticket Analytics', href: '/admin/tickets/analytics' },
       ],
     },
