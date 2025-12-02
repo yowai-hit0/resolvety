@@ -35,6 +35,7 @@ export interface Ticket {
   created_by?: User;
   assignee?: User;
   priority?: TicketPriority;
+  tags?: Tag[];
   comments_count?: number;
   attachments_count?: number;
 }
