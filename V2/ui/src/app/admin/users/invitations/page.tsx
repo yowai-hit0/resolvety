@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { mockInvitations, mockOrganizations } from '@/lib/mockData';
 import { Invitation, InviteStatus, UserRole } from '@/types';
 import Icon, { faPlus, faRefresh, faPaperPlane, faTimes, faCheckCircle, faSearch, faFilter } from '@/app/components/Icon';
 import Pagination from '@/app/components/Pagination';
 import { useToast } from '@/app/components/Toaster';
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { InvitesAPI } from '@/lib/api';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
@@ -26,6 +26,7 @@ const STATUS_OPTIONS: { value: InviteStatus | ''; label: string }[] = [
 export default function AdminInvitationsPage() {
   const { show } = useToast();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [totalInvitations, setTotalInvitations] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -40,16 +41,33 @@ export default function AdminInvitationsPage() {
   // Form state
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('admin');
-  const [organizationId, setOrganizationId] = useState<number | ''>('');
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations([...mockInvitations]);
+    try {
+      const skip = (page - 1) * pageSize;
+      const params: any = { skip, take: pageSize };
+      
+      if (statusFilter) {
+        params.status = statusFilter;
+      }
+      
+      if (search.trim()) {
+        params.email = search.trim();
+      }
+      
+      const response = await InvitesAPI.list(params);
+      const invites = Array.isArray(response) ? response : (response.data || []);
+      const total = response.total || response.count || invites.length;
+      
+      setInvitations(invites);
+      setTotalInvitations(total);
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to load invitations', 'error');
+    } finally {
       setLoading(false);
-    }, 300);
-  }, []);
+    }
+  }, [page, pageSize, statusFilter, search, show]);
 
   useEffect(() => {
     load();
@@ -73,42 +91,21 @@ export default function AdminInvitationsPage() {
     };
   }, [load]);
 
-  // Filter invitations
+  // Filter invitations (client-side filtering for role only, status and email are server-side)
   const filteredInvitations = useMemo(() => {
     let filtered = [...invitations];
 
-    // Search filter
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(inv =>
-        inv.email.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Role filter
+    // Role filter (client-side since backend doesn't support it)
     if (roleFilter) {
       filtered = filtered.filter(inv => inv.role === roleFilter);
     }
 
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(inv => {
-        const expired = isExpired(inv.expires_at);
-        const statusDisplay = expired && inv.status === 'PENDING' ? 'EXPIRED' : inv.status;
-        return statusDisplay === statusFilter;
-      });
-    }
-
     return filtered;
-  }, [invitations, search, roleFilter, statusFilter]);
+  }, [invitations, roleFilter]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredInvitations.length / pageSize);
-  const paginatedInvitations = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredInvitations.slice(start, end);
-  }, [filteredInvitations, page, pageSize]);
+  // Pagination - use server-side pagination
+  const totalPages = Math.ceil(totalInvitations / pageSize);
+  const paginatedInvitations = filteredInvitations;
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,42 +115,31 @@ export default function AdminInvitationsPage() {
     }
     
     setSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const newInvite: Invitation = {
-        id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        email: email.trim().toLowerCase(),
-        role: role,
-        token: `token-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-      };
-      
-      setInvitations(prev => [newInvite, ...prev]);
+    try {
+      await InvitesAPI.create({ email: email.trim(), role });
       setEmail('');
       setRole('admin');
-      setOrganizationId('');
       setOpenModal(false);
-      setSubmitting(false);
       show('Invitation sent successfully', 'success');
-    }, 500);
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to send invitation', 'error');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleResend = async (id: string) => {
     setActionId(id);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations(prev => prev.map(inv => 
-        inv.id === id 
-          ? { ...inv, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'PENDING' as InviteStatus }
-          : inv
-      ));
-      setActionId(null);
+    try {
+      await InvitesAPI.resend(id);
       show('Invitation resent successfully', 'success');
-    }, 500);
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to resend invitation', 'error');
+    } finally {
+      setActionId(null);
+    }
   };
 
   const handleRevoke = async (id: string) => {
@@ -163,15 +149,15 @@ export default function AdminInvitationsPage() {
     if (!confirm(`Are you sure you want to revoke the invitation for ${invitation.email}?`)) return;
     
     setActionId(id);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations(prev => prev.map(inv => 
-        inv.id === id ? { ...inv, status: 'REVOKED' as InviteStatus } : inv
-      ));
-      setActionId(null);
+    try {
+      await InvitesAPI.revoke(id);
       show('Invitation revoked successfully', 'success');
-    }, 500);
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to revoke invitation', 'error');
+    } finally {
+      setActionId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -509,7 +495,7 @@ export default function AdminInvitationsPage() {
         <Pagination
           currentPage={page}
           totalPages={totalPages}
-          totalItems={filteredInvitations.length}
+          totalItems={totalInvitations}
           pageSize={pageSize}
           onPageChange={setPage}
         />
@@ -557,22 +543,6 @@ export default function AdminInvitationsPage() {
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Organization (Optional)
-                  </label>
-                  <select
-                    value={organizationId}
-                    onChange={(e) => setOrganizationId(e.target.value ? Number(e.target.value) : '')}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
-                  >
-                    <option value="">No Organization</option>
-                    {mockOrganizations.map(org => (
-                      <option key={org.id} value={org.id}>{org.name}</option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">Assign user to an organization (optional)</p>
                 </div>
                 <div className="flex items-center justify-end gap-3 pt-4">
                   <button

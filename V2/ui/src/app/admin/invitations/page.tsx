@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { mockInvitations } from '@/lib/mockData';
 import { Invitation, InviteStatus, UserRole } from '@/types';
 import Icon, { faPlus, faRefresh, faPaperPlane, faTimes, faCheckCircle } from '@/app/components/Icon';
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { InvitesAPI } from '@/lib/api';
+import { useToast } from '@/app/components/Toaster';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
 const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
@@ -13,7 +14,9 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
 ];
 
 export default function AdminInvitationsPage() {
+  const { show } = useToast();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [totalInvitations, setTotalInvitations] = useState(0);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -26,14 +29,22 @@ export default function AdminInvitationsPage() {
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<UserRole>('admin');
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations([...mockInvitations]);
+    try {
+      const skip = (page - 1) * pageSize;
+      const response = await InvitesAPI.list({ skip, take: pageSize });
+      const invites = Array.isArray(response) ? response : (response.data || []);
+      const total = response.total || response.count || invites.length;
+      
+      setInvitations(invites);
+      setTotalInvitations(total);
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to load invitations', 'error');
+    } finally {
       setLoading(false);
-    }, 300);
-  }, []);
+    }
+  }, [page, pageSize, show]);
 
   useEffect(() => {
     load();
@@ -59,56 +70,52 @@ export default function AdminInvitationsPage() {
 
   const handleCreateInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim()) return;
+    if (!email.trim()) {
+      show('Email is required', 'error');
+      return;
+    }
     
     setSubmitting(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      const newInvite: Invitation = {
-        id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        email: email.trim().toLowerCase(),
-        role: role,
-        token: `token-${Date.now()}-${Math.random().toString(36).substring(7)}`,
-        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
-        status: 'PENDING',
-        created_at: new Date().toISOString(),
-      };
-      
-      setInvitations(prev => [newInvite, ...prev]);
+    try {
+      await InvitesAPI.create({ email: email.trim(), role });
       setEmail('');
       setRole('admin');
       setOpenModal(false);
+      show('Invitation sent successfully', 'success');
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to send invitation', 'error');
+    } finally {
       setSubmitting(false);
-    }, 500);
+    }
   };
 
   const handleResend = async (id: string) => {
     setActionId(id);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations(prev => prev.map(inv => 
-        inv.id === id 
-          ? { ...inv, expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), status: 'PENDING' as InviteStatus }
-          : inv
-      ));
+    try {
+      await InvitesAPI.resend(id);
+      show('Invitation resent successfully', 'success');
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to resend invitation', 'error');
+    } finally {
       setActionId(null);
-    }, 500);
+    }
   };
 
   const handleRevoke = async (id: string) => {
     if (!confirm('Are you sure you want to revoke this invitation?')) return;
     
     setActionId(id);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setInvitations(prev => prev.map(inv => 
-        inv.id === id ? { ...inv, status: 'REVOKED' as InviteStatus } : inv
-      ));
+    try {
+      await InvitesAPI.revoke(id);
+      show('Invitation revoked successfully', 'success');
+      await load(); // Refresh the list
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to revoke invitation', 'error');
+    } finally {
       setActionId(null);
-    }, 500);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -125,9 +132,9 @@ export default function AdminInvitationsPage() {
     return new Date(expiresAt) < new Date();
   };
 
-  // Pagination
-  const totalPages = Math.ceil(invitations.length / pageSize);
-  const paginatedInvitations = invitations.slice((page - 1) * pageSize, page * pageSize);
+  // Pagination - use server-side pagination
+  const totalPages = Math.ceil(totalInvitations / pageSize);
+  const paginatedInvitations = invitations;
 
   return (
     <div className="space-y-6">
@@ -136,7 +143,7 @@ export default function AdminInvitationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Invitations</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {invitations.length} {invitations.length === 1 ? 'invitation' : 'invitations'} total
+            {totalInvitations} {totalInvitations === 1 ? 'invitation' : 'invitations'} total
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -359,10 +366,10 @@ export default function AdminInvitationsPage() {
       </div>
 
       {/* Pagination */}
-      {invitations.length > 0 && (
+      {totalInvitations > 0 && (
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="text-sm text-gray-600">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, invitations.length)} of {invitations.length} invitations
+            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalInvitations)} of {totalInvitations} invitations
           </div>
           <div className="flex items-center gap-2">
             <select
