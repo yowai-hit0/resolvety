@@ -121,8 +121,8 @@ export default function AdminOrganizationsPage() {
       return;
     }
 
-    const newOrg: Organization = {
-      id: organizations.length + 1,
+      const newOrg: Organization = {
+        id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
       ...formData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),

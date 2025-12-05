@@ -24,7 +24,7 @@ export default function OrganizationDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { show } = useToast();
-  const orgId = params?.id ? parseInt(params.id as string) : null;
+  const orgId = params?.id as string | undefined;
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -146,7 +146,7 @@ export default function OrganizationDetailPage() {
   const handleRemoveUser = (user: User) => {
     setUsers(users.filter(u => u.id !== user.id));
     setAllUsers(allUsers.map(u => 
-      u.id === user.id ? { ...u, organization_id: undefined as number | undefined } : u
+      u.id === user.id ? { ...u, organization_id: undefined as string | undefined } : u
     ));
     show(`User ${user.first_name} ${user.last_name} removed from organization`, 'success');
   };

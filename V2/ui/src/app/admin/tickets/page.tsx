@@ -326,8 +326,16 @@ export default function AdminTicketsPage() {
         if (assigneeFilter) params.assignee = assigneeFilter;
 
         const response = await TicketsAPI.list(params);
-        setTickets(response.data || []);
-        setTotalTickets(response.total || 0);
+        console.log('Tickets API Response:', response);
+        console.log('Response data:', response.data);
+        console.log('Response total:', response.total);
+        
+        // Handle different response structures
+        const ticketsData = response.data || response || [];
+        const totalData = response.total || response.totalCount || (Array.isArray(ticketsData) ? ticketsData.length : 0);
+        
+        setTickets(Array.isArray(ticketsData) ? ticketsData : []);
+        setTotalTickets(totalData);
       } catch (error) {
         console.error('Failed to load tickets:', error);
         setTickets([]);
@@ -529,7 +537,7 @@ export default function AdminTicketsPage() {
       location: '',
       priority_id: '',
       assignee_id: '',
-      tag_ids: [],
+      category_ids: [],
     });
     setPhoneLocal('');
     setUploadedFiles([]);
@@ -714,7 +722,7 @@ export default function AdminTicketsPage() {
     });
 
     return filtered;
-  }, [search, statusFilter, priorityFilter, assigneeFilter, sortField, sortDirection]);
+  }, [tickets, search, statusFilter, priorityFilter, assigneeFilter, sortField, sortDirection]);
 
   // Pagination
   // Pagination is handled by the API, so we use the tickets directly
@@ -741,7 +749,7 @@ export default function AdminTicketsPage() {
   };
 
   // Handle select one
-  const handleSelectOne = (id: number, checked: boolean) => {
+  const handleSelectOne = (id: string, checked: boolean) => {
     const newSelected = new Set(selectedIds);
     if (checked) {
       newSelected.add(id);
@@ -1012,7 +1020,7 @@ export default function AdminTicketsPage() {
                 </label>
                 <select
                   value={selectedAssignee}
-                  onChange={(e) => setSelectedAssignee(e.target.value ? Number(e.target.value) : '')}
+                  onChange={(e) => setSelectedAssignee(e.target.value || '')}
                   className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                 >
                   <option value="">Select assignee...</option>
@@ -1211,6 +1219,7 @@ export default function AdminTicketsPage() {
         }}
         priorities={priorities}
         agents={agents}
+        categories={availableCategories}
       />
 
       {/* Bulk Actions */}
@@ -1746,7 +1755,7 @@ export default function AdminTicketsPage() {
                       </label>
                     );
                   })}
-                  {availableTags.length === 0 && (
+                  {availableCategories.length === 0 && (
                     <span className="text-sm text-gray-500 p-2">No categories available</span>
                   )}
                 </div>

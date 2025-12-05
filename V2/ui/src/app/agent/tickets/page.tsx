@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { mockTickets, mockUsers, mockPriorities } from '@/lib/mockData';
-import { Ticket, TicketStatus } from '@/types';
+import { AgentAPI, TicketsAPI, PrioritiesAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
+import { Ticket, TicketStatus, TicketPriority } from '@/types';
 import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faTable, faTh, faTimes, faDownload } from '@/app/components/Icon';
 import { TableSkeleton, TicketCardSkeleton, Skeleton } from '@/app/components/Skeleton';
 
@@ -100,13 +101,13 @@ function MobileFilterSheet({
   onClose: () => void;
   search: string;
   statusFilter: TicketStatus | '';
-  priorityFilter: number | '';
+  priorityFilter: string | '';
   pageSize: number;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: TicketStatus | '') => void;
-  onPriorityChange: (value: number | '') => void;
+  onPriorityChange: (value: string | '') => void;
   onPageSizeChange: (value: number) => void;
-  priorities: typeof mockPriorities;
+  priorities: TicketPriority[];
 }) {
   if (!isOpen) return null;
 
@@ -186,121 +187,129 @@ function MobileFilterSheet({
 }
 
 export default function AgentTicketsPage() {
-  const [loading, setLoading] = useState(true);
-  const [currentAgent, setCurrentAgent] = useState<{ id: number } | null>(null);
+  const { user } = useAuthStore();
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [priorities, setPriorities] = useState<TicketPriority[]>([]);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
-  const [priorityFilter, setPriorityFilter] = useState<number | ''>('');
+  const [priorityFilter, setPriorityFilter] = useState<string | ''>('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [sortField, setSortField] = useState<SortField>('updated_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
+  const [loading, setLoading] = useState(true);
+  const [totalTickets, setTotalTickets] = useState(0);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
-  // Get current agent
+  // Fetch priorities
   useEffect(() => {
-    try {
-      const authRaw = sessionStorage.getItem('resolveitAuth');
-      if (authRaw) {
-        const auth = JSON.parse(authRaw) as { id?: number; role?: string } | null;
-        if (auth?.role === 'agent' && auth?.id) {
-          setCurrentAgent({ id: auth.id });
-          setLoading(false);
-          return;
-        }
+    const fetchPriorities = async () => {
+      try {
+        const prioritiesList = await PrioritiesAPI.list();
+        setPriorities(prioritiesList || []);
+      } catch (error) {
+        console.error('Failed to fetch priorities:', error);
       }
-      // Default to first agent for demo
-      const firstAgent = mockUsers.find(u => u.role === 'agent');
-      if (firstAgent) {
-        setCurrentAgent({ id: firstAgent.id });
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading agent info', error);
-      const firstAgent = mockUsers.find(u => u.role === 'agent');
-      if (firstAgent) {
-        setCurrentAgent({ id: firstAgent.id });
-      }
-      setLoading(false);
-    }
+    };
+    fetchPriorities();
   }, []);
 
-  // Filter and sort tickets - only show assigned to current agent
-  const filteredAndSortedTickets = useMemo(() => {
-    if (!currentAgent) return [];
-
-    let filtered = mockTickets.filter(ticket => ticket.assignee_id === currentAgent.id);
-
-    // Search filter
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(ticket =>
-        ticket.ticket_code.toLowerCase().includes(searchLower) ||
-        ticket.subject.toLowerCase().includes(searchLower) ||
-        ticket.requester_name?.toLowerCase().includes(searchLower) ||
-        ticket.requester_email?.toLowerCase().includes(searchLower)
-      );
+  // Fetch tickets from API
+  useEffect(() => {
+    if (!user || user.role !== 'agent') {
+      setLoading(false);
+      return;
     }
 
-    // Status filter
-    if (statusFilter) {
-      filtered = filtered.filter(ticket => ticket.status === statusFilter);
-    }
+    const fetchTickets = async () => {
+      setLoading(true);
+      try {
+        const params: any = {
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        };
+        
+        if (statusFilter) {
+          params.status = statusFilter;
+        }
+        
+        if (priorityFilter) {
+          params.priority = priorityFilter;
+        }
 
-    // Priority filter
-    if (priorityFilter) {
-      filtered = filtered.filter(ticket => ticket.priority_id === priorityFilter);
-    }
+        // Use AgentAPI.myTickets which automatically filters by current agent
+        const response = await AgentAPI.myTickets(params);
+        
+        // Filter by search on frontend (backend doesn't support search yet)
+        let filteredTickets = response.data || [];
+        if (search.trim()) {
+          const searchLower = search.toLowerCase();
+          filteredTickets = filteredTickets.filter((ticket: Ticket) =>
+            ticket.ticket_code.toLowerCase().includes(searchLower) ||
+            ticket.subject.toLowerCase().includes(searchLower) ||
+            ticket.requester_name?.toLowerCase().includes(searchLower) ||
+            ticket.requester_email?.toLowerCase().includes(searchLower)
+          );
+        }
+        
+        // Sort on frontend since backend doesn't support sorting yet
+        filteredTickets.sort((a: Ticket, b: Ticket) => {
+          let aValue: any;
+          let bValue: any;
 
-    // Sort
-    filtered.sort((a, b) => {
-      let aValue: any;
-      let bValue: any;
+          switch (sortField) {
+            case 'ticket_code':
+              aValue = a.ticket_code;
+              bValue = b.ticket_code;
+              break;
+            case 'subject':
+              aValue = a.subject.toLowerCase();
+              bValue = b.subject.toLowerCase();
+              break;
+            case 'status':
+              aValue = a.status;
+              bValue = b.status;
+              break;
+            case 'priority':
+              aValue = a.priority?.name || '';
+              bValue = b.priority?.name || '';
+              break;
+            case 'created_at':
+              aValue = new Date(a.created_at).getTime();
+              bValue = new Date(b.created_at).getTime();
+              break;
+            case 'updated_at':
+              aValue = new Date(a.updated_at).getTime();
+              bValue = new Date(b.updated_at).getTime();
+              break;
+            default:
+              return 0;
+          }
 
-      switch (sortField) {
-        case 'ticket_code':
-          aValue = a.ticket_code;
-          bValue = b.ticket_code;
-          break;
-        case 'subject':
-          aValue = a.subject.toLowerCase();
-          bValue = b.subject.toLowerCase();
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        case 'priority':
-          aValue = a.priority?.name || '';
-          bValue = b.priority?.name || '';
-          break;
-        case 'created_at':
-          aValue = new Date(a.created_at).getTime();
-          bValue = new Date(b.created_at).getTime();
-          break;
-        case 'updated_at':
-          aValue = new Date(a.updated_at).getTime();
-          bValue = new Date(b.updated_at).getTime();
-          break;
-        default:
+          if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
+          if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
           return 0;
+        });
+        
+        // Update total count if search is applied
+        const finalTotal = search.trim() ? filteredTickets.length : (response.total || 0);
+        setTotalTickets(finalTotal);
+        setTickets(filteredTickets);
+      } catch (error: any) {
+        console.error('Failed to fetch tickets:', error);
+        setTickets([]);
+        setTotalTickets(0);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
+    const handler = setTimeout(fetchTickets, 300); // Debounce search
+    return () => clearTimeout(handler);
+  }, [user, page, pageSize, search, statusFilter, priorityFilter, sortField, sortDirection]);
 
-    return filtered;
-  }, [currentAgent, search, statusFilter, priorityFilter, sortField, sortDirection]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedTickets.length / pageSize);
-  const paginatedTickets = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    return filteredAndSortedTickets.slice(start, start + pageSize);
-  }, [filteredAndSortedTickets, page, pageSize]);
+  const totalPages = Math.ceil(totalTickets / pageSize);
 
   // Handle sort
   const handleSort = (field: SortField) => {
@@ -313,27 +322,35 @@ export default function AgentTicketsPage() {
   };
 
   // CSV Export
-  const exportCsv = () => {
-    const headers = ['ID', 'Ticket Code', 'Subject', 'Requester Email', 'Requester Name', 'Priority', 'Status', 'Created At', 'Updated At'];
-    const rows = filteredAndSortedTickets.map((t) => [
-      t.id,
-      t.ticket_code,
-      `"${t.subject.replace(/"/g, '""')}"`,
-      t.requester_email || '',
-      t.requester_name || '',
-      t.priority?.name || 'N/A',
-      t.status,
-      new Date(t.created_at).toISOString(),
-      new Date(t.updated_at).toISOString(),
-    ]);
-    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `my_tickets_${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const exportCsv = async () => {
+    try {
+      // Fetch all tickets for export
+      const allTickets = await AgentAPI.myTickets({ take: 10000 });
+      const ticketsToExport = allTickets.data || tickets;
+      
+      const headers = ['ID', 'Ticket Code', 'Subject', 'Requester Email', 'Requester Name', 'Priority', 'Status', 'Created At', 'Updated At'];
+      const rows = ticketsToExport.map((t: Ticket) => [
+        t.id,
+        t.ticket_code,
+        `"${t.subject.replace(/"/g, '""')}"`,
+        t.requester_email || '',
+        t.requester_name || '',
+        t.priority?.name || 'N/A',
+        t.status,
+        new Date(t.created_at).toISOString(),
+        new Date(t.updated_at).toISOString(),
+      ]);
+      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `my_tickets_${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to export tickets:', error);
+    }
   };
 
   // Format date
@@ -407,7 +424,7 @@ export default function AgentTicketsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">My Tickets</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {filteredAndSortedTickets.length} {filteredAndSortedTickets.length === 1 ? 'ticket' : 'tickets'} assigned to you
+            {totalTickets} {totalTickets === 1 ? 'ticket' : 'tickets'} assigned to you
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -490,7 +507,7 @@ export default function AgentTicketsPage() {
             className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
           >
             <option value="">All Priorities</option>
-            {mockPriorities.map(p => (
+            {priorities.map(p => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
@@ -570,18 +587,18 @@ export default function AgentTicketsPage() {
           setPageSize(value);
           setPage(1);
         }}
-        priorities={mockPriorities}
+        priorities={priorities}
       />
 
       {/* Card View */}
       {viewMode === 'cards' && (
         <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-          {paginatedTickets.length === 0 ? (
+          {tickets.length === 0 ? (
             <div className="col-span-full bg-white border border-gray-200 rounded-sm p-12 text-center">
               <p className="text-gray-500">No tickets found</p>
             </div>
           ) : (
-            paginatedTickets.map((ticket) => (
+            tickets.map((ticket) => (
               <MobileTicketCard
                 key={ticket.id}
                 ticket={ticket}
@@ -655,14 +672,14 @@ export default function AgentTicketsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {paginatedTickets.length === 0 ? (
+                {tickets.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-4 py-12 text-center text-gray-500">
                       No tickets found
                     </td>
                   </tr>
                 ) : (
-                  paginatedTickets.map((ticket) => (
+                  tickets.map((ticket) => (
                     <tr
                       key={ticket.id}
                       className="hover:bg-gray-50 transition-colors"
@@ -716,7 +733,7 @@ export default function AgentTicketsPage() {
       {totalPages > 1 && (
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="text-sm text-gray-600">
-            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredAndSortedTickets.length)} of {filteredAndSortedTickets.length} tickets
+            Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalTickets)} of {totalTickets} tickets
           </div>
           <div className="flex items-center gap-2">
             <button

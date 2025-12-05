@@ -1,54 +1,71 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { mockTags, mockPriorities } from '@/lib/mockData';
-import { Tag, TicketPriority } from '@/types';
+import { CategoriesAPI, PrioritiesAPI } from '@/lib/api';
+import { Category, TicketPriority } from '@/types';
 import Icon, { faEdit, faTrash, faCheck, faTimes, faPlus } from '@/app/components/Icon';
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { useToast } from '@/app/components/Toaster';
 
 type TabType = 'tags' | 'priorities';
 
 export default function AdminTagsPage() {
+  const { show } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>('tags');
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tags, setTags] = useState<Category[]>([]);
   const [priorities, setPriorities] = useState<TicketPriority[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Tags state
   const [tagName, setTagName] = useState('');
-  const [editingTagId, setEditingTagId] = useState<number | null>(null);
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [editingTagName, setEditingTagName] = useState('');
   
   // Priorities state
   const [priorityName, setPriorityName] = useState('');
-  const [editingPriorityId, setEditingPriorityId] = useState<number | null>(null);
+  const [editingPriorityId, setEditingPriorityId] = useState<string | null>(null);
   const [editingPriorityName, setEditingPriorityName] = useState('');
 
+  // Fetch data from API
   useEffect(() => {
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      setTags([...mockTags]);
-      setPriorities([...mockPriorities]);
-      setLoading(false);
-    }, 300);
-  }, []);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [categoriesData, prioritiesData] = await Promise.all([
+          CategoriesAPI.list(),
+          PrioritiesAPI.list(),
+        ]);
+        
+        setTags(categoriesData || []);
+        setPriorities(prioritiesData || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        show('Failed to load categories and priorities', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [show]);
 
   // Tags handlers
-  const handleCreateTag = (e: React.FormEvent) => {
+  const handleCreateTag = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tagName.trim()) return;
     
-    const newTag: Tag = {
-      id: Math.max(...tags.map(t => t.id), 0) + 1,
-      name: tagName.trim(),
-    };
-    
-    setTags(prev => [...prev, newTag]);
-    setTagName('');
+    try {
+      const newTag = await CategoriesAPI.create({ name: tagName.trim() });
+      setTags(prev => [...prev, newTag]);
+      setTagName('');
+      show('Category created successfully', 'success');
+    } catch (error) {
+      console.error('Failed to create category:', error);
+      show('Failed to create category', 'error');
+    }
   };
 
-  const handleEditTag = (tagId: number) => {
+  const handleEditTag = (tagId: string) => {
     const tag = tags.find(t => t.id === tagId);
     if (tag) {
       setEditingTagId(tagId);
@@ -56,14 +73,21 @@ export default function AdminTagsPage() {
     }
   };
 
-  const handleSaveTag = (tagId: number) => {
+  const handleSaveTag = async (tagId: string) => {
     if (!editingTagName.trim()) return;
     
-    setTags(prev => prev.map(t => 
-      t.id === tagId ? { ...t, name: editingTagName.trim() } : t
-    ));
-    setEditingTagId(null);
-    setEditingTagName('');
+    try {
+      const updatedTag = await CategoriesAPI.update(tagId, { name: editingTagName.trim() });
+      setTags(prev => prev.map(t => 
+        t.id === tagId ? updatedTag : t
+      ));
+      setEditingTagId(null);
+      setEditingTagName('');
+      show('Category updated successfully', 'success');
+    } catch (error) {
+      console.error('Failed to update category:', error);
+      show('Failed to update category', 'error');
+    }
   };
 
   const handleCancelTagEdit = () => {
@@ -71,27 +95,39 @@ export default function AdminTagsPage() {
     setEditingTagName('');
   };
 
-  const handleDeleteTag = (tagId: number) => {
-    if (confirm('Are you sure you want to delete this tag?')) {
+  const handleDeleteTag = async (tagId: string) => {
+    if (!confirm('Are you sure you want to delete this category?')) return;
+    
+    try {
+      await CategoriesAPI.delete(tagId);
       setTags(prev => prev.filter(t => t.id !== tagId));
+      show('Category deleted successfully', 'success');
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+      show('Failed to delete category', 'error');
     }
   };
 
   // Priorities handlers
-  const handleCreatePriority = (e: React.FormEvent) => {
+  const handleCreatePriority = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!priorityName.trim()) return;
     
-    const newPriority: TicketPriority = {
-      id: Math.max(...priorities.map(p => p.id), 0) + 1,
-      name: priorityName.trim(),
-    };
-    
-    setPriorities(prev => [...prev, newPriority]);
-    setPriorityName('');
+    try {
+      const newPriority = await PrioritiesAPI.create({ 
+        name: priorityName.trim(),
+        sort_order: 0,
+      });
+      setPriorities(prev => [...prev, newPriority]);
+      setPriorityName('');
+      show('Priority created successfully', 'success');
+    } catch (error) {
+      console.error('Failed to create priority:', error);
+      show('Failed to create priority', 'error');
+    }
   };
 
-  const handleEditPriority = (priorityId: number) => {
+  const handleEditPriority = (priorityId: string) => {
     const priority = priorities.find(p => p.id === priorityId);
     if (priority) {
       setEditingPriorityId(priorityId);
@@ -99,14 +135,25 @@ export default function AdminTagsPage() {
     }
   };
 
-  const handleSavePriority = (priorityId: number) => {
+  const handleSavePriority = async (priorityId: string) => {
     if (!editingPriorityName.trim()) return;
     
-    setPriorities(prev => prev.map(p => 
-      p.id === priorityId ? { ...p, name: editingPriorityName.trim() } : p
-    ));
-    setEditingPriorityId(null);
-    setEditingPriorityName('');
+    try {
+      const priority = priorities.find(p => p.id === priorityId);
+      const updatedPriority = await PrioritiesAPI.update(priorityId, { 
+        name: editingPriorityName.trim(),
+        sort_order: priority?.sort_order || 0,
+      });
+      setPriorities(prev => prev.map(p => 
+        p.id === priorityId ? updatedPriority : p
+      ));
+      setEditingPriorityId(null);
+      setEditingPriorityName('');
+      show('Priority updated successfully', 'success');
+    } catch (error) {
+      console.error('Failed to update priority:', error);
+      show('Failed to update priority', 'error');
+    }
   };
 
   const handleCancelPriorityEdit = () => {
@@ -114,9 +161,16 @@ export default function AdminTagsPage() {
     setEditingPriorityName('');
   };
 
-  const handleDeletePriority = (priorityId: number) => {
-    if (confirm('Are you sure you want to delete this priority?')) {
+  const handleDeletePriority = async (priorityId: string) => {
+    if (!confirm('Are you sure you want to delete this priority?')) return;
+    
+    try {
+      await PrioritiesAPI.delete(priorityId);
       setPriorities(prev => prev.filter(p => p.id !== priorityId));
+      show('Priority deleted successfully', 'success');
+    } catch (error) {
+      console.error('Failed to delete priority:', error);
+      show('Failed to delete priority', 'error');
     }
   };
 

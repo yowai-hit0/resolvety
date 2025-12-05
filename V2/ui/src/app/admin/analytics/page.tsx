@@ -78,11 +78,11 @@ export default function AdminAnalyticsPage() {
       return acc;
     }, {} as Record<string, number>);
 
-    // Calculate tickets by tag
-    const byTag = filteredTickets.reduce((acc, ticket) => {
-      if (ticket.tags && Array.isArray(ticket.tags) && ticket.tags.length > 0) {
-        ticket.tags.forEach(tag => {
-          acc[tag.name] = (acc[tag.name] || 0) + 1;
+    // Calculate tickets by category
+    const byCategory = filteredTickets.reduce((acc, ticket) => {
+      if (ticket.categories && Array.isArray(ticket.categories) && ticket.categories.length > 0) {
+        ticket.categories.forEach(category => {
+          acc[category.name] = (acc[category.name] || 0) + 1;
         });
       }
       return acc;
@@ -111,7 +111,7 @@ export default function AdminAnalyticsPage() {
       avgResolutionTime,
       byStatus,
       byAgent,
-      byTag,
+      byCategory,
       byPriority,
       activeUsers,
       totalUsers: mockUsers.length,
@@ -154,12 +154,12 @@ export default function AdminAnalyticsPage() {
       .map(([name, count]) => ({ name, value: count }));
   }, [stats.byAgent]);
 
-  const ticketsByTagChart = useMemo(() => {
-    return Object.entries(stats.byTag)
+  const ticketsByCategoryChart = useMemo(() => {
+    return Object.entries(stats.byCategory)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 8)
       .map(([name, value]) => ({ name, value }));
-  }, [stats.byTag]);
+  }, [stats.byCategory]);
 
   const ticketsByStatusChart = useMemo(() => {
     return Object.entries(stats.byStatus).map(([name, value]) => ({
@@ -309,9 +309,9 @@ export default function AdminAnalyticsPage() {
 
         {/* Common Tags */}
         <div className="bg-white rounded-sm border border-gray-200 p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Common Tags</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Common Categories</h3>
           <DonutChart
-            data={ticketsByTagChart}
+            data={ticketsByCategoryChart}
             height={250}
           />
         </div>

@@ -3,8 +3,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
-import { Ticket, TicketStatus, Comment, Tag, Attachment, TicketEvent } from '@/types';
+import { TicketsAPI, UsersAPI, PrioritiesAPI, CategoriesAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
+import { Ticket, TicketStatus, Comment, Category, Attachment, TicketEvent, User, TicketPriority } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faImage, faFile, faTrash, faUpload } from '@/app/components/Icon';
 import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
@@ -18,157 +19,23 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = 
   { value: 'Reopened', label: 'Reopened', class: 'status-open' },
 ];
 
-// Mock comments for tickets
-const generateMockComments = (ticketId: number): Comment[] => {
-  const comments: Comment[] = [];
-  const agents = mockUsers.filter(u => u.role === 'agent' || u.role === 'admin');
-  
-  // Add 2-5 comments per ticket
-  const commentCount = Math.floor(Math.random() * 4) + 2;
-  
-  for (let i = 0; i < commentCount; i++) {
-    const author = agents[Math.floor(Math.random() * agents.length)];
-    const isInternal = Math.random() > 0.6; // 40% internal comments
-    const date = new Date();
-    date.setDate(date.getDate() - (commentCount - i));
-    
-    comments.push({
-      id: ticketId * 100 + i + 1,
-      content: isInternal 
-        ? `Internal note: ${['Following up on this issue', 'Need to escalate', 'Waiting for customer response', 'Resolved internally'][Math.floor(Math.random() * 4)]}`
-        : `Customer response: ${['Thank you for the update', 'This is still an issue', 'Can you provide more details?', 'Issue resolved, thank you!'][Math.floor(Math.random() * 4)]}`,
-      is_internal: isInternal,
-      created_at: date.toISOString(),
-      ticket_id: ticketId,
-      author_id: author.id,
-      author: author,
-    });
-  }
-  
-  return comments.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-};
+// Removed generateMockComments - using API data instead
 
-// Mock tags for tickets
-const generateMockTags = (ticketId: number): Tag[] => {
-  const tagCount = Math.floor(Math.random() * 3) + 1; // 1-3 tags
-  const selectedTags: Tag[] = [];
-  const availableTags = [...mockTags];
-  
-  for (let i = 0; i < tagCount && availableTags.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * availableTags.length);
-    selectedTags.push(availableTags.splice(randomIndex, 1)[0]);
-  }
-  
-  return selectedTags;
-};
+// Removed generateMockTags - using API data instead
 
-// Mock attachments for tickets
-const generateMockAttachments = (ticketId: number): Attachment[] => {
-  const attachments: Attachment[] = [];
-  const attachmentCount = Math.floor(Math.random() * 4); // 0-3 attachments
-  
-  const fileTypes = [
-    { type: 'image', mime: 'image/jpeg', ext: 'jpg', name: 'screenshot' },
-    { type: 'image', mime: 'image/png', ext: 'png', name: 'error-log' },
-    { type: 'audio', mime: 'audio/mpeg', ext: 'mp3', name: 'recording' },
-    { type: 'video', mime: 'video/mp4', ext: 'mp4', name: 'demo' },
-  ];
-  
-  for (let i = 0; i < attachmentCount; i++) {
-    const fileType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
-    const uploadedBy = mockUsers[Math.floor(Math.random() * mockUsers.length)];
-    const date = new Date();
-    date.setDate(date.getDate() - (attachmentCount - i));
-    
-    attachments.push({
-      id: ticketId * 1000 + i + 1,
-      original_filename: `${fileType.name}-${ticketId}-${i + 1}.${fileType.ext}`,
-      stored_filename: `https://via.placeholder.com/400x300?text=${fileType.name}`,
-      mime_type: fileType.mime,
-      size: fileType.type === 'image' ? 1024 * 500 : 1024 * 1024 * 5, // 500KB for images, 5MB for media
-      uploaded_at: date.toISOString(),
-      ticket_id: ticketId,
-      uploaded_by_id: uploadedBy.id,
-      uploaded_by: uploadedBy,
-    });
-  }
-  
-  return attachments;
-};
+// Removed generateMockAttachments - using API data instead
 
-// Mock ticket events/history
-const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
-  const events: TicketEvent[] = [];
-  const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
-  
-  // Ticket created event
-  events.push({
-    id: ticket.id * 10000 + 1,
-    ticket_id: ticket.id,
-    user_id: ticket.created_by_id,
-    change_type: 'ticket_created',
-    new_value: ticket.subject,
-    created_at: ticket.created_at,
-    user: ticket.created_by,
-  });
-  
-  // Status changes
-  if (ticket.status !== 'New') {
-    const statusChangeDate = new Date(ticket.created_at);
-    statusChangeDate.setHours(statusChangeDate.getHours() + 1);
-    events.push({
-      id: ticket.id * 10000 + 2,
-      ticket_id: ticket.id,
-      user_id: ticket.assignee_id || ticket.created_by_id,
-      change_type: 'status_changed',
-      old_value: 'New',
-      new_value: ticket.status,
-      created_at: statusChangeDate.toISOString(),
-      user: ticket.assignee || ticket.created_by,
-    });
-  }
-  
-  // Assignment
-  if (ticket.assignee_id) {
-    const assignDate = new Date(ticket.created_at);
-    assignDate.setHours(assignDate.getHours() + 2);
-    events.push({
-      id: ticket.id * 10000 + 3,
-      ticket_id: ticket.id,
-      user_id: ticket.assignee_id,
-      change_type: 'assigned',
-      new_value: `${ticket.assignee?.first_name} ${ticket.assignee?.last_name}`,
-      created_at: assignDate.toISOString(),
-      user: ticket.assignee,
-    });
-  }
-  
-  // Priority set
-  if (ticket.priority_id) {
-    const priorityDate = new Date(ticket.created_at);
-    priorityDate.setMinutes(priorityDate.getMinutes() + 30);
-    events.push({
-      id: ticket.id * 10000 + 4,
-      ticket_id: ticket.id,
-      user_id: ticket.created_by_id,
-      change_type: 'priority_changed',
-      new_value: ticket.priority?.name || 'Medium',
-      created_at: priorityDate.toISOString(),
-      user: ticket.created_by,
-    });
-  }
-  
-  return events.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-};
+// Events will come from the API response (ticket.ticket_events)
 
 export default function TicketDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const ticketId = params?.id ? parseInt(params.id as string) : null;
+  const { user: currentUser } = useAuthStore();
+  const ticketId = params?.id as string | undefined;
   
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -183,115 +50,156 @@ export default function TicketDetailPage() {
   
   const [editData, setEditData] = useState({
     status: '' as TicketStatus | '',
-    priority_id: '' as number | '',
-    assignee_id: '' as number | '',
-    tag_ids: [] as number[],
+    priority_id: '' as string | '',
+    assignee_id: '' as string | '',
+    category_ids: [] as string[],
   });
 
   // Get agents and admins for assignee dropdown
-  const agents = useMemo(() => mockUsers.filter(u => u.role === 'agent' || u.role === 'admin'), []);
+  const [agents, setAgents] = useState<User[]>([]);
+  const [priorities, setPriorities] = useState<TicketPriority[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
+  // Fetch users, priorities, and categories
+  useEffect(() => {
+    const fetchDropdownData = async () => {
+      try {
+        const [usersList, prioritiesList, categoriesList] = await Promise.all([
+          UsersAPI.list({ take: 1000 }).catch(() => ({ data: [] })),
+          PrioritiesAPI.list().catch(() => []),
+          CategoriesAPI.list().catch(() => []),
+        ]);
+        
+        setAgents((usersList.data || usersList || []).filter((u: User) => u.role === 'agent' || u.role === 'admin'));
+        setPriorities(prioritiesList || []);
+        setAllCategories(categoriesList || []);
+      } catch (error) {
+        console.error('Failed to fetch dropdown data:', error);
+      }
+    };
+    
+    fetchDropdownData();
+  }, []);
+
+  // Fetch ticket data
   useEffect(() => {
     if (!ticketId) {
       setLoading(false);
       return;
     }
 
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      const foundTicket = mockTickets.find(t => t.id === ticketId);
-      if (foundTicket) {
-        setTicket(foundTicket);
-        setComments(generateMockComments(ticketId));
-        const mockTags = generateMockTags(ticketId);
-        setTags(mockTags);
-        setAttachments(generateMockAttachments(ticketId));
-        setEvents(generateMockEvents(foundTicket));
+    const fetchTicket = async () => {
+      setLoading(true);
+      try {
+        const ticketData = await TicketsAPI.get(ticketId);
+        
+        setTicket(ticketData);
+        setComments(ticketData.comments || []);
+        setCategories(ticketData.categories?.map((tc: any) => tc.category || tc) || []);
+        setAttachments(ticketData.attachments || []);
+        setEvents(ticketData.ticket_events || []);
+        
         setEditData({
-          status: foundTicket.status,
-          priority_id: foundTicket.priority_id,
-          assignee_id: foundTicket.assignee_id || '',
-          tag_ids: mockTags.map(t => t.id),
+          status: ticketData.status,
+          priority_id: ticketData.priority_id || '',
+          assignee_id: ticketData.assignee_id || '',
+          category_ids: ticketData.categories?.map((tc: any) => (tc.category || tc).id) || [],
         });
+      } catch (error) {
+        console.error('Failed to fetch ticket:', error);
+        router.push('/admin/tickets');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 300);
-  }, [ticketId]);
+    };
+    
+    fetchTicket();
+  }, [ticketId, router]);
 
   const handleFieldChange = (field: string, value: any) => {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleTag = (tagId: number) => {
+  const toggleCategory = (categoryId: string) => {
     setEditData(prev => ({
       ...prev,
-      tag_ids: prev.tag_ids.includes(tagId)
-        ? prev.tag_ids.filter(id => id !== tagId)
-        : [...prev.tag_ids, tagId],
+      category_ids: prev.category_ids.includes(categoryId)
+        ? prev.category_ids.filter(id => id !== categoryId)
+        : [...prev.category_ids, categoryId],
     }));
   };
 
   const handleSave = async () => {
-    if (!ticket) return;
+    if (!ticket || !ticketId) return;
     
     setSaving(true);
     
-    // Mock API call
-    setTimeout(() => {
-      setTicket(prev => prev ? {
-        ...prev,
-        status: editData.status || prev.status,
-        priority_id: editData.priority_id || prev.priority_id,
-        assignee_id: editData.assignee_id || undefined,
-        priority: mockPriorities.find(p => p.id === editData.priority_id) || prev.priority,
-        assignee: mockUsers.find(u => u.id === editData.assignee_id) || prev.assignee,
-      } : null);
+    try {
+      const updateData: any = {};
+      if (editData.status && editData.status !== ticket.status) {
+        updateData.status = editData.status;
+      }
+      if (editData.priority_id && editData.priority_id !== ticket.priority_id) {
+        updateData.priority_id = editData.priority_id;
+      }
+      if (editData.assignee_id !== ticket.assignee_id) {
+        updateData.assignee_id = editData.assignee_id || undefined;
+      }
+      if (JSON.stringify(editData.category_ids.sort()) !== JSON.stringify((ticket.categories || []).map((tc: any) => (tc.category || tc).id).sort())) {
+        updateData.category_ids = editData.category_ids;
+      }
       
-      setTags(mockTags.filter(t => editData.tag_ids.includes(t.id)));
+      if (Object.keys(updateData).length > 0) {
+        const updatedTicket = await TicketsAPI.update(ticketId, updateData);
+        setTicket(updatedTicket);
+        setCategories(updatedTicket.categories?.map((tc: any) => tc.category || tc) || []);
+      }
+      
       setEditMode(false);
+    } catch (error) {
+      console.error('Failed to update ticket:', error);
+      alert('Failed to update ticket. Please try again.');
+    } finally {
       setSaving(false);
-    }, 500);
+    }
   };
 
   const handleCancel = () => {
     if (!ticket) return;
     setEditData({
       status: ticket.status,
-      priority_id: ticket.priority_id,
+      priority_id: ticket.priority_id || '',
       assignee_id: ticket.assignee_id || '',
-      tag_ids: tags.map(t => t.id),
+      category_ids: (ticket.categories || []).map((tc: any) => (tc.category || tc).id),
     });
     setEditMode(false);
   };
 
   const handleAddComment = async () => {
-    if (!comment.trim() || !ticket) return;
+    if (!comment.trim() || !ticket || !ticketId) return;
     
     setSaving(true);
     
-    // Mock API call
-    setTimeout(() => {
-      const newComment: Comment = {
-        id: comments.length + 1,
+    try {
+      const newComment = await TicketsAPI.addComment(ticketId, {
         content: comment,
         is_internal: isInternal,
-        created_at: new Date().toISOString(),
-        ticket_id: ticket.id,
-        author_id: 1, // Mock admin user
-        author: mockUsers.find(u => u.role === 'admin') || mockUsers[0],
-      };
+      });
       
       setComments(prev => [...prev, newComment]);
       setComment('');
       setIsInternal(false);
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      alert('Failed to add comment. Please try again.');
+    } finally {
       setSaving(false);
-    }, 300);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length === 0 || !ticket) return;
+    if (files.length === 0 || !ticket || !ticketId) return;
     
     // Validate media files
     const mediaFiles = files.filter(file => 
@@ -307,33 +215,43 @@ export default function TicketDetailPage() {
     
     setUploading(true);
     
-    // Mock API call
-    setTimeout(() => {
-      const newAttachments: Attachment[] = mediaFiles.map((file, index) => {
-        const uploadedBy = mockUsers.find(u => u.role === 'admin') || mockUsers[0];
-        return {
-          id: attachments.length + index + 1,
+    try {
+      // Upload files one by one (backend may support multiple, but we'll do one at a time for now)
+      for (const file of mediaFiles) {
+        // For now, we'll need to upload the file to a storage service first
+        // This is a placeholder - actual implementation depends on your file storage setup
+        const attachmentData = {
           original_filename: file.name,
-          stored_filename: URL.createObjectURL(file),
+          stored_filename: file.name, // This should be the URL from your storage service
           mime_type: file.type,
           size: file.size,
-          uploaded_at: new Date().toISOString(),
-          ticket_id: ticket.id,
-          uploaded_by_id: uploadedBy.id,
-          uploaded_by: uploadedBy,
         };
-      });
+        
+        const newAttachment = await TicketsAPI.addAttachment(ticketId, attachmentData);
+        setAttachments(prev => [...prev, newAttachment]);
+      }
       
-      setAttachments(prev => [...prev, ...newAttachments]);
-      setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }, 500);
+    } catch (error) {
+      console.error('Failed to upload attachment:', error);
+      alert('Failed to upload file. Please try again.');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const handleRemoveAttachment = (attachmentId: number) => {
-    setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+  const handleRemoveAttachment = async (attachmentId: string) => {
+    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    
+    try {
+      await TicketsAPI.deleteAttachment(attachmentId);
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } catch (error) {
+      console.error('Failed to delete attachment:', error);
+      alert('Failed to delete attachment. Please try again.');
+    }
   };
 
   const getFileType = (mimeType: string): 'image' | 'audio' | 'video' => {
@@ -510,7 +428,7 @@ export default function TicketDetailPage() {
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     >
                       <option value="">Select Priority</option>
-                      {mockPriorities.map((p) => (
+                      {priorities.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
@@ -546,20 +464,20 @@ export default function TicketDetailPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
                 {editMode ? (
                   <div className="flex flex-wrap gap-2">
-                    {mockTags.map((tag) => (
+                    {allCategories.map((tag) => (
                       <label
                         key={tag.id}
                         className={`px-3 py-1.5 rounded-sm text-sm cursor-pointer transition-colors flex items-center gap-2 ${
-                          editData.tag_ids.includes(tag.id)
+                          editData.category_ids.includes(tag.id)
                             ? 'text-white border border-primary-500'
                             : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
-                        style={editData.tag_ids.includes(tag.id) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
+                        style={editData.category_ids.includes(tag.id) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
                       >
                         <input
                           type="checkbox"
-                          checked={editData.tag_ids.includes(tag.id)}
-                          onChange={() => toggleTag(tag.id)}
+                          checked={editData.category_ids.includes(tag.id)}
+                          onChange={() => toggleCategory(tag.id)}
                           disabled={saving}
                           className="sr-only"
                         />
@@ -569,8 +487,8 @@ export default function TicketDetailPage() {
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {tags.length > 0 ? (
-                      tags.map((tag) => (
+                    {categories.length > 0 ? (
+                      categories.map((tag) => (
                         <span key={tag.id} className="px-3 py-1.5 bg-gray-100 border border-gray-200 rounded-sm text-sm text-gray-700">
                           {tag.name}
                         </span>

@@ -282,18 +282,19 @@ export const AgentAPI = {
   dashboard: () =>
     api.get('/agent/dashboard').then((r) => r.data),
   
-  tickets: (params?: {
+  myTickets: (params?: {
     skip?: number;
     take?: number;
     status?: string;
     priority?: string;
+    search?: string;
   }) =>
     api.get('/agent/tickets', { params }).then((r) => r.data),
   
-  updateStatus: (id: string, status: string) =>
+  updateTicketStatus: (id: string, status: string) =>
     api.put(`/agent/tickets/${id}/status`, { status }).then((r) => r.data),
   
-  updatePriority: (id: string, priority_id: string) =>
+  updateTicketPriority: (id: string, priority_id: string) =>
     api.put(`/agent/tickets/${id}/priority`, { priority_id }).then((r) => r.data),
   
   performance: () =>

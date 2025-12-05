@@ -31,7 +31,7 @@ export default function AdminInvitationsPage() {
   const [pageSize, setPageSize] = useState(10);
   const [openModal, setOpenModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [actionId, setActionId] = useState<number | null>(null);
+  const [actionId, setActionId] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
@@ -122,7 +122,7 @@ export default function AdminInvitationsPage() {
     // Simulate API call
     setTimeout(() => {
       const newInvite: Invitation = {
-        id: Math.max(...invitations.map(i => i.id), 0) + 1,
+        id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
         email: email.trim().toLowerCase(),
         role: role,
         token: `token-${Date.now()}-${Math.random().toString(36).substring(7)}`,
@@ -141,7 +141,7 @@ export default function AdminInvitationsPage() {
     }, 500);
   };
 
-  const handleResend = async (id: number) => {
+  const handleResend = async (id: string) => {
     setActionId(id);
     
     // Simulate API call
@@ -156,7 +156,7 @@ export default function AdminInvitationsPage() {
     }, 500);
   };
 
-  const handleRevoke = async (id: number) => {
+  const handleRevoke = async (id: string) => {
     const invitation = invitations.find(inv => inv.id === id);
     if (!invitation) return;
     

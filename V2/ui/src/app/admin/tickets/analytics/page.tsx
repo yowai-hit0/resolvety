@@ -172,18 +172,19 @@ export default function TicketAnalyticsPage() {
 
   // Tickets by Category/Tag
   const ticketsByCategory = useMemo(() => {
-    const tagCounts: Record<string, number> = {};
+    const categoryCounts: Record<string, number> = {};
     filteredTickets.forEach(ticket => {
-      if (ticket.tags && Array.isArray(ticket.tags) && ticket.tags.length > 0) {
-        ticket.tags.forEach(tag => {
-          tagCounts[tag.name] = (tagCounts[tag.name] || 0) + 1;
+      if (ticket.categories && Array.isArray(ticket.categories) && ticket.categories.length > 0) {
+        ticket.categories.forEach((cat: any) => {
+          const category = cat.category || cat;
+          categoryCounts[category.name] = (categoryCounts[category.name] || 0) + 1;
         });
       } else {
-        tagCounts['Uncategorized'] = (tagCounts['Uncategorized'] || 0) + 1;
+        categoryCounts['Uncategorized'] = (categoryCounts['Uncategorized'] || 0) + 1;
       }
     });
     
-    return Object.entries(tagCounts)
+    return Object.entries(categoryCounts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 8); // Top 8 categories
