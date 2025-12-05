@@ -6,7 +6,7 @@ import Icon, { faImage, faFileAlt, faTimes, faTrash } from './Icon';
 interface AttachmentItemProps {
   attachment: Attachment;
   onPreview?: (url: string) => void;
-  onRemove?: (id: number) => void;
+  onRemove?: (id: string) => void;
   loading?: boolean;
   showRemove?: boolean;
 }

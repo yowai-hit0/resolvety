@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { mockOrganizations } from '@/lib/mockData';
 import { Organization } from '@/types';
 import Icon, { faSearch, faPlus, faEdit, faTrash, faBuilding, faCheckCircle, faTimesCircle, faEye } from '@/app/components/Icon';
 import Pagination from '@/app/components/Pagination';
 import { useToast } from '@/app/components/Toaster';
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { OrganizationsAPI } from '@/lib/api';
 
 export default function AdminOrganizationsPage() {
   const { show } = useToast();
@@ -26,14 +26,39 @@ export default function AdminOrganizationsPage() {
     address: '',
     is_active: true,
   });
-  const [organizations, setOrganizations] = useState(mockOrganizations);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [totalOrganizations, setTotalOrganizations] = useState(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchOrganizations = async () => {
+      try {
+        setLoading(true);
+        const skip = (page - 1) * pageSize;
+        const params: { skip: number; take: number } = { skip, take: pageSize };
+        const response = await OrganizationsAPI.list(params);
+        
+        // Handle both array response and object with data property
+        const orgs = Array.isArray(response) ? response : (response.data || []);
+        const total = response.total || response.count || orgs.length;
+        
+        // Map _count.users to users_count and add tickets_count
+        const mappedOrgs = orgs.map((org: any) => ({
+          ...org,
+          users_count: org._count?.users || 0,
+          tickets_count: 0, // Backend doesn't provide this yet
+        }));
+        
+        setOrganizations(mappedOrgs);
+        setTotalOrganizations(total);
+      } catch (error: any) {
+        show(error?.response?.data?.message || 'Failed to fetch organizations', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, [page, pageSize, show]);
 
   // Filter organizations
   const filteredOrganizations = useMemo(() => {
@@ -51,13 +76,9 @@ export default function AdminOrganizationsPage() {
     return filtered;
   }, [organizations, search]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredOrganizations.length / pageSize);
-  const paginatedOrganizations = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredOrganizations.slice(start, end);
-  }, [filteredOrganizations, page, pageSize]);
+  // Pagination - use server-side pagination
+  const totalPages = Math.ceil(totalOrganizations / pageSize);
+  const paginatedOrganizations = filteredOrganizations;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -115,27 +136,44 @@ export default function AdminOrganizationsPage() {
     setShowDeleteModal(true);
   };
 
-  const handleSaveCreate = () => {
+  const handleSaveCreate = async () => {
     if (!formData.name.trim()) {
       show('Organization name is required', 'error');
       return;
     }
 
-      const newOrg: Organization = {
-        id: `${Date.now()}-${Math.random().toString(36).substring(7)}`,
-      ...formData,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      users_count: 0,
-      tickets_count: 0,
-    };
+    try {
+      const newOrg = await OrganizationsAPI.create({
+        name: formData.name,
+        domain: formData.domain || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+      });
 
-    setOrganizations([...organizations, newOrg]);
-    setShowCreateModal(false);
-    show('Organization created successfully', 'success');
+      // Refresh the list
+      const skip = (page - 1) * pageSize;
+      const response = await OrganizationsAPI.list({ skip, take: pageSize });
+      const orgs = Array.isArray(response) ? response : (response.data || []);
+      const total = response.total || response.count || orgs.length;
+      
+      // Map _count.users to users_count
+      const mappedOrgs = orgs.map((org: any) => ({
+        ...org,
+        users_count: org._count?.users || 0,
+        tickets_count: 0,
+      }));
+      
+      setOrganizations(mappedOrgs);
+      setTotalOrganizations(total);
+      setShowCreateModal(false);
+      show('Organization created successfully', 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to create organization', 'error');
+    }
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!formData.name.trim()) {
       show('Organization name is required', 'error');
       return;
@@ -143,23 +181,65 @@ export default function AdminOrganizationsPage() {
 
     if (!selectedOrg) return;
 
-    setOrganizations(organizations.map(org =>
-      org.id === selectedOrg.id
-        ? { ...org, ...formData, updated_at: new Date().toISOString() }
-        : org
-    ));
-    setShowEditModal(false);
-    setSelectedOrg(null);
-    show('Organization updated successfully', 'success');
+    try {
+      await OrganizationsAPI.update(selectedOrg.id, {
+        name: formData.name,
+        domain: formData.domain || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+      });
+
+      // Refresh the list
+      const skip = (page - 1) * pageSize;
+      const response = await OrganizationsAPI.list({ skip, take: pageSize });
+      const orgs = Array.isArray(response) ? response : (response.data || []);
+      const total = response.total || response.count || orgs.length;
+      
+      // Map _count.users to users_count
+      const mappedOrgs = orgs.map((org: any) => ({
+        ...org,
+        users_count: org._count?.users || 0,
+        tickets_count: 0,
+      }));
+      
+      setOrganizations(mappedOrgs);
+      setTotalOrganizations(total);
+      setShowEditModal(false);
+      setSelectedOrg(null);
+      show('Organization updated successfully', 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to update organization', 'error');
+    }
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!selectedOrg) return;
 
-    setOrganizations(organizations.filter(org => org.id !== selectedOrg.id));
-    setShowDeleteModal(false);
-    setSelectedOrg(null);
-    show('Organization deleted successfully', 'success');
+    try {
+      await OrganizationsAPI.delete(selectedOrg.id);
+
+      // Refresh the list
+      const skip = (page - 1) * pageSize;
+      const response = await OrganizationsAPI.list({ skip, take: pageSize });
+      const orgs = Array.isArray(response) ? response : (response.data || []);
+      const total = response.total || response.count || orgs.length;
+      
+      // Map _count.users to users_count
+      const mappedOrgs = orgs.map((org: any) => ({
+        ...org,
+        users_count: org._count?.users || 0,
+        tickets_count: 0,
+      }));
+      
+      setOrganizations(mappedOrgs);
+      setTotalOrganizations(total);
+      setShowDeleteModal(false);
+      setSelectedOrg(null);
+      show('Organization deleted successfully', 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to delete organization', 'error');
+    }
   };
 
   return (
@@ -169,7 +249,7 @@ export default function AdminOrganizationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Organizations</h1>
           <p className="text-sm text-gray-600 mt-1">
-            {filteredOrganizations.length} {filteredOrganizations.length === 1 ? 'organization' : 'organizations'} found
+            {totalOrganizations} {totalOrganizations === 1 ? 'organization' : 'organizations'} found
           </p>
         </div>
         <button
@@ -421,7 +501,7 @@ export default function AdminOrganizationsPage() {
         <Pagination
           currentPage={page}
           totalPages={totalPages}
-          totalItems={filteredOrganizations.length}
+          totalItems={totalOrganizations}
           pageSize={pageSize}
           onPageChange={setPage}
         />

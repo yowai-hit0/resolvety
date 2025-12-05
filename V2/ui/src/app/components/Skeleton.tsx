@@ -144,7 +144,6 @@ export function ChartSkeleton({ height = 300, showTitle = true }: ChartSkeletonP
             key={i}
             className="flex-1"
             height={Math.random() * 60 + 40 + '%'}
-            style={{ minHeight: '40px' }}
           />
         ))}
       </div>

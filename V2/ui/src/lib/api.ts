@@ -171,7 +171,7 @@ export const UsersAPI = {
 
 // Categories API (was Tags)
 export const CategoriesAPI = {
-  list: () =>
+  list: (params?: { skip?: number; take?: number }) =>
     api.get('/categories').then((r) => r.data),
   
   get: (id: string) =>
@@ -189,7 +189,7 @@ export const CategoriesAPI = {
 
 // Priorities API
 export const PrioritiesAPI = {
-  list: () =>
+  list: (params?: { skip?: number; take?: number }) =>
     api.get('/priorities').then((r) => r.data),
   
   get: (id: string) =>
@@ -207,8 +207,8 @@ export const PrioritiesAPI = {
 
 // Organizations API
 export const OrganizationsAPI = {
-  list: () =>
-    api.get('/organizations').then((r) => r.data),
+  list: (params?: { skip?: number; take?: number }) =>
+    api.get('/organizations', { params }).then((r) => r.data),
   
   get: (id: string) =>
     api.get(`/organizations/${id}`).then((r) => r.data),

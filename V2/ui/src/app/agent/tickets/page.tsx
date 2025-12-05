@@ -158,7 +158,7 @@ function MobileFilterSheet({
             <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
             <select
               value={priorityFilter}
-              onChange={(e) => onPriorityChange(e.target.value ? Number(e.target.value) : '')}
+              onChange={(e) => onPriorityChange(e.target.value || '')}
               className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
             >
               <option value="">All Priorities</option>
@@ -340,7 +340,7 @@ export default function AgentTicketsPage() {
         new Date(t.created_at).toISOString(),
         new Date(t.updated_at).toISOString(),
       ]);
-      const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+      const csv = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -391,7 +391,7 @@ export default function AgentTicketsPage() {
     );
   };
 
-  if (loading || !currentAgent) {
+  if (loading || !user) {
     return (
       <div className="space-y-6">
         <div className="flex items-center justify-between">
@@ -501,7 +501,7 @@ export default function AgentTicketsPage() {
           <select
             value={priorityFilter}
             onChange={(e) => {
-              setPriorityFilter(e.target.value ? Number(e.target.value) : '');
+              setPriorityFilter(e.target.value || '');
               setPage(1);
             }}
             className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"

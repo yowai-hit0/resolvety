@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
-import { Ticket, TicketStatus, Comment, Tag, Attachment, TicketEvent } from '@/types';
+import { Ticket, TicketStatus, Comment, Category, Attachment, TicketEvent } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faFile, faHistory, faFileAlt, faImage, faPlus, faUpload, faTrash } from '@/app/components/Icon';
 import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
@@ -19,7 +19,7 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = 
 ];
 
 // Mock comments for tickets
-const generateMockComments = (ticketId: number): Comment[] => {
+const generateMockComments = (ticketId: string): Comment[] => {
   const comments: Comment[] = [];
   const agents = mockUsers.filter(u => u.role === 'agent' || u.role === 'admin');
   
@@ -32,7 +32,7 @@ const generateMockComments = (ticketId: number): Comment[] => {
     date.setDate(date.getDate() - (commentCount - i));
     
     comments.push({
-      id: ticketId * 100 + i + 1,
+      id: `${ticketId}-comment-${i + 1}`,
       content: isInternal 
         ? `Internal note: ${['Following up on this issue', 'Need to escalate', 'Waiting for customer response', 'Resolved internally'][Math.floor(Math.random() * 4)]}`
         : `Customer response: ${['Thank you for the update', 'This is still an issue', 'Can you provide more details?', 'Issue resolved, thank you!'][Math.floor(Math.random() * 4)]}`,
@@ -48,10 +48,14 @@ const generateMockComments = (ticketId: number): Comment[] => {
 };
 
 // Mock tags for tickets
-const generateMockTags = (ticketId: number): Tag[] => {
+const generateMockTags = (ticketId: string): Category[] => {
   const tagCount = Math.floor(Math.random() * 3) + 1;
-  const selectedTags: Tag[] = [];
-  const availableTags = [...mockTags];
+  const selectedTags: Category[] = [];
+  const availableTags = mockTags.map(t => ({
+    ...t,
+    id: String(t.id),
+    is_active: true,
+  }));
   
   for (let i = 0; i < tagCount && availableTags.length > 0; i++) {
     const randomIndex = Math.floor(Math.random() * availableTags.length);
@@ -62,7 +66,7 @@ const generateMockTags = (ticketId: number): Tag[] => {
 };
 
 // Mock attachments for tickets
-const generateMockAttachments = (ticketId: number): Attachment[] => {
+const generateMockAttachments = (ticketId: string): Attachment[] => {
   const attachments: Attachment[] = [];
   const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
   const fileTypes = [
@@ -84,7 +88,7 @@ const generateMockAttachments = (ticketId: number): Attachment[] => {
     date.setDate(date.getDate() - (attachmentCount - i));
 
     attachments.push({
-      id: ticketId * 1000 + i + 1,
+      id: `${ticketId}-attachment-${i + 1}`,
       original_filename: filename,
       stored_filename: `/mock-files/${filename}`,
       mime_type: fileType.mime,
@@ -93,6 +97,7 @@ const generateMockAttachments = (ticketId: number): Attachment[] => {
       ticket_id: ticketId,
       uploaded_by_id: user.id,
       uploaded_by: user,
+      is_deleted: false,
     });
   }
   return attachments;
@@ -104,7 +109,7 @@ const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
   const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
   
   events.push({
-    id: ticket.id * 10000 + 1,
+    id: `${ticket.id}-event-1`,
     ticket_id: ticket.id,
     user_id: ticket.created_by_id,
     change_type: 'ticket_created',
@@ -122,7 +127,7 @@ const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
       const date = new Date(ticket.created_at);
       date.setDate(date.getDate() + i + 1);
       events.push({
-        id: ticket.id * 10000 + 2 + i,
+        id: `${ticket.id}-event-${2 + i}`,
         ticket_id: ticket.id,
         user_id: user.id,
         change_type: 'status_changed',
@@ -140,7 +145,7 @@ const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
     const date = new Date(ticket.created_at);
     date.setDate(date.getDate() + 1);
     events.push({
-      id: ticket.id * 10000 + 10,
+      id: `${ticket.id}-event-10`,
       ticket_id: ticket.id,
       user_id: user.id,
       change_type: 'assignee_changed',
@@ -163,7 +168,7 @@ const formatFileSize = (bytes: number) => {
 };
 
 // Attachment Item Component
-function AttachmentItem({ attachment, onPreview, onRemove, loading }: { attachment: Attachment; onPreview: (url: string) => void; onRemove?: (id: number) => void; loading: boolean }) {
+function AttachmentItem({ attachment, onPreview, onRemove, loading }: { attachment: Attachment; onPreview: (url: string) => void; onRemove?: (id: string) => void; loading: boolean }) {
   const getFileType = (mimeType: string) => {
     if (mimeType.startsWith('image/')) return 'image';
     if (mimeType.startsWith('audio/')) return 'audio';
@@ -272,12 +277,12 @@ function MediaPreview({ url }: { url: string }) {
 
 export default function AgentTicketDetailPage() {
   const params = useParams();
-  const ticketId = params?.id ? parseInt(params.id as string) : null;
-  const [currentAgent, setCurrentAgent] = useState<{ id: number } | null>(null);
+  const ticketId = params?.id ? (params.id as string) : null;
+  const [currentAgent, setCurrentAgent] = useState<{ id: string } | null>(null);
   
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tags, setTags] = useState<Category[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,8 +296,8 @@ export default function AgentTicketDetailPage() {
 
   const [editData, setEditData] = useState({
     status: '' as TicketStatus | '',
-    priority_id: '' as number | '',
-    tag_ids: [] as number[],
+    priority_id: '' as string | '',
+    tag_ids: [] as string[],
   });
 
   // Get current agent
@@ -300,7 +305,7 @@ export default function AgentTicketDetailPage() {
     try {
       const authRaw = sessionStorage.getItem('resolveitAuth');
       if (authRaw) {
-        const auth = JSON.parse(authRaw) as { id?: number; role?: string } | null;
+        const auth = JSON.parse(authRaw) as { id?: string; role?: string } | null;
         if (auth?.role === 'agent' && auth?.id) {
           setCurrentAgent({ id: auth.id });
         }
@@ -328,17 +333,27 @@ export default function AgentTicketDetailPage() {
 
     setLoading(true);
     setTimeout(() => {
-      const foundTicket = mockTickets.find(t => t.id === ticketId && t.assignee_id === currentAgent.id);
+      if (!currentAgent) {
+        setLoading(false);
+        return;
+      }
+      const foundTicket = mockTickets.find(t => {
+        const tId = String(t.id);
+        const tAssigneeId = t.assignee_id ? String(t.assignee_id as any) : null;
+        const ticketIdStr = String(ticketId);
+        const agentIdStr = String(currentAgent.id);
+        return tId === ticketIdStr && tAssigneeId === agentIdStr;
+      });
       if (foundTicket) {
         setTicket(foundTicket);
-        setComments(generateMockComments(ticketId));
-        const mockTags = generateMockTags(ticketId);
+        setComments(generateMockComments(ticketId!));
+        const mockTags = generateMockTags(ticketId!);
         setTags(mockTags);
-        setAttachments(generateMockAttachments(ticketId));
+        setAttachments(generateMockAttachments(ticketId!));
         setEvents(generateMockEvents(foundTicket));
         setEditData({
           status: foundTicket.status,
-          priority_id: foundTicket.priority_id,
+          priority_id: foundTicket.priority_id ? String(foundTicket.priority_id) : '',
           tag_ids: mockTags.map(t => t.id),
         });
       } else {
@@ -352,7 +367,7 @@ export default function AgentTicketDetailPage() {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleTag = (tagId: number) => {
+  const toggleTag = (tagId: string) => {
     setEditData(prev => ({
       ...prev,
       tag_ids: prev.tag_ids.includes(tagId)
@@ -369,11 +384,11 @@ export default function AgentTicketDetailPage() {
       const updatedTicket = {
         ...ticket,
         status: editData.status as TicketStatus,
-        priority_id: editData.priority_id as number,
-        priority: mockPriorities.find(p => p.id === editData.priority_id),
+        priority_id: editData.priority_id,
+        priority: mockPriorities.find(p => String(p.id) === editData.priority_id),
       };
       setTicket(updatedTicket);
-      setTags(mockTags.filter(t => editData.tag_ids.includes(t.id)));
+      setTags(tags.filter(t => editData.tag_ids.includes(t.id)));
       setEditMode(false);
       setSaving(false);
     }, 500);
@@ -396,12 +411,12 @@ export default function AgentTicketDetailPage() {
     
     setTimeout(() => {
       const newComment: Comment = {
-        id: comments.length + 1,
+        id: `${ticketId}-comment-${comments.length + 1}`,
         content: comment,
         is_internal: false, // Agents can only add external comments
         created_at: new Date().toISOString(),
         ticket_id: ticket.id,
-        author_id: currentAgent?.id || 1,
+        author_id: currentAgent?.id || '',
         author: mockUsers.find(u => u.id === currentAgent?.id) || mockUsers[0],
       };
       
@@ -424,15 +439,16 @@ export default function AgentTicketDetailPage() {
                          file.type.startsWith('video/') ? 'video' : 'file';
         const url = URL.createObjectURL(file);
         return {
-          id: attachments.length + index + 1,
+          id: `${ticketId}-attachment-${attachments.length + index + 1}`,
           original_filename: file.name,
           stored_filename: url,
           mime_type: file.type,
           size: file.size,
           uploaded_at: new Date().toISOString(),
           ticket_id: ticketId!,
-          uploaded_by_id: currentAgent?.id || 1,
-          uploaded_by: mockUsers.find(u => u.id === currentAgent?.id) || mockUsers[0],
+          uploaded_by_id: currentAgent?.id || '',
+          uploaded_by: mockUsers.find(u => String(u.id) === currentAgent?.id) || mockUsers[0],
+          is_deleted: false,
         };
       });
       
@@ -444,7 +460,7 @@ export default function AgentTicketDetailPage() {
     }, 500);
   };
 
-  const handleRemoveAttachment = (idToRemove: number) => {
+  const handleRemoveAttachment = (idToRemove: string) => {
     setAttachments(prev => prev.filter(att => att.id !== idToRemove));
   };
 
@@ -617,20 +633,20 @@ export default function AgentTicketDetailPage() {
                       <label
                         key={tag.id}
                         className={`px-3 py-1.5 rounded-sm text-sm cursor-pointer transition-colors flex items-center gap-2 ${
-                          editData.tag_ids.includes(tag.id)
+                          editData.tag_ids.includes(String(tag.id))
                             ? 'text-white border border-primary-500'
                             : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
-                        style={editData.tag_ids.includes(tag.id) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
+                        style={editData.tag_ids.includes(String(tag.id)) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
                       >
                         <input
                           type="checkbox"
-                          checked={editData.tag_ids.includes(tag.id)}
-                          onChange={() => toggleTag(tag.id)}
+                          checked={editData.tag_ids.includes(String(tag.id))}
+                          onChange={() => toggleTag(String(tag.id))}
                           disabled={saving}
                           className="sr-only"
                         />
-                        {editData.tag_ids.includes(tag.id) && <Icon icon={faCheck} size="xs" />}
+                        {editData.tag_ids.includes(String(tag.id)) && <Icon icon={faCheck} size="xs" />}
                         {tag.name}
                       </label>
                     ))}

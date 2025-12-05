@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { mockOrganizations, mockUsers } from '@/lib/mockData';
 import { Organization, User } from '@/types';
+import { OrganizationsAPI, UsersAPI } from '@/lib/api';
 import Icon, { 
   faBuilding, 
   faUsers, 
@@ -28,7 +28,7 @@ export default function OrganizationDetailPage() {
   
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>(mockUsers);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -47,33 +47,51 @@ export default function OrganizationDetailPage() {
   });
 
   useEffect(() => {
-    if (!orgId) {
-      setLoading(false);
-      return;
-    }
+    const fetchData = async () => {
+      if (!orgId) {
+        setLoading(false);
+        return;
+      }
 
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      const foundOrg = mockOrganizations.find(o => o.id === orgId);
-      if (foundOrg) {
-        setOrganization(foundOrg);
+      try {
+        setLoading(true);
+        
+        // Fetch organization details
+        const org = await OrganizationsAPI.get(orgId);
+        
+        // Map _count.users to users_count
+        const mappedOrg = {
+          ...org,
+          users_count: org._count?.users || 0,
+          tickets_count: 0, // Backend doesn't provide this yet
+        };
+        
+        setOrganization(mappedOrg);
         setFormData({
-          name: foundOrg.name,
-          domain: foundOrg.domain || '',
-          email: foundOrg.email || '',
-          phone: foundOrg.phone || '',
-          address: foundOrg.address || '',
-          is_active: foundOrg.is_active,
+          name: org.name,
+          domain: org.domain || '',
+          email: org.email || '',
+          phone: org.phone || '',
+          address: org.address || '',
+          is_active: org.is_active,
         });
         
-        // Get users for this organization
-        const orgUsers = mockUsers.filter(u => u.organization_id === orgId);
-        setUsers(orgUsers);
+        // Fetch users for this organization
+        const orgUsers = await OrganizationsAPI.getUsers(orgId);
+        setUsers(Array.isArray(orgUsers) ? orgUsers : (orgUsers.data || []));
+        
+        // Fetch all users for the "Add User" modal
+        const allUsersList = await UsersAPI.list();
+        setAllUsers(Array.isArray(allUsersList) ? allUsersList : (allUsersList.data || []));
+      } catch (error: any) {
+        show(error?.response?.data?.message || 'Failed to fetch organization details', 'error');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 300);
-  }, [orgId]);
+    };
+
+    fetchData();
+  }, [orgId, show]);
 
   // Filter users in organization
   const filteredUsers = useMemo(() => {
@@ -115,7 +133,7 @@ export default function OrganizationDetailPage() {
     return filteredUsers.slice(start, end);
   }, [filteredUsers, page, pageSize]);
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!formData.name.trim()) {
       show('Organization name is required', 'error');
       return;
@@ -123,38 +141,75 @@ export default function OrganizationDetailPage() {
 
     if (!organization) return;
 
-    setOrganization({
-      ...organization,
-      ...formData,
-      updated_at: new Date().toISOString(),
-    });
-    setShowEditModal(false);
-    show('Organization updated successfully', 'success');
+    try {
+      const updatedOrg = await OrganizationsAPI.update(organization.id, {
+        name: formData.name,
+        domain: formData.domain || undefined,
+        email: formData.email || undefined,
+        phone: formData.phone || undefined,
+        address: formData.address || undefined,
+      });
+
+      setOrganization({ ...organization, ...updatedOrg, ...formData });
+      setShowEditModal(false);
+      show('Organization updated successfully', 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to update organization', 'error');
+    }
   };
 
-  const handleAddUser = (user: User) => {
+  const handleAddUser = async (user: User) => {
     if (!orgId) return;
-    setUsers([...users, { ...user, organization_id: orgId }]);
-    setAllUsers(allUsers.map(u => 
-      u.id === user.id ? { ...u, organization_id: orgId } : u
-    ));
-    setShowAddUserModal(false);
-    setUserSearch('');
-    show(`User ${user.first_name} ${user.last_name} added to organization`, 'success');
+
+    try {
+      await UsersAPI.update(user.id, { organization_id: orgId });
+      
+      // Refresh users list
+      const orgUsers = await OrganizationsAPI.getUsers(orgId);
+      setUsers(Array.isArray(orgUsers) ? orgUsers : (orgUsers.data || []));
+      
+      // Update allUsers list
+      setAllUsers(allUsers.map(u => 
+        u.id === user.id ? { ...u, organization_id: orgId } : u
+      ));
+      
+      setShowAddUserModal(false);
+      setUserSearch('');
+      show(`User ${user.first_name} ${user.last_name} added to organization`, 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to add user to organization', 'error');
+    }
   };
 
-  const handleRemoveUser = (user: User) => {
-    setUsers(users.filter(u => u.id !== user.id));
-    setAllUsers(allUsers.map(u => 
-      u.id === user.id ? { ...u, organization_id: undefined as string | undefined } : u
-    ));
-    show(`User ${user.first_name} ${user.last_name} removed from organization`, 'success');
+  const handleRemoveUser = async (user: User) => {
+    try {
+      await UsersAPI.update(user.id, { organization_id: undefined });
+      
+      // Refresh users list
+      const orgUsers = await OrganizationsAPI.getUsers(orgId!);
+      setUsers(Array.isArray(orgUsers) ? orgUsers : (orgUsers.data || []));
+      
+      // Update allUsers list
+      setAllUsers(allUsers.map(u => 
+        u.id === user.id ? { ...u, organization_id: undefined } : u
+      ));
+      
+      show(`User ${user.first_name} ${user.last_name} removed from organization`, 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to remove user from organization', 'error');
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (!organization) return;
-    router.push('/admin/organizations');
-    show('Organization deleted successfully', 'success');
+
+    try {
+      await OrganizationsAPI.delete(organization.id);
+      router.push('/admin/organizations');
+      show('Organization deleted successfully', 'success');
+    } catch (error: any) {
+      show(error?.response?.data?.message || 'Failed to delete organization', 'error');
+    }
   };
 
   const formatDate = (dateString: string) => {
