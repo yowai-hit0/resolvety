@@ -1,184 +1,153 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { mockTickets, mockUsers, mockTags, mockChartData } from '@/lib/mockData';
 import AreaChart from '@/app/components/charts/AreaChart';
 import BarChart from '@/app/components/charts/BarChart';
 import DonutChart from '@/app/components/charts/DonutChart';
 import StatCard from '@/app/components/StatCard';
 import Icon, { faChartLine, faUsers, faTicketAlt, faClock, faCheckCircle, faTimesCircle } from '@/app/components/Icon';
 import { StatCardSkeleton, ChartSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { AdminAPI, TicketsAPI } from '@/lib/api';
 
 type TimePeriod = '7d' | '30d' | '90d' | 'all';
 
 export default function AdminAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [ticketStats, setTicketStats] = useState<any>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [analytics, stats] = await Promise.all([
+          AdminAPI.analytics(),
+          TicketsAPI.stats(),
+        ]);
+        setAnalyticsData(analytics);
+        setTicketStats(stats);
+      } catch (error: any) {
+        console.error('Failed to fetch analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Calculate date range based on time period
-  const dateRange = useMemo(() => {
-    const now = new Date();
-    const startDate = new Date();
-    
-    switch (timePeriod) {
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(now.getDate() - 90);
-        break;
-      case 'all':
-        startDate.setFullYear(2024, 0, 1);
-        break;
-    }
-    
-    return { startDate, endDate: now };
-  }, [timePeriod]);
-
-  // Filter tickets by date range
-  const filteredTickets = useMemo(() => {
-    return mockTickets.filter(ticket => {
-      const ticketDate = new Date(ticket.created_at);
-      return ticketDate >= dateRange.startDate && ticketDate <= dateRange.endDate;
-    });
-  }, [dateRange]);
-
-  // Calculate statistics
+  // Calculate statistics from API data
   const stats = useMemo(() => {
-    const totalTickets = filteredTickets.length;
-    const resolvedTickets = filteredTickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
-    const activeTickets = filteredTickets.filter(t => 
-      ['New', 'Assigned', 'In_Progress', 'On_Hold', 'Reopened'].includes(t.status)
-    ).length;
-    const avgResponseTime = Math.floor(Math.random() * 24) + 1; // Mock: 1-24 hours
-    const avgResolutionTime = Math.floor(Math.random() * 72) + 12; // Mock: 12-84 hours
+    if (!analyticsData || !ticketStats) {
+      return {
+        totalTickets: 0,
+        resolvedTickets: 0,
+        activeTickets: 0,
+        avgResponseTime: 0,
+        avgResolutionTime: 0,
+        byStatus: {} as Record<string, number>,
+        byAgent: {} as Record<string, number>,
+        byCategory: {} as Record<string, number>,
+        byPriority: {} as Record<string, number>,
+        activeUsers: 0,
+        totalUsers: 0,
+        usersByRole: {} as Record<string, number>,
+      };
+    }
+
+    const byStatus = analyticsData.tickets_by_status?.reduce((acc: Record<string, number>, item: any) => {
+      acc[item.status] = item._count || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const byPriority = analyticsData.tickets_by_priority?.reduce((acc: Record<string, number>, item: any) => {
+      acc[item.priority_name] = item._count || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const byCategory = analyticsData.tickets_by_category?.reduce((acc: Record<string, number>, item: any) => {
+      acc[item.category_name] = item.count || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const usersByRole = analyticsData.users_by_role?.reduce((acc: Record<string, number>, item: any) => {
+      acc[item.role] = item._count || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const totalTickets = ticketStats.total || 0;
+    const resolvedTickets = (byStatus['Resolved'] || 0) + (byStatus['Closed'] || 0);
+    const activeTickets = (byStatus['New'] || 0) + (byStatus['Assigned'] || 0) + 
+                         (byStatus['In_Progress'] || 0) + (byStatus['On_Hold'] || 0) + 
+                         (byStatus['Reopened'] || 0);
     
-    // Calculate tickets by status
-    const byStatus = filteredTickets.reduce((acc, ticket) => {
-      acc[ticket.status] = (acc[ticket.status] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const totalUsers = Object.values(usersByRole).reduce((sum: number, count: any) => sum + count, 0);
+    const activeUsers = ticketStats.active_users || 0;
 
-    // Calculate tickets by agent
-    const byAgent = filteredTickets.reduce((acc, ticket) => {
-      if (ticket.assignee) {
-        const agentName = `${ticket.assignee.first_name} ${ticket.assignee.last_name}`.trim() || ticket.assignee.email.split('@')[0];
-        acc[agentName] = (acc[agentName] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    // Calculate tickets by category
-    const byCategory = filteredTickets.reduce((acc, ticket) => {
-      if (ticket.categories && Array.isArray(ticket.categories) && ticket.categories.length > 0) {
-        ticket.categories.forEach(category => {
-          acc[category.name] = (acc[category.name] || 0) + 1;
-        });
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    // Calculate tickets by priority
-    const byPriority = filteredTickets.reduce((acc, ticket) => {
-      if (ticket.priority) {
-        acc[ticket.priority.name] = (acc[ticket.priority.name] || 0) + 1;
-      }
-      return acc;
-    }, {} as Record<string, number>);
-
-    // User statistics
-    const activeUsers = mockUsers.filter(u => u.is_active).length;
-    const usersByRole = mockUsers.reduce((acc, user) => {
-      acc[user.role] = (acc[user.role] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    // Calculate avg resolution time from ticket stats if available
+    const avgResolutionTime = ticketStats.avg_resolution_time || 0;
 
     return {
       totalTickets,
       resolvedTickets,
       activeTickets,
-      avgResponseTime,
+      avgResponseTime: 0, // Not available from backend yet
       avgResolutionTime,
       byStatus,
-      byAgent,
+      byAgent: {}, // Will be populated from dashboard data if needed
       byCategory,
       byPriority,
       activeUsers,
-      totalUsers: mockUsers.length,
+      totalUsers,
       usersByRole,
     };
-  }, [filteredTickets]);
+  }, [analyticsData, ticketStats]);
 
   // Prepare chart data
   const ticketsByDay = useMemo(() => {
-    const days: Record<string, number> = {};
-    const today = new Date();
-    const daysToShow = timePeriod === '7d' ? 7 : timePeriod === '30d' ? 30 : timePeriod === '90d' ? 90 : 365;
-    
-    // Initialize all days with 0
-    for (let i = daysToShow - 1; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const key = date.toISOString().split('T')[0];
-      days[key] = 0;
+    if (!analyticsData?.tickets_by_day) {
+      return [];
     }
-    
-    // Count tickets per day
-    filteredTickets.forEach(ticket => {
-      const date = new Date(ticket.created_at).toISOString().split('T')[0];
-      if (days[date] !== undefined) {
-        days[date]++;
-      }
-    });
-    
-    return Object.entries(days).map(([date, count]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-      count,
+
+    // Backend returns tickets_by_day as array of { date, count }
+    return analyticsData.tickets_by_day.map((item: any) => ({
+      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: item.count || 0,
     }));
-  }, [filteredTickets, timePeriod]);
+  }, [analyticsData]);
 
   const ticketsByAgentChart = useMemo(() => {
-    return Object.entries(stats.byAgent)
-      .sort(([, a], [, b]) => b - a)
-      .slice(0, 10)
-      .map(([name, count]) => ({ name, value: count }));
-  }, [stats.byAgent]);
+    // Get from dashboard data if available, otherwise empty
+    // This would need to be fetched separately or from dashboard endpoint
+    return [];
+  }, []);
 
   const ticketsByCategoryChart = useMemo(() => {
     return Object.entries(stats.byCategory)
-      .sort(([, a], [, b]) => b - a)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 8)
-      .map(([name, value]) => ({ name, value }));
+      .map(([name, value]) => ({ name, value: value as number }));
   }, [stats.byCategory]);
 
   const ticketsByStatusChart = useMemo(() => {
     return Object.entries(stats.byStatus).map(([name, value]) => ({
       name: name.replace('_', ' '),
-      value,
+      value: value as number,
     }));
   }, [stats.byStatus]);
 
   const ticketsByPriorityChart = useMemo(() => {
     return Object.entries(stats.byPriority).map(([name, value]) => ({
       name,
-      value,
+      value: value as number,
     }));
   }, [stats.byPriority]);
 
   const usersByRoleChart = useMemo(() => {
     return Object.entries(stats.usersByRole).map(([name, value]) => ({
       name: name.replace('_', ' '),
-      value,
+      value: value as number,
     }));
   }, [stats.usersByRole]);
 
@@ -358,7 +327,7 @@ export default function AdminAnalyticsPage() {
                 {Object.entries(stats.usersByRole).map(([role, count]) => (
                   <div key={role} className="flex items-center justify-between text-sm">
                     <span className="text-gray-600 capitalize">{role.replace('_', ' ')}</span>
-                    <span className="font-medium text-gray-900">{count}</span>
+                    <span className="font-medium text-gray-900">{count as number}</span>
                   </div>
                 ))}
               </div>

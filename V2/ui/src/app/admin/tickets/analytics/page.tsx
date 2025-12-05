@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { mockTickets, mockUsers, mockTags, mockPriorities, mockChartData } from '@/lib/mockData';
 import AreaChart from '@/app/components/charts/AreaChart';
 import BarChart from '@/app/components/charts/BarChart';
 import DonutChart from '@/app/components/charts/DonutChart';
@@ -19,77 +18,69 @@ import Icon, {
   faArrowDown,
 } from '@/app/components/Icon';
 import { StatCardSkeleton, ChartSkeleton, Skeleton } from '@/app/components/Skeleton';
+import { AdminAPI, TicketsAPI } from '@/lib/api';
 
 type TimePeriod = '7d' | '30d' | '90d' | 'all';
 
 export default function TicketAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
+  const [ticketAnalytics, setTicketAnalytics] = useState<any>(null);
+  const [ticketStats, setTicketStats] = useState<any>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [analytics, stats] = await Promise.all([
+          AdminAPI.ticketAnalytics(),
+          TicketsAPI.stats(),
+        ]);
+        setTicketAnalytics(analytics);
+        setTicketStats(stats);
+      } catch (error: any) {
+        console.error('Failed to fetch ticket analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  // Calculate date range based on time period
-  const dateRange = useMemo(() => {
-    const now = new Date();
-    const startDate = new Date();
-    
-    switch (timePeriod) {
-      case '7d':
-        startDate.setDate(now.getDate() - 7);
-        break;
-      case '30d':
-        startDate.setDate(now.getDate() - 30);
-        break;
-      case '90d':
-        startDate.setDate(now.getDate() - 90);
-        break;
-      case 'all':
-        startDate.setFullYear(2024, 0, 1);
-        break;
-    }
-    
-    return { startDate, endDate: now };
-  }, [timePeriod]);
-
-  // Filter tickets by date range
-  const filteredTickets = useMemo(() => {
-    return mockTickets.filter(ticket => {
-      const ticketDate = new Date(ticket.created_at);
-      return ticketDate >= dateRange.startDate && ticketDate <= dateRange.endDate;
-    });
-  }, [dateRange]);
-
-  // Calculate statistics
+  // Calculate statistics from API data
   const stats = useMemo(() => {
-    const totalTickets = filteredTickets.length;
-    const resolvedTickets = filteredTickets.filter(t => t.status === 'Resolved' || t.status === 'Closed').length;
-    const activeTickets = filteredTickets.filter(t => 
-      ['New', 'Assigned', 'In_Progress', 'On_Hold', 'Reopened'].includes(t.status)
-    ).length;
-    const newTickets = filteredTickets.filter(t => t.status === 'New').length;
-    const inProgressTickets = filteredTickets.filter(t => t.status === 'In_Progress').length;
-    
-    // Calculate average response time (mock: hours)
-    const avgResponseTime = Math.floor(Math.random() * 24) + 1;
-    
-    // Calculate average resolution time (mock: hours)
-    const avgResolutionTime = Math.floor(Math.random() * 72) + 12;
-    
-    // Calculate resolution rate
-    const resolutionRate = totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0;
-    
-    // Calculate tickets per day average
-    const daysDiff = Math.max(1, Math.ceil((dateRange.endDate.getTime() - dateRange.startDate.getTime()) / (1000 * 60 * 60 * 24)));
-    const ticketsPerDay = Math.round((totalTickets / daysDiff) * 10) / 10;
+    if (!ticketAnalytics || !ticketStats) {
+      return {
+        totalTickets: 0,
+        resolvedTickets: 0,
+        activeTickets: 0,
+        newTickets: 0,
+        inProgressTickets: 0,
+        avgResponseTime: 0,
+        avgResolutionTime: 0,
+        resolutionRate: 0,
+        ticketsPerDay: 0,
+        growth: 0,
+      };
+    }
 
-    // Calculate growth (mock: compare with previous period)
-    const previousPeriodTickets = Math.floor(totalTickets * 0.85);
-    const growth = totalTickets > 0 ? Math.round(((totalTickets - previousPeriodTickets) / previousPeriodTickets) * 100) : 0;
+    const byStatus = ticketAnalytics.by_status?.reduce((acc: Record<string, number>, item: any) => {
+      acc[item.status] = item._count || 0;
+      return acc;
+    }, {} as Record<string, number>) || {};
+
+    const totalTickets = ticketStats.total || 0;
+    const resolvedTickets = (byStatus['Resolved'] || 0) + (byStatus['Closed'] || 0);
+    const activeTickets = (byStatus['New'] || 0) + (byStatus['Assigned'] || 0) + 
+                         (byStatus['In_Progress'] || 0) + (byStatus['On_Hold'] || 0) + 
+                         (byStatus['Reopened'] || 0);
+    const newTickets = byStatus['New'] || 0;
+    const inProgressTickets = byStatus['In_Progress'] || 0;
+    
+    const resolutionRate = totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 0;
+    const avgResolutionDays = ticketAnalytics.avg_resolution_days?.[0]?.avg_days || 0;
+    const avgResolutionTime = Math.round(avgResolutionDays * 24); // Convert days to hours
 
     return {
       totalTickets,
@@ -97,125 +88,60 @@ export default function TicketAnalyticsPage() {
       activeTickets,
       newTickets,
       inProgressTickets,
-      avgResponseTime,
+      avgResponseTime: 0, // Not available from backend yet
       avgResolutionTime,
       resolutionRate,
-      ticketsPerDay,
-      growth,
+      ticketsPerDay: 0, // Can be calculated if needed
+      growth: 0, // Can be calculated if needed
     };
-  }, [filteredTickets, dateRange]);
+  }, [ticketAnalytics, ticketStats]);
 
-  // Tickets by Day (for area chart)
+  // Tickets by Day (for area chart) - Use from general analytics if available
   const ticketsByDay = useMemo(() => {
-    const days: Record<string, number> = {};
-    filteredTickets.forEach(ticket => {
-      const date = new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      days[date] = (days[date] || 0) + 1;
-    });
-    
-    // Sort by date and fill missing days
-    const sortedDates = Object.keys(days).sort((a, b) => {
-      return new Date(a).getTime() - new Date(b).getTime();
-    });
-    
-    return sortedDates.map(date => ({
-      date,
-      count: days[date],
-    }));
-  }, [filteredTickets]);
+    // This would need to be fetched from AdminAPI.analytics() or calculated from ticket list
+    return [];
+  }, []);
 
   // Tickets by Status
   const ticketsByStatus = useMemo(() => {
-    const statusCounts: Record<string, number> = {};
-    filteredTickets.forEach(ticket => {
-      statusCounts[ticket.status] = (statusCounts[ticket.status] || 0) + 1;
-    });
+    if (!ticketAnalytics?.by_status) return [];
     
-    return Object.entries(statusCounts).map(([name, value]) => ({
-      name: name.replace('_', ' '),
-      value,
+    return ticketAnalytics.by_status.map((item: any) => ({
+      name: item.status.replace('_', ' '),
+      value: item._count || 0,
     }));
-  }, [filteredTickets]);
+  }, [ticketAnalytics]);
 
-  // Tickets by Agent
+  // Tickets by Agent - Would need to fetch from dashboard or separate endpoint
   const ticketsByAgent = useMemo(() => {
-    const agentCounts: Record<string, number> = {};
-    filteredTickets.forEach(ticket => {
-      if (ticket.assignee) {
-        const agentName = `${ticket.assignee.first_name} ${ticket.assignee.last_name}`.trim() || ticket.assignee.email.split('@')[0];
-        agentCounts[agentName] = (agentCounts[agentName] || 0) + 1;
-      } else {
-        agentCounts['Unassigned'] = (agentCounts['Unassigned'] || 0) + 1;
-      }
-    });
-    
-    return Object.entries(agentCounts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 10); // Top 10 agents
-  }, [filteredTickets]);
+    return [];
+  }, []);
 
   // Tickets by Priority
   const ticketsByPriority = useMemo(() => {
-    const priorityCounts: Record<string, number> = {};
-    filteredTickets.forEach(ticket => {
-      if (ticket.priority) {
-        priorityCounts[ticket.priority.name] = (priorityCounts[ticket.priority.name] || 0) + 1;
-      }
-    });
+    if (!ticketAnalytics?.by_priority) return [];
     
-    return Object.entries(priorityCounts).map(([name, value]) => ({
-      name,
-      value,
+    // Backend returns by_priority with priority_id, need to get names from stats
+    const priorityMap = ticketStats?.by_priority?.reduce((acc: Record<string, string>, item: any) => {
+      acc[item.priority_id] = item.priority_name || 'Unknown';
+      return acc;
+    }, {} as Record<string, string>) || {};
+    
+    return ticketAnalytics.by_priority.map((item: any) => ({
+      name: priorityMap[item.priority_id] || 'Unknown',
+      value: item._count || 0,
     }));
-  }, [filteredTickets]);
+  }, [ticketAnalytics, ticketStats]);
 
-  // Tickets by Category/Tag
+  // Tickets by Category - Would need to fetch from general analytics
   const ticketsByCategory = useMemo(() => {
-    const categoryCounts: Record<string, number> = {};
-    filteredTickets.forEach(ticket => {
-      if (ticket.categories && Array.isArray(ticket.categories) && ticket.categories.length > 0) {
-        ticket.categories.forEach((cat: any) => {
-          const category = cat.category || cat;
-          categoryCounts[category.name] = (categoryCounts[category.name] || 0) + 1;
-        });
-      } else {
-        categoryCounts['Uncategorized'] = (categoryCounts['Uncategorized'] || 0) + 1;
-      }
-    });
-    
-    return Object.entries(categoryCounts)
-      .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 8); // Top 8 categories
-  }, [filteredTickets]);
+    return [];
+  }, []);
 
-  // Status Trend (line chart showing status changes over time)
+  // Status Trend - Would need to calculate from ticket list or separate endpoint
   const statusTrend = useMemo(() => {
-    const statusByDay: Record<string, Record<string, number>> = {};
-    
-    filteredTickets.forEach(ticket => {
-      const date = new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      if (!statusByDay[date]) {
-        statusByDay[date] = {};
-      }
-      statusByDay[date][ticket.status] = (statusByDay[date][ticket.status] || 0) + 1;
-    });
-    
-    const dates = Object.keys(statusByDay).sort((a, b) => 
-      new Date(a).getTime() - new Date(b).getTime()
-    );
-    
-    const statuses = ['New', 'Assigned', 'In_Progress', 'Resolved', 'Closed'];
-    
-    return dates.map(date => {
-      const data: Record<string, any> = { date };
-      statuses.forEach(status => {
-        data[status] = statusByDay[date][status] || 0;
-      });
-      return data;
-    });
-  }, [filteredTickets]);
+    return [];
+  }, []);
 
   if (loading) {
     return (

@@ -244,7 +244,7 @@ export const OrganizationsAPI = {
 
 // Invites API
 export const InvitesAPI = {
-  list: (params?: { skip?: number; take?: number }) =>
+  list: (params?: { skip?: number; take?: number; status?: string; email?: string }) =>
     api.get('/invites', { params }).then((r) => r.data),
   
   create: (data: { email: string; role: string }) =>
