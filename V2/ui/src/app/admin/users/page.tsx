@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { mockUsers } from '@/lib/mockData';
+import { UsersAPI } from '@/lib/api';
 import { User, UserRole } from '@/types';
 import Icon, { faSearch, faEye } from '@/app/components/Icon';
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
@@ -17,49 +17,49 @@ const ROLE_OPTIONS: { value: UserRole | ''; label: string }[] = [
 ];
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<UserRole | ''>('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [loading, setLoading] = useState(true);
+  const [totalUsers, setTotalUsers] = useState(0);
 
+  // Fetch users from API
   useEffect(() => {
-    // Simulate initial data loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchUsers = async () => {
+      setLoading(true);
+      try {
+        const params: any = {
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        };
+        
+        if (search.trim()) {
+          params.search = search.trim();
+        }
+        
+        if (roleFilter) {
+          params.role = roleFilter;
+        }
 
-  // Filter and search users
-  const filteredUsers = useMemo(() => {
-    let filtered = [...mockUsers];
+        const response = await UsersAPI.list(params);
+        setUsers(response.data || []);
+        setTotalUsers(response.total || 0);
+      } catch (error: any) {
+        console.error('Failed to fetch users:', error);
+        setUsers([]);
+        setTotalUsers(0);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Role filter
-    if (roleFilter) {
-      filtered = filtered.filter(u => u.role === roleFilter);
-    }
+    const handler = setTimeout(fetchUsers, 300); // Debounce search
+    return () => clearTimeout(handler);
+  }, [page, pageSize, search, roleFilter]);
 
-    // Search filter
-    if (search.trim()) {
-      const searchLower = search.toLowerCase();
-      filtered = filtered.filter(u =>
-        u.first_name.toLowerCase().includes(searchLower) ||
-        u.last_name.toLowerCase().includes(searchLower) ||
-        u.email.toLowerCase().includes(searchLower)
-      );
-    }
-
-    return filtered;
-  }, [search, roleFilter]);
-
-  // Pagination
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const paginatedUsers = useMemo(() => {
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    return filteredUsers.slice(start, end);
-  }, [filteredUsers, page, pageSize]);
+  const totalPages = Math.ceil(totalUsers / pageSize);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -94,7 +94,7 @@ export default function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Users</h1>
         <p className="text-sm text-gray-600 mt-1">
-          {filteredUsers.length} {filteredUsers.length === 1 ? 'user' : 'users'} found
+          {totalUsers} {totalUsers === 1 ? 'user' : 'users'} found
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default function AdminUsersPage() {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  ID
+                  No
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Name
@@ -179,17 +179,17 @@ export default function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedUsers.length === 0 ? (
+              {users.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                     No users found
                   </td>
                 </tr>
               ) : (
-                paginatedUsers.map((user) => (
+                users.map((user, index) => (
                   <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {user.id}
+                      {(page - 1) * pageSize + index + 1}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.first_name} {user.last_name}
@@ -234,12 +234,12 @@ export default function AdminUsersPage() {
 
         {/* Mobile Card View */}
         <div className="md:hidden divide-y divide-gray-200">
-          {paginatedUsers.length === 0 ? (
+          {users.length === 0 ? (
             <div className="p-12 text-center text-gray-500">
               No users found
             </div>
           ) : (
-            paginatedUsers.map((user) => (
+            users.map((user, index) => (
               <Link
                 key={user.id}
                 href={`/admin/users/${user.id}`}
@@ -248,6 +248,7 @@ export default function AdminUsersPage() {
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm text-gray-500 font-medium">#{(page - 1) * pageSize + index + 1}</span>
                       <div className="font-medium text-gray-900">
                         {user.first_name} {user.last_name}
                       </div>
@@ -257,8 +258,6 @@ export default function AdminUsersPage() {
                     </div>
                     <div className="text-sm text-gray-600 truncate">{user.email}</div>
                     <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
-                      <span>ID: {user.id}</span>
-                      <span>•</span>
                       <span>{formatDate(user.created_at)}</span>
                     </div>
                   </div>
@@ -285,7 +284,7 @@ export default function AdminUsersPage() {
         <div className="bg-white border border-gray-200 rounded-sm p-4">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="text-sm text-gray-600">
-              Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, filteredUsers.length)} of {filteredUsers.length} users
+              Showing {(page - 1) * pageSize + 1} to {Math.min(page * pageSize, totalUsers)} of {totalUsers} users
             </div>
             <div className="flex items-center gap-2">
               <button

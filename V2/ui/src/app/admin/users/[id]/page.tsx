@@ -3,44 +3,77 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { mockUsers, mockTickets } from '@/lib/mockData';
+import { UsersAPI, TicketsAPI } from '@/lib/api';
 import { User } from '@/types';
 import Icon, { faArrowLeft, faCheck, faTimes } from '@/app/components/Icon';
 import { DetailPageSkeleton } from '@/app/components/Skeleton';
 
 export default function UserDetailPage() {
   const params = useParams();
-  const userId = params?.id ? parseInt(params.id as string) : null;
+  const userId = params?.id as string | undefined;
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [userStats, setUserStats] = useState<{
+    totalTickets: number;
+    assignedTickets: number;
+    createdTickets: number;
+  } | null>(null);
 
+  // Fetch user data
   useEffect(() => {
     if (!userId) {
       setLoading(false);
       return;
     }
 
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      const foundUser = mockUsers.find(u => u.id === userId);
-      setUser(foundUser || null);
-      setLoading(false);
-    }, 300);
+    const fetchUser = async () => {
+      setLoading(true);
+      try {
+        const userData = await UsersAPI.get(userId);
+        setUser(userData);
+
+        // Fetch user statistics
+        try {
+          const [createdTickets, assignedTickets] = await Promise.all([
+            TicketsAPI.list({ created_by: userId, take: 1 }).then(r => r.total || 0),
+            TicketsAPI.list({ assignee: userId, take: 1 }).then(r => r.total || 0),
+          ]);
+          
+          setUserStats({
+            totalTickets: createdTickets + assignedTickets,
+            createdTickets,
+            assignedTickets,
+          });
+        } catch (error) {
+          console.error('Failed to fetch user statistics:', error);
+          setUserStats({ totalTickets: 0, createdTickets: 0, assignedTickets: 0 });
+        }
+      } catch (error: any) {
+        console.error('Failed to fetch user:', error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
   }, [userId]);
 
   const handleToggleStatus = async () => {
     if (!user) return;
     
     setSaving(true);
-    
-    // Mock API call
-    setTimeout(() => {
+    try {
+      await UsersAPI.updateStatus(user.id, { is_active: !user.is_active });
       setUser(prev => prev ? { ...prev, is_active: !prev.is_active } : null);
+    } catch (error: any) {
+      console.error('Failed to update user status:', error);
+      alert('Failed to update user status. Please try again.');
+    } finally {
       setSaving(false);
-    }, 300);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -53,12 +86,6 @@ export default function UserDetailPage() {
     });
   };
 
-  // Get user statistics
-  const userStats = user ? {
-    totalTickets: mockTickets.filter(t => t.created_by_id === user.id || t.assignee_id === user.id).length,
-    assignedTickets: mockTickets.filter(t => t.assignee_id === user.id).length,
-    createdTickets: mockTickets.filter(t => t.created_by_id === user.id).length,
-  } : null;
 
   if (loading) {
     return <DetailPageSkeleton showHeader showStats />;
