@@ -59,13 +59,47 @@ let AgentService = class AgentService {
             recent_tickets: recentTickets,
         };
     }
-    async getTickets(userId, skip = 0, take = 10, status, priorityId) {
+    async getTickets(userId, skip = 0, take = 10, status, priorityId, search, sortBy, sortOrder = 'desc') {
         const where = { assignee_id: userId };
         if (status) {
             where.status = status;
         }
         if (priorityId) {
             where.priority_id = priorityId;
+        }
+        if (search) {
+            where.OR = [
+                { ticket_code: { contains: search, mode: 'insensitive' } },
+                { subject: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { requester_email: { contains: search, mode: 'insensitive' } },
+                { requester_name: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+        let orderBy = { created_at: 'desc' };
+        if (sortBy) {
+            switch (sortBy) {
+                case 'ticket_code':
+                    orderBy = { ticket_code: sortOrder };
+                    break;
+                case 'subject':
+                    orderBy = { subject: sortOrder };
+                    break;
+                case 'status':
+                    orderBy = { status: sortOrder };
+                    break;
+                case 'priority':
+                    orderBy = { priority: { name: sortOrder } };
+                    break;
+                case 'created_at':
+                    orderBy = { created_at: sortOrder };
+                    break;
+                case 'updated_at':
+                    orderBy = { updated_at: sortOrder };
+                    break;
+                default:
+                    orderBy = { created_at: sortOrder };
+            }
         }
         const [tickets, total] = await Promise.all([
             this.prisma.ticket.findMany({
@@ -86,7 +120,7 @@ let AgentService = class AgentService {
                         },
                     },
                 },
-                orderBy: { created_at: 'desc' },
+                orderBy,
             }),
             this.prisma.ticket.count({ where }),
         ]);

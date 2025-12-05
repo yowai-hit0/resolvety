@@ -4,13 +4,13 @@ export declare class PrioritiesService {
     constructor(prisma: PrismaService);
     findAll(): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }[]>;
     findOne(id: string): Promise<{
         _count: {
@@ -18,42 +18,42 @@ export declare class PrioritiesService {
         };
     } & {
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     create(name: string, sortOrder: number, userId: string): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     update(id: string, name: string, sortOrder: number, userId: string): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     delete(id: string, userId: string): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
 }

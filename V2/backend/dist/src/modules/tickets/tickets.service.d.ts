@@ -37,23 +37,23 @@ export declare class TicketsService {
             };
             priority: {
                 id: string;
-                name: string;
-                is_active: boolean;
-                sort_order: number;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
+                sort_order: number;
             };
             categories: ({
                 category: {
                     id: string;
-                    name: string;
-                    is_active: boolean;
                     created_at: Date;
                     updated_at: Date;
                     created_by_id: string | null;
                     updated_by_id: string | null;
+                    name: string;
+                    is_active: boolean;
                 };
             } & {
                 id: string;
@@ -67,10 +67,6 @@ export declare class TicketsService {
             };
         } & {
             id: string;
-            created_at: Date;
-            updated_at: Date;
-            created_by_id: string;
-            updated_by_id: string | null;
             ticket_code: string;
             subject: string;
             description: string;
@@ -79,8 +75,12 @@ export declare class TicketsService {
             requester_phone: string;
             location: string | null;
             status: import(".prisma/client").$Enums.TicketStatus;
+            created_at: Date;
+            updated_at: Date;
             resolved_at: Date | null;
             closed_at: Date | null;
+            created_by_id: string;
+            updated_by_id: string | null;
             assignee_id: string | null;
             priority_id: string;
         })[];
@@ -100,6 +100,22 @@ export declare class TicketsService {
             email: string;
             first_name: string;
             last_name: string;
+        };
+        assignee: {
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+        };
+        priority: {
+            id: string;
+            created_at: Date;
+            updated_at: Date;
+            created_by_id: string | null;
+            updated_by_id: string | null;
+            name: string;
+            is_active: boolean;
+            sort_order: number;
         };
         comments: ({
             author: {
@@ -155,31 +171,15 @@ export declare class TicketsService {
             uploaded_by_id: string;
             deleted_by_id: string | null;
         })[];
-        assignee: {
-            id: string;
-            email: string;
-            first_name: string;
-            last_name: string;
-        };
-        priority: {
-            id: string;
-            name: string;
-            is_active: boolean;
-            sort_order: number;
-            created_at: Date;
-            updated_at: Date;
-            created_by_id: string | null;
-            updated_by_id: string | null;
-        };
         categories: ({
             category: {
                 id: string;
-                name: string;
-                is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
             };
         } & {
             id: string;
@@ -189,10 +189,6 @@ export declare class TicketsService {
         })[];
     } & {
         id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
         ticket_code: string;
         subject: string;
         description: string;
@@ -201,8 +197,12 @@ export declare class TicketsService {
         requester_phone: string;
         location: string | null;
         status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
         resolved_at: Date | null;
         closed_at: Date | null;
+        created_by_id: string;
+        updated_by_id: string | null;
         assignee_id: string | null;
         priority_id: string;
     }>;
@@ -215,23 +215,23 @@ export declare class TicketsService {
         };
         priority: {
             id: string;
-            name: string;
-            is_active: boolean;
-            sort_order: number;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            is_active: boolean;
+            sort_order: number;
         };
         categories: ({
             category: {
                 id: string;
-                name: string;
-                is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
             };
         } & {
             id: string;
@@ -241,10 +241,6 @@ export declare class TicketsService {
         })[];
     } & {
         id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
         ticket_code: string;
         subject: string;
         description: string;
@@ -253,8 +249,12 @@ export declare class TicketsService {
         requester_phone: string;
         location: string | null;
         status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
         resolved_at: Date | null;
         closed_at: Date | null;
+        created_by_id: string;
+        updated_by_id: string | null;
         assignee_id: string | null;
         priority_id: string;
     }>;
@@ -273,23 +273,23 @@ export declare class TicketsService {
         };
         priority: {
             id: string;
-            name: string;
-            is_active: boolean;
-            sort_order: number;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            is_active: boolean;
+            sort_order: number;
         };
         categories: ({
             category: {
                 id: string;
-                name: string;
-                is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
             };
         } & {
             id: string;
@@ -299,10 +299,6 @@ export declare class TicketsService {
         })[];
     } & {
         id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
         ticket_code: string;
         subject: string;
         description: string;
@@ -311,8 +307,12 @@ export declare class TicketsService {
         requester_phone: string;
         location: string | null;
         status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
         resolved_at: Date | null;
         closed_at: Date | null;
+        created_by_id: string;
+        updated_by_id: string | null;
         assignee_id: string | null;
         priority_id: string;
     }>;

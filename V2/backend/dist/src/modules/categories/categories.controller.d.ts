@@ -10,12 +10,12 @@ export declare class CategoriesController {
     constructor(categoriesService: CategoriesService);
     findAll(): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
     }[]>;
     findOne(id: string): Promise<{
         _count: {
@@ -23,39 +23,39 @@ export declare class CategoriesController {
         };
     } & {
         id: string;
-        name: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
     }>;
     create(dto: CreateCategoryDto, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
     }>;
     update(id: string, dto: UpdateCategoryDto, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
     }>;
     delete(id: string, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
     }>;
 }
 export {};

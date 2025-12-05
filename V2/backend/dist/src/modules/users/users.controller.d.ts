@@ -6,8 +6,8 @@ export declare class UsersController {
     findAll(skip?: string, take?: string, role?: string, is_active?: string, organization?: string, search?: string): Promise<{
         data: {
             id: string;
-            is_active: boolean;
             created_at: Date;
+            is_active: boolean;
             email: string;
             first_name: string;
             last_name: string;
@@ -28,8 +28,8 @@ export declare class UsersController {
     }>;
     create(dto: CreateUserDto, req: any): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
+        is_active: boolean;
         email: string;
         organization: {
             id: string;
@@ -42,9 +42,14 @@ export declare class UsersController {
     }>;
     getMe(req: any): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
+        _count: {
+            comments: number;
+            tickets_created: number;
+            tickets_assigned: number;
+        };
+        is_active: boolean;
         email: string;
         organization: {
             id: string;
@@ -56,17 +61,17 @@ export declare class UsersController {
         last_login_at: Date;
         last_login_ip: string;
         organization_id: string;
-        _count: {
-            tickets_created: number;
-            tickets_assigned: number;
-            comments: number;
-        };
     }>;
     findOne(id: string): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
+        _count: {
+            comments: number;
+            tickets_created: number;
+            tickets_assigned: number;
+        };
+        is_active: boolean;
         email: string;
         organization: {
             id: string;
@@ -78,17 +83,12 @@ export declare class UsersController {
         last_login_at: Date;
         last_login_ip: string;
         organization_id: string;
-        _count: {
-            tickets_created: number;
-            tickets_assigned: number;
-            comments: number;
-        };
     }>;
     update(id: string, dto: UpdateUserDto, req: any): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
         updated_at: Date;
+        is_active: boolean;
         email: string;
         first_name: string;
         last_name: string;

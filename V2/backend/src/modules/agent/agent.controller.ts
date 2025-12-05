@@ -23,12 +23,18 @@ export class AgentController {
   @ApiQuery({ name: 'take', required: false, type: Number, example: 10 })
   @ApiQuery({ name: 'status', required: false, type: String, enum: ['New', 'Assigned', 'In_Progress', 'Resolved', 'Closed'] })
   @ApiQuery({ name: 'priority', required: false, type: String })
+  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search in ticket code, subject, description, requester' })
+  @ApiQuery({ name: 'sort_by', required: false, type: String, enum: ['ticket_code', 'subject', 'status', 'priority', 'created_at', 'updated_at'] })
+  @ApiQuery({ name: 'sort_order', required: false, type: String, enum: ['asc', 'desc'], example: 'desc' })
   async getTickets(
     @Request() req,
     @Query('skip') skip?: string,
     @Query('take') take?: string,
     @Query('status') status?: string,
     @Query('priority') priority?: string,
+    @Query('search') search?: string,
+    @Query('sort_by') sortBy?: string,
+    @Query('sort_order') sortOrder?: 'asc' | 'desc',
   ) {
     return this.agentService.getTickets(
       req.user.id,
@@ -36,6 +42,9 @@ export class AgentController {
       take ? parseInt(take) : 10,
       status,
       priority,
+      search,
+      sortBy,
+      sortOrder || 'desc',
     );
   }
 

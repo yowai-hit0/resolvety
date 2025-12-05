@@ -56,7 +56,16 @@ export class AgentService {
     };
   }
 
-  async getTickets(userId: string, skip = 0, take = 10, status?: string, priorityId?: string) {
+  async getTickets(
+    userId: string,
+    skip = 0,
+    take = 10,
+    status?: string,
+    priorityId?: string,
+    search?: string,
+    sortBy?: string,
+    sortOrder: 'asc' | 'desc' = 'desc',
+  ) {
     const where: any = { assignee_id: userId };
     
     if (status) {
@@ -65,6 +74,44 @@ export class AgentService {
     
     if (priorityId) {
       where.priority_id = priorityId;
+    }
+
+    // Add search functionality
+    if (search) {
+      where.OR = [
+        { ticket_code: { contains: search, mode: 'insensitive' } },
+        { subject: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { requester_email: { contains: search, mode: 'insensitive' } },
+        { requester_name: { contains: search, mode: 'insensitive' } },
+      ];
+    }
+
+    // Build orderBy clause
+    let orderBy: any = { created_at: 'desc' }; // Default
+    if (sortBy) {
+      switch (sortBy) {
+        case 'ticket_code':
+          orderBy = { ticket_code: sortOrder };
+          break;
+        case 'subject':
+          orderBy = { subject: sortOrder };
+          break;
+        case 'status':
+          orderBy = { status: sortOrder };
+          break;
+        case 'priority':
+          orderBy = { priority: { name: sortOrder } };
+          break;
+        case 'created_at':
+          orderBy = { created_at: sortOrder };
+          break;
+        case 'updated_at':
+          orderBy = { updated_at: sortOrder };
+          break;
+        default:
+          orderBy = { created_at: sortOrder };
+      }
     }
 
     const [tickets, total] = await Promise.all([
@@ -86,7 +133,7 @@ export class AgentService {
             },
           },
         },
-        orderBy: { created_at: 'desc' },
+        orderBy,
       }),
       this.prisma.ticket.count({ where }),
     ]);

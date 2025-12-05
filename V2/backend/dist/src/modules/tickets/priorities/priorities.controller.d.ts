@@ -12,13 +12,13 @@ export declare class PrioritiesController {
     constructor(prioritiesService: PrioritiesService);
     findAll(): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }[]>;
     findOne(id: string): Promise<{
         _count: {
@@ -26,43 +26,43 @@ export declare class PrioritiesController {
         };
     } & {
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     create(dto: CreatePriorityDto, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     update(id: string, dto: UpdatePriorityDto, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
     delete(id: string, req: any): Promise<{
         id: string;
-        name: string;
-        is_active: boolean;
-        sort_order: number;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        is_active: boolean;
+        sort_order: number;
     }>;
 }
 export {};

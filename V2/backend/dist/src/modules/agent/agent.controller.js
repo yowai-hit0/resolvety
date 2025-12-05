@@ -25,8 +25,8 @@ let AgentController = class AgentController {
     async getDashboard(req) {
         return this.agentService.getDashboard(req.user.id);
     }
-    async getTickets(req, skip, take, status, priority) {
-        return this.agentService.getTickets(req.user.id, skip ? parseInt(skip) : 0, take ? parseInt(take) : 10, status, priority);
+    async getTickets(req, skip, take, status, priority, search, sortBy, sortOrder) {
+        return this.agentService.getTickets(req.user.id, skip ? parseInt(skip) : 0, take ? parseInt(take) : 10, status, priority, search, sortBy, sortOrder || 'desc');
     }
     async updateTicketStatus(id, dto, req) {
         return this.agentService.updateTicketStatus(id, dto.status, req.user.id);
@@ -54,13 +54,19 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'take', required: false, type: Number, example: 10 }),
     (0, swagger_1.ApiQuery)({ name: 'status', required: false, type: String, enum: ['New', 'Assigned', 'In_Progress', 'Resolved', 'Closed'] }),
     (0, swagger_1.ApiQuery)({ name: 'priority', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false, type: String, description: 'Search in ticket code, subject, description, requester' }),
+    (0, swagger_1.ApiQuery)({ name: 'sort_by', required: false, type: String, enum: ['ticket_code', 'subject', 'status', 'priority', 'created_at', 'updated_at'] }),
+    (0, swagger_1.ApiQuery)({ name: 'sort_order', required: false, type: String, enum: ['asc', 'desc'], example: 'desc' }),
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Query)('skip')),
     __param(2, (0, common_1.Query)('take')),
     __param(3, (0, common_1.Query)('status')),
     __param(4, (0, common_1.Query)('priority')),
+    __param(5, (0, common_1.Query)('search')),
+    __param(6, (0, common_1.Query)('sort_by')),
+    __param(7, (0, common_1.Query)('sort_order')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String, String, String]),
+    __metadata("design:paramtypes", [Object, String, String, String, String, String, String, String]),
     __metadata("design:returntype", Promise)
 ], AgentController.prototype, "getTickets", null);
 __decorate([

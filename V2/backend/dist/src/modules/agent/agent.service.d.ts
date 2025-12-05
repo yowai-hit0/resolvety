@@ -12,23 +12,23 @@ export declare class AgentService {
         recent_tickets: ({
             priority: {
                 id: string;
-                name: string;
-                is_active: boolean;
-                sort_order: number;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
+                sort_order: number;
             };
             categories: ({
                 category: {
                     id: string;
-                    name: string;
-                    is_active: boolean;
                     created_at: Date;
                     updated_at: Date;
                     created_by_id: string | null;
                     updated_by_id: string | null;
+                    name: string;
+                    is_active: boolean;
                 };
             } & {
                 id: string;
@@ -38,10 +38,6 @@ export declare class AgentService {
             })[];
         } & {
             id: string;
-            created_at: Date;
-            updated_at: Date;
-            created_by_id: string;
-            updated_by_id: string | null;
             ticket_code: string;
             subject: string;
             description: string;
@@ -50,33 +46,37 @@ export declare class AgentService {
             requester_phone: string;
             location: string | null;
             status: import(".prisma/client").$Enums.TicketStatus;
+            created_at: Date;
+            updated_at: Date;
             resolved_at: Date | null;
             closed_at: Date | null;
+            created_by_id: string;
+            updated_by_id: string | null;
             assignee_id: string | null;
             priority_id: string;
         })[];
     }>;
-    getTickets(userId: string, skip?: number, take?: number, status?: string, priorityId?: string): Promise<{
+    getTickets(userId: string, skip?: number, take?: number, status?: string, priorityId?: string, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<{
         data: ({
             priority: {
                 id: string;
-                name: string;
-                is_active: boolean;
-                sort_order: number;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
+                sort_order: number;
             };
             categories: ({
                 category: {
                     id: string;
-                    name: string;
-                    is_active: boolean;
                     created_at: Date;
                     updated_at: Date;
                     created_by_id: string | null;
                     updated_by_id: string | null;
+                    name: string;
+                    is_active: boolean;
                 };
             } & {
                 id: string;
@@ -90,10 +90,6 @@ export declare class AgentService {
             };
         } & {
             id: string;
-            created_at: Date;
-            updated_at: Date;
-            created_by_id: string;
-            updated_by_id: string | null;
             ticket_code: string;
             subject: string;
             description: string;
@@ -102,8 +98,12 @@ export declare class AgentService {
             requester_phone: string;
             location: string | null;
             status: import(".prisma/client").$Enums.TicketStatus;
+            created_at: Date;
+            updated_at: Date;
             resolved_at: Date | null;
             closed_at: Date | null;
+            created_by_id: string;
+            updated_by_id: string | null;
             assignee_id: string | null;
             priority_id: string;
         })[];
@@ -114,23 +114,23 @@ export declare class AgentService {
     updateTicketStatus(ticketId: string, status: TicketStatus, userId: string): Promise<{
         priority: {
             id: string;
-            name: string;
-            is_active: boolean;
-            sort_order: number;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            is_active: boolean;
+            sort_order: number;
         };
         categories: ({
             category: {
                 id: string;
-                name: string;
-                is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
+                is_active: boolean;
             };
         } & {
             id: string;
@@ -140,10 +140,6 @@ export declare class AgentService {
         })[];
     } & {
         id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
         ticket_code: string;
         subject: string;
         description: string;
@@ -152,28 +148,28 @@ export declare class AgentService {
         requester_phone: string;
         location: string | null;
         status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
         resolved_at: Date | null;
         closed_at: Date | null;
+        created_by_id: string;
+        updated_by_id: string | null;
         assignee_id: string | null;
         priority_id: string;
     }>;
     updateTicketPriority(ticketId: string, priorityId: string, userId: string): Promise<{
         priority: {
             id: string;
-            name: string;
-            is_active: boolean;
-            sort_order: number;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            is_active: boolean;
+            sort_order: number;
         };
     } & {
         id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
         ticket_code: string;
         subject: string;
         description: string;
@@ -182,8 +178,12 @@ export declare class AgentService {
         requester_phone: string;
         location: string | null;
         status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
         resolved_at: Date | null;
         closed_at: Date | null;
+        created_by_id: string;
+        updated_by_id: string | null;
         assignee_id: string | null;
         priority_id: string;
     }>;
@@ -194,9 +194,9 @@ export declare class AgentService {
         avg_resolution_days: unknown;
         recent_activity: {
             id: string;
-            created_at: Date;
             ticket_code: string;
             subject: string;
+            created_at: Date;
             resolved_at: Date;
         }[];
     }>;

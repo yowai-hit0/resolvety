@@ -6,13 +6,13 @@ export declare class InvitesService {
     findAll(status?: InviteStatus, email?: string, skip?: number, take?: number): Promise<{
         data: {
             id: string;
+            status: import(".prisma/client").$Enums.InviteStatus;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
             email: string;
             role: import(".prisma/client").$Enums.UserRole;
-            status: import(".prisma/client").$Enums.InviteStatus;
             token: string;
             expires_at: Date;
             accepted_at: Date | null;
@@ -23,13 +23,13 @@ export declare class InvitesService {
     }>;
     create(email: string, role: UserRole, expiresInHours: number, userId: string): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.InviteStatus;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
         email: string;
         role: import(".prisma/client").$Enums.UserRole;
-        status: import(".prisma/client").$Enums.InviteStatus;
         token: string;
         expires_at: Date;
         accepted_at: Date | null;
@@ -38,13 +38,13 @@ export declare class InvitesService {
         message: string;
         invite: {
             id: string;
+            status: import(".prisma/client").$Enums.InviteStatus;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
             email: string;
             role: import(".prisma/client").$Enums.UserRole;
-            status: import(".prisma/client").$Enums.InviteStatus;
             token: string;
             expires_at: Date;
             accepted_at: Date | null;
@@ -52,13 +52,13 @@ export declare class InvitesService {
     }>;
     revoke(id: string, userId: string): Promise<{
         id: string;
+        status: import(".prisma/client").$Enums.InviteStatus;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
         email: string;
         role: import(".prisma/client").$Enums.UserRole;
-        status: import(".prisma/client").$Enums.InviteStatus;
         token: string;
         expires_at: Date;
         accepted_at: Date | null;
@@ -66,11 +66,11 @@ export declare class InvitesService {
     accept(token: string, password: string, firstName: string, lastName: string): Promise<{
         user: {
             id: string;
-            is_active: boolean;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            is_active: boolean;
             email: string;
             password_hash: string;
             first_name: string;

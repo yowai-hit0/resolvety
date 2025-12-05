@@ -36,8 +36,8 @@ export declare class AuthService {
     }>;
     getProfile(userId: string): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
+        is_active: boolean;
         email: string;
         first_name: string;
         last_name: string;

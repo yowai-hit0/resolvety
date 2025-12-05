@@ -32,8 +32,8 @@ export declare class AuthController {
     }>;
     getProfile(req: any): Promise<{
         id: string;
-        is_active: boolean;
         created_at: Date;
+        is_active: boolean;
         email: string;
         first_name: string;
         last_name: string;
