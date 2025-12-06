@@ -66,9 +66,9 @@ This module allows external applications to integrate with ResolveIt through API
 ```
 POST /api/v1/users/register
 Headers:
-  X-API-Key: api_key_...
+  X-API-Key: rsk_...
   or
-  Authorization: Bearer api_key_...
+  Authorization: Bearer rsk_...
 
 Body:
 {
@@ -84,9 +84,9 @@ Body:
 ```
 POST /api/v1/tickets
 Headers:
-  X-API-Key: api_key_...
+  X-API-Key: rsk_...
   or
-  Authorization: Bearer api_key_...
+  Authorization: Bearer rsk_...
 
 Body:
 {
@@ -150,8 +150,8 @@ Authorization: Bearer <jwt-token>
 
 Response:
 {
-  "api_key": "api_key_...", // Store this securely!
-  "key_prefix": "api_key_ab",
+  "api_key": "rsk_...", // Store this securely!
+  "key_prefix": "rsk_abc",
   "name": "Production Key",
   "expires_at": "2025-12-31T23:59:59Z",
   "message": "Store this API key securely. It will not be shown again."
@@ -177,7 +177,7 @@ Authorization: Bearer <jwt-token>
 ### 4. Use API Key to Create Ticket
 ```bash
 POST /api/v1/tickets
-X-API-Key: api_key_...
+X-API-Key: rsk_...
 {
   "subject": "API Created Ticket",
   "description": "This ticket was created via API",

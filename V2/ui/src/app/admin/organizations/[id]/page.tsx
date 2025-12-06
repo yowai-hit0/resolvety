@@ -111,7 +111,14 @@ export default function OrganizationDetailPage() {
 
   // Filter available users to add
   const availableUsers = useMemo(() => {
-    let filtered = allUsers.filter(u => !u.organization_id || u.organization_id !== orgId);
+    let filtered = allUsers.filter(user => {
+      // Filter out users already in this organization
+      // Check both new (user_organizations) and old (organization_id) relationships
+      const isInOrg = users.some(orgUser => orgUser.id === user.id) ||
+        (user.user_organizations?.some(uo => uo.organization_id === orgId)) ||
+        (user.organization_id === orgId);
+      return !isInOrg;
+    });
 
     if (userSearch.trim()) {
       const searchLower = userSearch.toLowerCase();
@@ -123,7 +130,7 @@ export default function OrganizationDetailPage() {
     }
 
     return filtered;
-  }, [allUsers, orgId, userSearch]);
+  }, [allUsers, users, userSearch, orgId]);
 
   // Pagination
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
@@ -162,16 +169,23 @@ export default function OrganizationDetailPage() {
     if (!orgId) return;
 
     try {
-      await UsersAPI.update(user.id, { organization_id: orgId });
+      // Get user's current organizations
+      const currentOrgIds = user.user_organizations?.map(uo => uo.organization_id) || 
+                           (user.organization_id ? [user.organization_id] : []);
+      
+      // Add the new organization if not already present
+      if (!currentOrgIds.includes(orgId)) {
+        const updatedOrgIds = [...currentOrgIds, orgId];
+        await UsersAPI.update(user.id, { organization_ids: updatedOrgIds });
+      }
       
       // Refresh users list
       const orgUsers = await OrganizationsAPI.getUsers(orgId);
       setUsers(Array.isArray(orgUsers) ? orgUsers : (orgUsers.data || []));
       
-      // Update allUsers list
-      setAllUsers(allUsers.map(u => 
-        u.id === user.id ? { ...u, organization_id: orgId } : u
-      ));
+      // Refresh all users to get updated organization data
+      const allUsersData = await UsersAPI.list({ take: 1000 });
+      setAllUsers(Array.isArray(allUsersData.data) ? allUsersData.data : []);
       
       setShowAddUserModal(false);
       setUserSearch('');
@@ -182,17 +196,24 @@ export default function OrganizationDetailPage() {
   };
 
   const handleRemoveUser = async (user: User) => {
+    if (!orgId) return;
+
     try {
-      await UsersAPI.update(user.id, { organization_id: undefined });
+      // Get user's current organizations
+      const currentOrgIds = user.user_organizations?.map(uo => uo.organization_id) || 
+                           (user.organization_id ? [user.organization_id] : []);
+      
+      // Remove the organization
+      const updatedOrgIds = currentOrgIds.filter(id => id !== orgId);
+      await UsersAPI.update(user.id, { organization_ids: updatedOrgIds });
       
       // Refresh users list
-      const orgUsers = await OrganizationsAPI.getUsers(orgId!);
+      const orgUsers = await OrganizationsAPI.getUsers(orgId);
       setUsers(Array.isArray(orgUsers) ? orgUsers : (orgUsers.data || []));
       
-      // Update allUsers list
-      setAllUsers(allUsers.map(u => 
-        u.id === user.id ? { ...u, organization_id: undefined } : u
-      ));
+      // Refresh all users to get updated organization data
+      const allUsersData = await UsersAPI.list({ take: 1000 });
+      setAllUsers(Array.isArray(allUsersData.data) ? allUsersData.data : []);
       
       show(`User ${user.first_name} ${user.last_name} removed from organization`, 'success');
     } catch (error: any) {
@@ -416,13 +437,20 @@ export default function OrganizationDetailPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleRemoveUser(user)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                        title="Remove from organization"
-                      >
-                        <Icon icon={faTimes} size="sm" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {(user as any).is_primary && (
+                          <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-sm font-medium">
+                            Primary
+                          </span>
+                        )}
+                        <button
+                          onClick={() => handleRemoveUser(user)}
+                          className="text-red-500 hover:text-red-700 transition-colors"
+                          title="Remove from organization"
+                        >
+                          <Icon icon={faTimes} size="sm" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

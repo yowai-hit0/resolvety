@@ -47,8 +47,15 @@ export class PublicApiService {
         first_name: dto.first_name,
         last_name: dto.last_name,
         role: 'customer', // Default role for API-registered users
-        organization_id: app.organization_id,
+        organization_id: app.organization_id, // Keep for backward compatibility
         is_active: true,
+        // Also create user_organizations relationship
+        user_organizations: {
+          create: {
+            organization_id: app.organization_id,
+            is_primary: true,
+          },
+        },
       },
       select: {
         id: true,
@@ -74,7 +81,18 @@ export class PublicApiService {
       throw new NotFoundException('User not found');
     }
 
-    if (user.organization_id !== app.organization_id) {
+    // Check if user belongs to the app's organization (both old and new relationship)
+    const belongsToOrg = user.organization_id === app.organization_id || 
+      await this.prisma.userOrganization.findUnique({
+        where: {
+          user_id_organization_id: {
+            user_id: user.id,
+            organization_id: app.organization_id,
+          },
+        },
+      });
+    
+    if (!belongsToOrg) {
       throw new BadRequestException('User does not belong to the app\'s organization');
     }
 
@@ -179,8 +197,18 @@ export class PublicApiService {
       throw new NotFoundException('User not found');
     }
 
-    // Verify user belongs to the app's organization
-    if (user.organization_id !== app.organization_id) {
+    // Verify user belongs to the app's organization (check both old and new relationship)
+    const belongsToOrg = user.organization_id === app.organization_id || 
+      await this.prisma.userOrganization.findUnique({
+        where: {
+          user_id_organization_id: {
+            user_id: user.id,
+            organization_id: app.organization_id,
+          },
+        },
+      });
+    
+    if (!belongsToOrg) {
       throw new BadRequestException('User does not belong to the app\'s organization');
     }
 
@@ -455,13 +483,9 @@ export class PublicApiService {
 
     // Find user by phone - look for tickets with this requester_phone
     // and get the user who created them (most recent ticket)
-    // Filter by user's organization through the created_by relation
     const ticket = await this.prisma.ticket.findFirst({
       where: {
         requester_phone: phone,
-        created_by: {
-          organization_id: app.organization_id,
-        },
       },
       orderBy: { created_at: 'desc' },
       select: { created_by_id: true },
@@ -471,10 +495,24 @@ export class PublicApiService {
       throw new NotFoundException('User not found for this phone number');
     }
 
+    // Verify user belongs to the app's organization through junction table
+    const userOrg = await this.prisma.userOrganization.findUnique({
+      where: {
+        user_id_organization_id: {
+          user_id: ticket.created_by_id,
+          organization_id: app.organization_id,
+        },
+      },
+    });
+
+    // Also check old organization_id for backward compatibility
     const user = await this.prisma.user.findFirst({
       where: {
         id: ticket.created_by_id,
-        organization_id: app.organization_id,
+        OR: [
+          { organization_id: app.organization_id },
+          { user_organizations: { some: { organization_id: app.organization_id } } },
+        ],
         is_active: true,
       },
       select: {
@@ -492,11 +530,6 @@ export class PublicApiService {
 
     if (!user) {
       throw new NotFoundException('User not found in this organization');
-    }
-
-    // Verify user belongs to the app's organization (double check)
-    if (user.organization_id !== app.organization_id) {
-      throw new BadRequestException('User does not belong to the app\'s organization');
     }
 
     return user;

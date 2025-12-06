@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsBoolean, IsUUID, IsEmail, MinLength } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsBoolean, IsUUID, IsEmail, MinLength, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 
@@ -27,7 +27,13 @@ export class CreateUserDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  organization_id?: string;
+  organization_id?: string; // Deprecated: use organization_ids instead
+
+  @ApiPropertyOptional({ type: [String], description: 'Array of organization UUIDs to assign user to' })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  organization_ids?: string[];
 
   @ApiPropertyOptional({ default: true })
   @IsBoolean()
@@ -54,7 +60,13 @@ export class UpdateUserDto {
   @ApiPropertyOptional()
   @IsUUID()
   @IsOptional()
-  organization_id?: string;
+  organization_id?: string; // Deprecated: use organization_ids instead
+
+  @ApiPropertyOptional({ type: [String], description: 'Array of organization UUIDs to assign user to' })
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  organization_ids?: string[];
 }
 
 export class UpdateUserStatusDto {

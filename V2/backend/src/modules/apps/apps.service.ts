@@ -193,8 +193,8 @@ export class AppsService {
 
     // Generate API key
     const randomBytes = crypto.randomBytes(32);
-    const apiKey = `api_key_${randomBytes.toString('base64url')}`;
-    const keyPrefix = apiKey.substring(0, 12); // First 12 chars for display
+    const apiKey = `rsk_${randomBytes.toString('base64url')}`;
+    const keyPrefix = apiKey.substring(0, 8); // First 8 chars for display (rsk_...)
 
     // Hash the API key
     const keyHash = await bcrypt.hash(apiKey, 10);

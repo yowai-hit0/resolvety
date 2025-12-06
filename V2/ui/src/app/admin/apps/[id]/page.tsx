@@ -172,7 +172,7 @@ export default function AppDetailPage() {
       });
       
       // Show the key (only shown once)
-      setNewApiKey(result.key || '');
+      setNewApiKey(result.api_key || '');
       setShowCreateKeyModal(false);
       setShowKeyModal(true);
       setKeyFormData({ name: '', expires_at: '' });

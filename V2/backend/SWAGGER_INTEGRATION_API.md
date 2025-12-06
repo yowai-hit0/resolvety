@@ -151,7 +151,7 @@ All endpoints require API key authentication (X-API-Key header or Authorization:
 
 API keys are generated in the format:
 ```
-api_key_<random-base64-string>
+rsk_<random-base64-string>
 ```
 
 Example:
@@ -172,8 +172,8 @@ api_key_AbCdEfGhIjKlMnOpQrStUvWxYz1234567890
 ### Create API Key Response
 ```json
 {
-  "api_key": "api_key_AbCdEfGhIjKlMnOpQrStUvWxYz1234567890",
-  "key_prefix": "api_key_",
+  "api_key": "rsk_AbCdEfGhIjKlMnOpQrStUvWxYz1234567890",
+  "key_prefix": "rsk_AbC",
   "name": "Production Key",
   "expires_at": "2025-12-31T23:59:59Z",
   "message": "Store this API key securely. It will not be shown again."

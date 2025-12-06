@@ -193,6 +193,36 @@ export default function UserDetailPage() {
                 <div className="text-sm text-gray-600">{formatDate(user.updated_at)}</div>
               </div>
             </div>
+
+            {/* Organizations */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Organizations</label>
+              {user.user_organizations && user.user_organizations.length > 0 ? (
+                <div className="space-y-2">
+                  {user.user_organizations.map((uo) => (
+                    <div key={uo.id} className="flex items-center justify-between p-2 bg-gray-50 border border-gray-200 rounded-sm">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-900">{uo.organization?.name || 'Unknown'}</span>
+                        {uo.is_primary && (
+                          <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs rounded-sm font-medium">
+                            Primary
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : user.organization ? (
+                <div className="p-2 bg-gray-50 border border-gray-200 rounded-sm">
+                  <span className="text-sm text-gray-900">{user.organization.name}</span>
+                  <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-700 text-xs rounded-sm font-medium">
+                    Legacy
+                  </span>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">No organizations assigned</p>
+              )}
+            </div>
           </div>
         </div>
 

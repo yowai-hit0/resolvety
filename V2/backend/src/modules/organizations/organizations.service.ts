@@ -39,9 +39,24 @@ export class OrganizationsService {
             is_active: true,
           },
         },
+        user_organizations: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                first_name: true,
+                last_name: true,
+                role: true,
+                is_active: true,
+              },
+            },
+          },
+        },
         _count: {
           select: {
-            users: true,
+            users: true, // Keep for backward compatibility
+            user_organizations: true, // New count
           },
         },
       },
@@ -104,17 +119,27 @@ export class OrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    return this.prisma.user.findMany({
+    // Get users through the junction table
+    const userOrgs = await this.prisma.userOrganization.findMany({
       where: { organization_id: id },
-      select: {
-        id: true,
-        email: true,
-        first_name: true,
-        last_name: true,
-        role: true,
-        is_active: true,
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            first_name: true,
+            last_name: true,
+            role: true,
+            is_active: true,
+          },
+        },
       },
     });
+
+    return userOrgs.map(uo => ({
+      ...uo.user,
+      is_primary: uo.is_primary,
+    }));
   }
 
   async getTickets(id: string) {
@@ -123,12 +148,13 @@ export class OrganizationsService {
       throw new NotFoundException('Organization not found');
     }
 
-    const users = await this.prisma.user.findMany({
+    // Get users through the junction table
+    const userOrgs = await this.prisma.userOrganization.findMany({
       where: { organization_id: id },
-      select: { id: true },
+      select: { user_id: true },
     });
 
-    const userIds = users.map(u => u.id);
+    const userIds = userOrgs.map(uo => uo.user_id);
 
     return this.prisma.ticket.findMany({
       where: {

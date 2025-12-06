@@ -147,7 +147,8 @@ export const UsersAPI = {
     first_name?: string;
     last_name?: string;
     role?: string;
-    organization_id?: string;
+    organization_id?: string; // Deprecated: use organization_ids
+    organization_ids?: string[]; // New: array of organization UUIDs
   }) =>
     api.put(`/users/${id}`, data).then((r) => r.data),
   
@@ -163,7 +164,8 @@ export const UsersAPI = {
     first_name: string;
     last_name: string;
     role: string;
-    organization_id?: string;
+    organization_id?: string; // Deprecated: use organization_ids
+    organization_ids?: string[]; // New: array of organization UUIDs
     is_active?: boolean;
   }) =>
     api.post('/users', data).then((r) => r.data),

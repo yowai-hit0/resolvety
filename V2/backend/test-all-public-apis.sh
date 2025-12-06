@@ -18,7 +18,7 @@ echo -e "${BLUE}========================================${NC}\n"
 if [ -z "$1" ]; then
   echo -e "${RED}❌ Error: API Key required${NC}"
   echo -e "${YELLOW}Usage: $0 <API_KEY>${NC}"
-  echo -e "${YELLOW}Example: $0 api_key_AbCdEfGhIjKlMnOpQrStUvWxYz1234567890${NC}"
+  echo -e "${YELLOW}Example: $0 rsk_AbCdEfGhIjKlMnOpQrStUvWxYz1234567890${NC}"
   exit 1
 fi
 

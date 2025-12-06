@@ -112,11 +112,11 @@ export declare class PublicApiController {
                 id: string;
                 created_at: Date;
                 ip_address: string | null;
+                user_id: string;
                 ticket_id: string;
                 change_type: string;
                 old_value: string | null;
                 new_value: string | null;
-                user_id: string;
             })[];
             attachments: ({
                 uploaded_by: {
@@ -240,11 +240,11 @@ export declare class PublicApiController {
             id: string;
             created_at: Date;
             ip_address: string | null;
+            user_id: string;
             ticket_id: string;
             change_type: string;
             old_value: string | null;
             new_value: string | null;
-            user_id: string;
         })[];
         attachments: ({
             uploaded_by: {

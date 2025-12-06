@@ -216,8 +216,8 @@ let AppsService = class AppsService {
             throw new common_1.NotFoundException('App not found');
         }
         const randomBytes = crypto.randomBytes(32);
-        const apiKey = `api_key_${randomBytes.toString('base64url')}`;
-        const keyPrefix = apiKey.substring(0, 12);
+        const apiKey = `rsk_${randomBytes.toString('base64url')}`;
+        const keyPrefix = apiKey.substring(0, 8);
         const keyHash = await bcrypt.hash(apiKey, 10);
         let expiresAt = null;
         if (dto.expires_at) {

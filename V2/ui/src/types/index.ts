@@ -11,11 +11,27 @@ export interface User {
   last_name: string;
   role: UserRole;
   is_active: boolean;
-  organization_id?: string; // UUID
+  organization_id?: string; // UUID - Deprecated: kept for backward compatibility
   created_at: string;
   updated_at: string;
   last_login_at?: string;
   last_login_ip?: string;
+  organization?: Organization; // Deprecated: use user_organizations
+  user_organizations?: UserOrganization[]; // New: array of organization relationships
+  _count?: {
+    tickets_created?: number;
+    tickets_assigned?: number;
+    comments?: number;
+  };
+}
+
+export interface UserOrganization {
+  id: string; // UUID
+  user_id: string; // UUID
+  organization_id: string; // UUID
+  is_primary: boolean;
+  created_at: string;
+  created_by_id?: string; // UUID
   organization?: Organization;
 }
 
