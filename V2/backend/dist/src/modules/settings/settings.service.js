@@ -18,22 +18,86 @@ let SettingsService = class SettingsService {
     }
     async getSettings() {
         return {
-            system: {
-                name: 'ResolveIt',
-                version: '2.0',
+            general: {
+                systemName: 'ResolveIt',
+                systemDomain: 'resolveit.rw',
+                supportEmail: 'support@resolveit.rw',
+                timezone: 'Africa/Kigali',
+                dateFormat: 'MM/DD/YYYY',
+                timeFormat: '12h',
             },
-            features: {
-                email_notifications: true,
-                sms_notifications: false,
-                two_factor_auth: false,
+            email: {
+                smtpHost: '',
+                smtpPort: '587',
+                smtpUser: '',
+                smtpPassword: '',
+                smtpFromEmail: 'noreply@resolveit.rw',
+                smtpFromName: 'ResolveIt',
+                smtpSecure: false,
+            },
+            security: {
+                passwordMinLength: 8,
+                passwordRequireUppercase: true,
+                passwordRequireLowercase: true,
+                passwordRequireNumbers: true,
+                passwordRequireSpecial: false,
+                sessionTimeout: 24,
+                maxLoginAttempts: 5,
+                lockoutDuration: 30,
+            },
+            tickets: {
+                defaultPriority: 'Medium',
+                autoAssignEnabled: false,
+                autoAssignStrategy: 'round-robin',
+                slaEnabled: false,
+                slaResponseTime: 4,
+                slaResolutionTime: 24,
+                allowCustomerReopen: true,
+            },
+            fileUpload: {
+                maxFileSize: 50,
+                allowedImageTypes: 'jpg,jpeg,png,gif,webp',
+                allowedAudioTypes: 'mp3,wav,ogg,aac,m4a',
+                allowedVideoTypes: 'mp4,avi,mov,wmv,webm',
+                allowedDocumentTypes: 'pdf,doc,docx,xls,xlsx,txt',
+            },
+            notifications: {
+                emailNotifications: true,
+                ticketCreated: true,
+                ticketAssigned: true,
+                ticketStatusChanged: true,
+                ticketResolved: true,
+                newComment: true,
+                mentionNotifications: true,
+            },
+            organization: {
+                allowMultipleOrganizations: true,
+                defaultOrganization: '',
+                organizationIsolation: true,
             },
         };
     }
     async updateSettings(settings, userId) {
+        const validSections = [
+            'general',
+            'email',
+            'security',
+            'tickets',
+            'fileUpload',
+            'notifications',
+            'organization',
+        ];
+        const updatedSettings = {};
+        for (const section of validSections) {
+            if (settings[section]) {
+                updatedSettings[section] = settings[section];
+            }
+        }
         return {
-            ...settings,
+            ...updatedSettings,
             updated_by: userId,
             updated_at: new Date(),
+            message: 'Settings updated successfully',
         };
     }
 };

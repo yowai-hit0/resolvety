@@ -21,14 +21,14 @@ export declare class AppsService {
             };
         } & {
             id: string;
-            name: string;
-            description: string | null;
-            organization_id: string;
             is_active: boolean;
+            organization_id: string;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            description: string | null;
         })[];
         total: number;
         skip: number;
@@ -54,33 +54,33 @@ export declare class AppsService {
         };
         api_keys: {
             id: string;
-            name: string;
             is_active: boolean;
             created_at: Date;
+            name: string;
+            expires_at: Date;
             key_prefix: string;
             last_used_at: Date;
             last_used_ip: string;
-            expires_at: Date;
         }[];
         ip_whitelist: {
             id: string;
-            description: string | null;
             is_active: boolean;
             created_at: Date;
             created_by_id: string | null;
-            app_id: string;
+            description: string | null;
             ip_address: string;
+            app_id: string;
         }[];
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     create(dto: CreateAppDto, userId: string): Promise<{
         organization: {
@@ -89,14 +89,14 @@ export declare class AppsService {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     update(id: string, dto: UpdateAppDto, userId: string): Promise<{
         organization: {
@@ -105,14 +105,14 @@ export declare class AppsService {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     delete(id: string): Promise<{
         message: string;
@@ -129,7 +129,6 @@ export declare class AppsService {
     }>;
     getApiKeys(appId: string): Promise<{
         id: string;
-        name: string;
         is_active: boolean;
         created_at: Date;
         created_by: {
@@ -138,28 +137,29 @@ export declare class AppsService {
             first_name: string;
             last_name: string;
         };
+        name: string;
+        expires_at: Date;
         key_prefix: string;
         last_used_at: Date;
         last_used_ip: string;
-        expires_at: Date;
     }[]>;
     addIpToWhitelist(appId: string, dto: CreateIpWhitelistDto, userId: string): Promise<{
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     }>;
     updateIpWhitelist(appId: string, ipId: string, dto: UpdateIpWhitelistDto): Promise<{
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     }>;
     removeIpFromWhitelist(appId: string, ipId: string): Promise<{
         message: string;
@@ -173,12 +173,12 @@ export declare class AppsService {
         };
     } & {
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     })[]>;
     private isValidIpOrCidr;
     verifyApiKey(apiKey: string, clientIp: string): Promise<{

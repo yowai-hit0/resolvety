@@ -55,6 +55,15 @@ export const AuthAPI = {
   
   refresh: (refreshToken: string) =>
     api.post('/auth/refresh', { refreshToken }).then((r) => r.data),
+  
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post('/auth/change-password', data).then((r) => r.data),
+  
+  forgotPassword: (email: string) =>
+    api.post('/auth/forgot-password', { email }).then((r) => r.data),
+  
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data).then((r) => r.data),
 };
 
 // Tickets API

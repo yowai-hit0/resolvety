@@ -1,7 +1,7 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 export declare class AuthService {
     private prisma;
     private jwtService;
@@ -44,6 +44,19 @@ export declare class AuthService {
         organization_id: string;
         created_at: Date;
         last_login_at: Date;
+    }>;
+    changePassword(userId: string, dto: ChangePasswordDto): Promise<{
+        message: string;
+    }>;
+    forgotPassword(dto: ForgotPasswordDto, ipAddress?: string): Promise<{
+        message: string;
+    } | {
+        token: any;
+        expiresAt: Date;
+        message: string;
+    }>;
+    resetPassword(dto: ResetPasswordDto, ipAddress?: string): Promise<{
+        message: string;
     }>;
     private generateTokens;
 }

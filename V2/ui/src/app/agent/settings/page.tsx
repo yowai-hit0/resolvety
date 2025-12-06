@@ -11,6 +11,8 @@ import Icon, {
 } from '@/app/components/Icon';
 import { useToast } from '@/app/components/Toaster';
 import { DetailPageSkeleton } from '@/app/components/Skeleton';
+import { AuthAPI, UsersAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 
 interface AgentSettingsData {
   profile: {
@@ -70,63 +72,56 @@ const defaultSettings: AgentSettingsData = {
 
 export default function AgentSettingsPage() {
   const { show } = useToast();
+  const { user, setUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState('profile');
   const [settings, setSettings] = useState<AgentSettingsData>(defaultSettings);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [userInfo, setUserInfo] = useState<{ name?: string; email?: string }>({});
 
   useEffect(() => {
-    // Get user info from session
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('resolveitAuth');
-      if (auth) {
-        try {
-          const user = JSON.parse(auth);
-          setUserInfo({
-            name: user.name || '',
-            email: user.email || '',
-          });
-          
-          // Set initial profile data
-          if (user.name) {
-            const nameParts = user.name.split(' ');
+    // Load user profile from API
+    const loadProfile = async () => {
+      setLoading(true);
+      try {
+        const profile = await AuthAPI.profile();
+        
+        // Set profile data
+        setSettings(prev => ({
+          ...prev,
+          profile: {
+            firstName: profile.first_name || '',
+            lastName: profile.last_name || '',
+            email: profile.email || '',
+            phone: '', // Phone not in user model yet
+          },
+        }));
+
+        // Load preferences/notifications from localStorage (can be moved to backend later)
+        const savedSettings = localStorage.getItem('resolveitAgentSettings');
+        if (savedSettings) {
+          try {
+            const saved = JSON.parse(savedSettings);
             setSettings(prev => ({
               ...prev,
-              profile: {
-                ...prev.profile,
-                firstName: nameParts[0] || '',
-                lastName: nameParts.slice(1).join(' ') || '',
-                email: user.email || '',
-              },
+              preferences: saved.preferences || prev.preferences,
+              notifications: saved.notifications || prev.notifications,
+              security: defaultSettings.security, // Don't load password fields
             }));
+          } catch (e) {
+            console.error('Error loading saved settings:', e);
           }
-        } catch (e) {
-          console.error('Error parsing auth data:', e);
         }
+      } catch (error: any) {
+        console.error('Error loading profile:', error);
+        show(error?.response?.data?.message || 'Failed to load profile', 'error');
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-    // Load settings (mock - in real app, fetch from API)
-    setLoading(true);
-    setTimeout(() => {
-      const savedSettings = localStorage.getItem('resolveitAgentSettings');
-      if (savedSettings) {
-        try {
-          const saved = JSON.parse(savedSettings);
-          setSettings(prev => ({
-            ...prev,
-            ...saved,
-            security: defaultSettings.security, // Don't load password fields
-          }));
-        } catch (e) {
-          console.error('Error loading settings:', e);
-        }
-      }
-      setLoading(false);
-    }, 300);
-  }, []);
+    loadProfile();
+  }, [show]);
 
   const handleChange = (section: keyof AgentSettingsData, field: string, value: any) => {
     setSettings(prev => ({
@@ -140,32 +135,69 @@ export default function AgentSettingsPage() {
   };
 
   const handleSave = async (section?: keyof AgentSettingsData) => {
+    if (!user?.id) {
+      show('User not found', 'error');
+      return;
+    }
+
     setSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      if (section) {
-        // Save specific section
+    try {
+      if (section === 'profile') {
+        // Update profile via API
+        await UsersAPI.update(user.id, {
+          first_name: settings.profile.firstName,
+          last_name: settings.profile.lastName,
+        });
+        
+        // Update auth store
+        if (user) {
+          setUser({
+            ...user,
+            first_name: settings.profile.firstName,
+            last_name: settings.profile.lastName,
+          });
+        }
+        
+        show('Profile updated successfully!', 'success');
+      } else if (section === 'preferences' || section === 'notifications') {
+        // Save preferences/notifications to localStorage (can be moved to backend later)
         const currentSettings = JSON.parse(localStorage.getItem('resolveitAgentSettings') || JSON.stringify(defaultSettings));
         currentSettings[section] = settings[section];
         localStorage.setItem('resolveitAgentSettings', JSON.stringify(currentSettings));
         show(`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved successfully!`, 'success');
       } else {
         // Save all settings (except security passwords)
+        // Update profile via API
+        await UsersAPI.update(user.id, {
+          first_name: settings.profile.firstName,
+          last_name: settings.profile.lastName,
+        });
+        
+        // Update auth store
+        if (user) {
+          setUser({
+            ...user,
+            first_name: settings.profile.firstName,
+            last_name: settings.profile.lastName,
+          });
+        }
+        
+        // Save preferences/notifications to localStorage
         const settingsToSave = {
-          ...settings,
-          security: {
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: '',
-          },
+          preferences: settings.preferences,
+          notifications: settings.notifications,
         };
         localStorage.setItem('resolveitAgentSettings', JSON.stringify(settingsToSave));
         show('All settings saved successfully!', 'success');
       }
       setHasChanges(false);
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      show(error?.response?.data?.message || 'Failed to save settings', 'error');
+    } finally {
       setSaving(false);
-    }, 500);
+    }
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
@@ -193,8 +225,13 @@ export default function AgentSettingsPage() {
     
     setSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await AuthAPI.changePassword({
+        currentPassword: settings.security.currentPassword,
+        newPassword: settings.security.newPassword,
+      });
+      
+      // Clear password fields
       setSettings(prev => ({
         ...prev,
         security: {
@@ -203,9 +240,14 @@ export default function AgentSettingsPage() {
           confirmPassword: '',
         },
       }));
-      setSaving(false);
+      
       show('Password changed successfully!', 'success');
-    }, 500);
+    } catch (error: any) {
+      console.error('Error changing password:', error);
+      show(error?.response?.data?.message || 'Failed to change password', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const tabs = [

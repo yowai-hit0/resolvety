@@ -21,14 +21,14 @@ export declare class AppsController {
             };
         } & {
             id: string;
-            name: string;
-            description: string | null;
-            organization_id: string;
             is_active: boolean;
+            organization_id: string;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
+            description: string | null;
         })[];
         total: number;
         skip: number;
@@ -54,33 +54,33 @@ export declare class AppsController {
         };
         api_keys: {
             id: string;
-            name: string;
             is_active: boolean;
             created_at: Date;
+            name: string;
+            expires_at: Date;
             key_prefix: string;
             last_used_at: Date;
             last_used_ip: string;
-            expires_at: Date;
         }[];
         ip_whitelist: {
             id: string;
-            description: string | null;
             is_active: boolean;
             created_at: Date;
             created_by_id: string | null;
-            app_id: string;
+            description: string | null;
             ip_address: string;
+            app_id: string;
         }[];
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     create(dto: CreateAppDto, req: any): Promise<{
         organization: {
@@ -89,14 +89,14 @@ export declare class AppsController {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     update(id: string, dto: UpdateAppDto, req: any): Promise<{
         organization: {
@@ -105,14 +105,14 @@ export declare class AppsController {
         };
     } & {
         id: string;
-        name: string;
-        description: string | null;
-        organization_id: string;
         is_active: boolean;
+        organization_id: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
+        name: string;
+        description: string | null;
     }>;
     delete(id: string): Promise<{
         message: string;
@@ -126,7 +126,6 @@ export declare class AppsController {
     }>;
     getApiKeys(id: string): Promise<{
         id: string;
-        name: string;
         is_active: boolean;
         created_at: Date;
         created_by: {
@@ -135,22 +134,23 @@ export declare class AppsController {
             first_name: string;
             last_name: string;
         };
+        name: string;
+        expires_at: Date;
         key_prefix: string;
         last_used_at: Date;
         last_used_ip: string;
-        expires_at: Date;
     }[]>;
     revokeApiKey(id: string, keyId: string): Promise<{
         message: string;
     }>;
     addIpToWhitelist(id: string, dto: CreateIpWhitelistDto, req: any): Promise<{
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     }>;
     getIpWhitelist(id: string): Promise<({
         created_by: {
@@ -161,21 +161,21 @@ export declare class AppsController {
         };
     } & {
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     })[]>;
     updateIpWhitelist(id: string, ipId: string, dto: UpdateIpWhitelistDto): Promise<{
         id: string;
-        description: string | null;
         is_active: boolean;
         created_at: Date;
         created_by_id: string | null;
-        app_id: string;
+        description: string | null;
         ip_address: string;
+        app_id: string;
     }>;
     removeIpFromWhitelist(id: string, ipId: string): Promise<{
         message: string;

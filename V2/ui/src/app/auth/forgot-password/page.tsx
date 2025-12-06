@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon, { faEnvelope, faCheckCircle, faArrowLeft } from '@/app/components/Icon';
 import DigitalClock from '@/app/components/DigitalClock';
+import { AuthAPI } from '@/lib/api';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -31,15 +32,14 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    // Mock password reset for now
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Mock success
+      await AuthAPI.forgotPassword(email.trim());
       setSuccess(true);
-    } catch (err) {
-      setError('Failed to send reset email. Please try again.');
+    } catch (err: any) {
+      console.error('Forgot password error:', err);
+      // Even on error, show success for security (don't reveal if email exists)
+      // But log the actual error for debugging
+      setSuccess(true);
     } finally {
       setLoading(false);
     }

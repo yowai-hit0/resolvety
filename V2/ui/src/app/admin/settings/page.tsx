@@ -16,6 +16,8 @@ import Icon, {
 import { useToast } from '@/app/components/Toaster';
 import { UserRole } from '@/types';
 import { DetailPageSkeleton } from '@/app/components/Skeleton';
+import { SettingsAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 
 interface SettingsData {
   general: {
@@ -139,42 +141,43 @@ const defaultSettings: SettingsData = {
 
 export default function AdminSettingsPage() {
   const { show } = useToast();
+  const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState('general');
   const [settings, setSettings] = useState<SettingsData>(defaultSettings);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>('admin');
+  const [userRole, setUserRole] = useState<UserRole>(user?.role || 'admin');
 
   useEffect(() => {
-    // Get user role from session
-    if (typeof window !== 'undefined') {
-      const auth = sessionStorage.getItem('resolveitAuth');
-      if (auth) {
-        try {
-          const user = JSON.parse(auth);
-          setUserRole(user.role || 'admin');
-        } catch (e) {
-          console.error('Error parsing auth data:', e);
-        }
-      }
+    // Get user role from auth store
+    if (user?.role) {
+      setUserRole(user.role);
     }
 
-    // Load settings (mock - in real app, fetch from API)
-    setLoading(true);
-    setTimeout(() => {
-      // In real app, fetch from API
-      const savedSettings = localStorage.getItem('resolveitSettings');
-      if (savedSettings) {
-        try {
-          setSettings(JSON.parse(savedSettings));
-        } catch (e) {
-          console.error('Error loading settings:', e);
-        }
+    // Load settings from API
+    const loadSettings = async () => {
+      setLoading(true);
+      try {
+        const response = await SettingsAPI.get();
+        // Merge API response with defaults to ensure all fields exist
+        const mergedSettings: SettingsData = {
+          ...defaultSettings,
+          ...response,
+        };
+        setSettings(mergedSettings);
+      } catch (error: any) {
+        console.error('Error loading settings:', error);
+        show(error?.response?.data?.message || 'Failed to load settings', 'error');
+        // Use defaults on error
+        setSettings(defaultSettings);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 300);
-  }, []);
+    };
+
+    loadSettings();
+  }, [user, show]);
 
   const isSuperAdmin = userRole === 'super_admin';
 
@@ -192,23 +195,24 @@ export default function AdminSettingsPage() {
   const handleSave = async (section?: keyof SettingsData) => {
     setSaving(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // In real app, save to API
+    try {
       if (section) {
         // Save specific section
-        const currentSettings = JSON.parse(localStorage.getItem('resolveitSettings') || JSON.stringify(defaultSettings));
-        currentSettings[section] = settings[section];
-        localStorage.setItem('resolveitSettings', JSON.stringify(currentSettings));
+        const sectionData = { [section]: settings[section] };
+        await SettingsAPI.update(sectionData);
         show(`${section.charAt(0).toUpperCase() + section.slice(1)} settings saved successfully!`, 'success');
       } else {
         // Save all settings
-        localStorage.setItem('resolveitSettings', JSON.stringify(settings));
+        await SettingsAPI.update(settings);
         show('All settings saved successfully!', 'success');
       }
       setHasChanges(false);
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      show(error?.response?.data?.message || 'Failed to save settings', 'error');
+    } finally {
       setSaving(false);
-    }, 500);
+    }
   };
 
   const handleReset = (section: keyof SettingsData) => {

@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../prisma/prisma.service';
-import { LoginDto, RegisterDto } from './dto/auth.dto';
+import { LoginDto, RegisterDto, ChangePasswordDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
 
 @Injectable()
 export class AuthService {
@@ -139,6 +139,144 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    // Get user with password hash
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        password_hash: true,
+      },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Verify current password
+    const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.password_hash);
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    // Update password
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: newPasswordHash,
+        updated_at: new Date(),
+      },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto, ipAddress?: string) {
+    // Find user by email
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        is_active: true,
+      },
+    });
+
+    // Always return success message (security best practice - don't reveal if email exists)
+    if (!user || !user.is_active) {
+      return { message: 'If an account with that email exists, a password reset link has been sent.' };
+    }
+
+    // Generate reset token
+    const crypto = require('crypto');
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Set expiration (1 hour from now)
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 1);
+
+    // Create password reset record
+    await this.prisma.passwordReset.create({
+      data: {
+        user_id: user.id,
+        token,
+        expires_at: expiresAt,
+        ip_address: ipAddress || null,
+      },
+    });
+
+    // TODO: Send email with reset link
+    // For now, we'll just return success
+    // In production, you would send an email like:
+    // await this.emailService.sendPasswordResetEmail(user.email, token);
+
+    return {
+      message: 'If an account with that email exists, a password reset link has been sent.',
+      // In development, you might want to return the token for testing
+      // Remove this in production!
+      ...(process.env.NODE_ENV === 'development' && { token, expiresAt }),
+    };
+  }
+
+  async resetPassword(dto: ResetPasswordDto, ipAddress?: string) {
+    // Find password reset record
+    const resetRecord = await this.prisma.passwordReset.findUnique({
+      where: { token: dto.token },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            is_active: true,
+          },
+        },
+      },
+    });
+
+    if (!resetRecord) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    if (resetRecord.used_at) {
+      throw new UnauthorizedException('This reset token has already been used');
+    }
+
+    if (new Date() > resetRecord.expires_at) {
+      throw new UnauthorizedException('Reset token has expired');
+    }
+
+    if (!resetRecord.user.is_active) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    // Hash new password
+    const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
+
+    // Update user password and mark reset token as used
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetRecord.user_id },
+        data: {
+          password_hash: newPasswordHash,
+          updated_at: new Date(),
+        },
+      }),
+      this.prisma.passwordReset.update({
+        where: { id: resetRecord.id },
+        data: {
+          used_at: new Date(),
+        },
+      }),
+    ]);
+
+    return { message: 'Password has been reset successfully. You can now login with your new password.' };
   }
 
   private async generateTokens(userId: string, email: string) {

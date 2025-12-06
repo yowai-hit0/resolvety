@@ -5,12 +5,12 @@ export declare class PublicApiController {
     constructor(publicApiService: PublicApiService);
     registerUser(dto: ApiRegisterUserDto, req: any): Promise<{
         id: string;
-        organization_id: string;
-        created_at: Date;
         email: string;
         first_name: string;
         last_name: string;
         role: import(".prisma/client").$Enums.UserRole;
+        organization_id: string;
+        created_at: Date;
     }>;
     createTicket(dto: ApiCreateTicketDto, req: any): Promise<{
         created_by: {
@@ -27,39 +27,39 @@ export declare class PublicApiController {
         };
         priority: {
             id: string;
-            name: string;
             is_active: boolean;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
             sort_order: number;
         };
         categories: ({
             category: {
                 id: string;
-                name: string;
                 is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
             };
         } & {
             id: string;
             created_at: Date;
-            category_id: string;
             ticket_id: string;
+            category_id: string;
         })[];
     } & {
         id: string;
-        description: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
         ticket_code: string;
         subject: string;
+        description: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
@@ -96,8 +96,8 @@ export declare class PublicApiController {
                 created_at: Date;
                 updated_at: Date;
                 updated_by_id: string | null;
-                content: string;
                 ticket_id: string;
+                content: string;
                 is_internal: boolean;
                 author_id: string;
             })[];
@@ -111,12 +111,12 @@ export declare class PublicApiController {
             } & {
                 id: string;
                 created_at: Date;
-                ip_address: string | null;
                 user_id: string;
                 ticket_id: string;
                 change_type: string;
                 old_value: string | null;
                 new_value: string | null;
+                ip_address: string | null;
             })[];
             attachments: ({
                 uploaded_by: {
@@ -146,39 +146,39 @@ export declare class PublicApiController {
             };
             priority: {
                 id: string;
-                name: string;
                 is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
                 sort_order: number;
             };
             categories: ({
                 category: {
                     id: string;
-                    name: string;
                     is_active: boolean;
                     created_at: Date;
                     updated_at: Date;
                     created_by_id: string | null;
                     updated_by_id: string | null;
+                    name: string;
                 };
             } & {
                 id: string;
                 created_at: Date;
-                category_id: string;
                 ticket_id: string;
+                category_id: string;
             })[];
         } & {
             id: string;
-            description: string;
             created_at: Date;
             updated_at: Date;
             created_by_id: string;
             updated_by_id: string | null;
             ticket_code: string;
             subject: string;
+            description: string;
             requester_email: string | null;
             requester_name: string | null;
             requester_phone: string;
@@ -224,8 +224,8 @@ export declare class PublicApiController {
             created_at: Date;
             updated_at: Date;
             updated_by_id: string | null;
-            content: string;
             ticket_id: string;
+            content: string;
             is_internal: boolean;
             author_id: string;
         })[];
@@ -239,12 +239,12 @@ export declare class PublicApiController {
         } & {
             id: string;
             created_at: Date;
-            ip_address: string | null;
             user_id: string;
             ticket_id: string;
             change_type: string;
             old_value: string | null;
             new_value: string | null;
+            ip_address: string | null;
         })[];
         attachments: ({
             uploaded_by: {
@@ -274,39 +274,39 @@ export declare class PublicApiController {
         };
         priority: {
             id: string;
-            name: string;
             is_active: boolean;
             created_at: Date;
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
+            name: string;
             sort_order: number;
         };
         categories: ({
             category: {
                 id: string;
-                name: string;
                 is_active: boolean;
                 created_at: Date;
                 updated_at: Date;
                 created_by_id: string | null;
                 updated_by_id: string | null;
+                name: string;
             };
         } & {
             id: string;
             created_at: Date;
-            category_id: string;
             ticket_id: string;
+            category_id: string;
         })[];
     } & {
         id: string;
-        description: string;
         created_at: Date;
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
         ticket_code: string;
         subject: string;
+        description: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
@@ -319,26 +319,26 @@ export declare class PublicApiController {
     }>;
     getCategories(req: any): Promise<{
         id: string;
-        name: string;
         is_active: boolean;
         created_at: Date;
+        name: string;
     }[]>;
     getPriorities(req: any): Promise<{
         id: string;
-        name: string;
         is_active: boolean;
         created_at: Date;
+        name: string;
         sort_order: number;
     }[]>;
     getUserProfile(phone: string, req?: any): Promise<{
         id: string;
-        organization_id: string;
-        is_active: boolean;
-        created_at: Date;
-        updated_at: Date;
         email: string;
         first_name: string;
         last_name: string;
         role: import(".prisma/client").$Enums.UserRole;
+        is_active: boolean;
+        organization_id: string;
+        created_at: Date;
+        updated_at: Date;
     }>;
 }

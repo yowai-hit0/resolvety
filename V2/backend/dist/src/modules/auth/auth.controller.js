@@ -34,6 +34,15 @@ let AuthController = class AuthController {
     async getProfile(req) {
         return this.authService.getProfile(req.user.id);
     }
+    async changePassword(dto, req) {
+        return this.authService.changePassword(req.user.id, dto);
+    }
+    async forgotPassword(dto, ip) {
+        return this.authService.forgotPassword(dto, ip);
+    }
+    async resetPassword(dto, ip) {
+        return this.authService.resetPassword(dto, ip);
+    }
 };
 exports.AuthController = AuthController;
 __decorate([
@@ -71,6 +80,35 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "getProfile", null);
+__decorate([
+    (0, common_1.Post)('change-password'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Change user password' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Request)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.ChangePasswordDto, Object]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "changePassword", null);
+__decorate([
+    (0, common_1.Post)('forgot-password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Request password reset' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Ip)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.ForgotPasswordDto, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "forgotPassword", null);
+__decorate([
+    (0, common_1.Post)('reset-password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Reset password with token' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, common_1.Ip)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.ResetPasswordDto, String]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "resetPassword", null);
 exports.AuthController = AuthController = __decorate([
     (0, swagger_1.ApiTags)('Auth'),
     (0, common_1.Controller)('auth'),
