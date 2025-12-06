@@ -405,7 +405,8 @@ let AppsService = class AppsService {
                     throw new common_1.BadRequestException('App is not active');
                 }
                 if (keyRecord.app.ip_whitelist.length > 0) {
-                    const isIpAllowed = this.isIpInWhitelist(clientIp, keyRecord.app.ip_whitelist.map(w => w.ip_address));
+                    const whitelistIps = keyRecord.app.ip_whitelist.map(w => w.ip_address);
+                    const isIpAllowed = this.isIpInWhitelist(clientIp, whitelistIps);
                     if (!isIpAllowed) {
                         throw new common_1.BadRequestException('IP address not whitelisted');
                     }
@@ -427,30 +428,59 @@ let AppsService = class AppsService {
     }
     isIpInWhitelist(clientIp, whitelist) {
         for (const allowedIp of whitelist) {
-            if (allowedIp.includes('/')) {
-                const [network, prefix] = allowedIp.split('/');
-                if (this.isIpInCidr(clientIp, network, parseInt(prefix))) {
-                    return true;
+            try {
+                if (allowedIp.includes('/')) {
+                    const [network, prefix] = allowedIp.split('/');
+                    const prefixNum = parseInt(prefix, 10);
+                    if (isNaN(prefixNum)) {
+                        continue;
+                    }
+                    if (this.isIpInCidr(clientIp, network, prefixNum)) {
+                        return true;
+                    }
+                }
+                else {
+                    if (clientIp === allowedIp) {
+                        return true;
+                    }
                 }
             }
-            else {
-                if (clientIp === allowedIp) {
-                    return true;
-                }
+            catch (error) {
+                continue;
             }
         }
         return false;
     }
     isIpInCidr(ip, network, prefix) {
-        const ipParts = ip.split('.').map(Number);
-        const networkParts = network.split('.').map(Number);
-        if (ipParts.length !== 4 || networkParts.length !== 4) {
+        try {
+            if (ip === '::1') {
+                ip = '127.0.0.1';
+            }
+            if (ip.startsWith('::ffff:')) {
+                ip = ip.substring(7);
+            }
+            const ipParts = ip.split('.');
+            const networkParts = network.split('.');
+            if (ipParts.length !== 4 || networkParts.length !== 4) {
+                return false;
+            }
+            if (prefix < 0 || prefix > 32) {
+                return false;
+            }
+            const ipNums = ipParts.map(Number);
+            const networkNums = networkParts.map(Number);
+            if (ipNums.some(n => isNaN(n) || n < 0 || n > 255) ||
+                networkNums.some(n => isNaN(n) || n < 0 || n > 255)) {
+                return false;
+            }
+            const mask = (0xFFFFFFFF << (32 - prefix)) >>> 0;
+            const ipNum = (ipNums[0] << 24) + (ipNums[1] << 16) + (ipNums[2] << 8) + ipNums[3];
+            const networkNum = (networkNums[0] << 24) + (networkNums[1] << 16) + (networkNums[2] << 8) + networkNums[3];
+            return (ipNum & mask) === (networkNum & mask);
+        }
+        catch (error) {
             return false;
         }
-        const mask = (0xFFFFFFFF << (32 - prefix)) >>> 0;
-        const ipNum = (ipParts[0] << 24) + (ipParts[1] << 16) + (ipParts[2] << 8) + ipParts[3];
-        const networkNum = (networkParts[0] << 24) + (networkParts[1] << 16) + (networkParts[2] << 8) + networkParts[3];
-        return (ipNum & mask) === (networkNum & mask);
     }
 };
 exports.AppsService = AppsService;

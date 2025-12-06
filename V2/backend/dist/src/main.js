@@ -10,6 +10,8 @@ const helmet_1 = __importDefault(require("helmet"));
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const expressApp = app.getHttpAdapter().getInstance();
+    expressApp.set('trust proxy', true);
     app.use((0, helmet_1.default)({
         contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: false,

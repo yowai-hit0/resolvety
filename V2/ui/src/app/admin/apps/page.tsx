@@ -463,6 +463,8 @@ export default function AdminAppsPage() {
         <Pagination
           currentPage={page}
           totalPages={totalPages}
+          totalItems={totalApps}
+          pageSize={pageSize}
           onPageChange={setPage}
         />
       )}

@@ -96,8 +96,8 @@ export declare class PublicApiController {
                 created_at: Date;
                 updated_at: Date;
                 updated_by_id: string | null;
-                ticket_id: string;
                 content: string;
+                ticket_id: string;
                 is_internal: boolean;
                 author_id: string;
             })[];
@@ -224,8 +224,8 @@ export declare class PublicApiController {
             created_at: Date;
             updated_at: Date;
             updated_by_id: string | null;
-            ticket_id: string;
             content: string;
+            ticket_id: string;
             is_internal: boolean;
             author_id: string;
         })[];

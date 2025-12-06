@@ -25,10 +25,21 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     // Get client IP
-    const clientIp = request.ip || 
-                     request.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
-                     request.connection.remoteAddress ||
-                     'unknown';
+    let clientIp = request.ip || 
+                   request.headers['x-forwarded-for']?.split(',')[0]?.trim() || 
+                   request.connection?.remoteAddress ||
+                   request.socket?.remoteAddress ||
+                   'unknown';
+    
+    // Handle IPv6 localhost (::1) - convert to IPv4 localhost
+    if (clientIp === '::1' || clientIp === '::ffff:127.0.0.1') {
+      clientIp = '127.0.0.1';
+    }
+    
+    // Remove IPv6 prefix if present
+    if (clientIp.startsWith('::ffff:')) {
+      clientIp = clientIp.substring(7);
+    }
 
     try {
       // Verify API key and check IP whitelist

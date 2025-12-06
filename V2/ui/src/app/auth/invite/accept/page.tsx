@@ -4,13 +4,17 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Icon, { faEnvelope, faLock, faUser, faEye, faEyeSlash } from '@/app/components/Icon';
+import { InvitesAPI, AuthAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
 
 function AcceptInviteForm() {
   const params = useSearchParams();
   const router = useRouter();
+  const { setUser, setToken } = useAuthStore();
   const token = params.get('token');
   
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -34,12 +38,20 @@ function AcceptInviteForm() {
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!name.trim()) {
-      newErrors.name = 'Full name is required';
-    } else if (name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
-    } else if (name.trim().length > 100) {
-      newErrors.name = 'Name cannot exceed 100 characters';
+    if (!firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    } else if (firstName.trim().length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters';
+    } else if (firstName.trim().length > 50) {
+      newErrors.firstName = 'First name cannot exceed 50 characters';
+    }
+
+    if (!lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    } else if (lastName.trim().length < 2) {
+      newErrors.lastName = 'Last name must be at least 2 characters';
+    } else if (lastName.trim().length > 50) {
+      newErrors.lastName = 'Last name cannot exceed 50 characters';
     }
 
     if (!password) {
@@ -74,34 +86,64 @@ function AcceptInviteForm() {
 
     setSubmitting(true);
 
-    // Mock invite acceptance for now
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock user data - role would come from the invite token
-      const mockUser = {
-        id: Date.now(),
-        email: 'invited@resolveit.rw', // Would come from token
-        name: name.trim(),
-        role: 'agent' // Would come from token
-      };
+      // Accept the invite
+      const acceptResponse = await InvitesAPI.accept({
+        token: token!,
+        password: password,
+        first_name: firstName.trim(),
+        last_name: lastName.trim(),
+      });
 
-      // Store in sessionStorage
-      sessionStorage.setItem('resolveitAuth', JSON.stringify(mockUser));
-      sessionStorage.setItem('resolveitRole', mockUser.role);
-      sessionStorage.setItem('adminName', mockUser.name);
+      // After accepting invite, login the user to get auth token
+      // The backend returns the user object with email
+      const userEmail = acceptResponse.user?.email;
+      if (!userEmail) {
+        throw new Error('User email not found in response');
+      }
+
+      // Login to get auth token
+      const loginResponse = await AuthAPI.login(userEmail, password);
+
+      // Store auth token
+      if (loginResponse.access_token) {
+        localStorage.setItem('auth_token', loginResponse.access_token);
+        if (loginResponse.refresh_token) {
+          localStorage.setItem('refresh_token', loginResponse.refresh_token);
+        }
+      }
+
+      // Update auth store
+      const authToken = loginResponse.access_token || loginResponse.accessToken || loginResponse.token;
+      const user = loginResponse.user || loginResponse.data?.user || loginResponse.data;
+      
+      if (user) {
+        setUser(user);
+        // Also update sessionStorage for backward compatibility
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('resolveitAuth', JSON.stringify(user));
+          sessionStorage.setItem('resolveitRole', user.role);
+          sessionStorage.setItem('adminName', `${user.first_name} ${user.last_name}`);
+        }
+      }
+      
+      if (authToken) {
+        setToken(authToken);
+      }
 
       // Redirect based on role
-      if (mockUser.role === 'admin' || mockUser.role === 'super_admin') {
+      const userRole = acceptResponse.user?.role || loginResponse.user?.role;
+      if (userRole === 'admin' || userRole === 'super_admin') {
         router.push('/admin/dashboard');
-      } else if (mockUser.role === 'agent') {
+      } else if (userRole === 'agent') {
         router.push('/agent/dashboard');
       } else {
         router.push('/auth/login');
       }
-    } catch (err) {
-      setError('Failed to accept invite. Please try again.');
+    } catch (err: any) {
+      console.error('Invite acceptance error:', err);
+      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to accept invite. Please try again.';
+      setError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -177,34 +219,58 @@ function AcceptInviteForm() {
 
           {/* Accept Invite Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Name Field */}
+            {/* First Name Field */}
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                Full Name
+              <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                First Name
               </label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                   <Icon icon={faUser} size="sm" />
                 </div>
                 <input
-                  id="name"
+                  id="firstName"
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-1 text-sm ${
-                    errors.name ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-accent focus:ring-accent'
+                    errors.firstName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-accent focus:ring-accent'
                   }`}
-                  placeholder="Enter your full name"
+                  placeholder="Enter your first name"
                   required
                   disabled={submitting}
                 />
               </div>
-              {errors.name && (
-                <p className="mt-1 text-xs text-red-600">{errors.name}</p>
+              {errors.firstName && (
+                <p className="mt-1 text-xs text-red-600">{errors.firstName}</p>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                This will be used to identify you in the system
-              </p>
+            </div>
+
+            {/* Last Name Field */}
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                Last Name
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                  <Icon icon={faUser} size="sm" />
+                </div>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:bg-white focus:ring-1 text-sm ${
+                    errors.lastName ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : 'border-gray-200 focus:border-accent focus:ring-accent'
+                  }`}
+                  placeholder="Enter your last name"
+                  required
+                  disabled={submitting}
+                />
+              </div>
+              {errors.lastName && (
+                <p className="mt-1 text-xs text-red-600">{errors.lastName}</p>
+              )}
             </div>
 
             {/* Password Field */}
@@ -283,7 +349,7 @@ function AcceptInviteForm() {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !name || !password || !confirmPassword}
+              disabled={submitting || !firstName || !lastName || !password || !confirmPassword}
               className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-6"
             >
               {submitting ? (

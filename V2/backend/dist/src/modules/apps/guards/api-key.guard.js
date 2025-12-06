@@ -30,10 +30,17 @@ let ApiKeyGuard = class ApiKeyGuard {
         if (!apiKey) {
             throw new common_1.UnauthorizedException('API key is required');
         }
-        const clientIp = request.ip ||
+        let clientIp = request.ip ||
             request.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
-            request.connection.remoteAddress ||
+            request.connection?.remoteAddress ||
+            request.socket?.remoteAddress ||
             'unknown';
+        if (clientIp === '::1' || clientIp === '::ffff:127.0.0.1') {
+            clientIp = '127.0.0.1';
+        }
+        if (clientIp.startsWith('::ffff:')) {
+            clientIp = clientIp.substring(7);
+        }
         try {
             const { app, apiKeyRecord } = await this.appsService.verifyApiKey(apiKey, clientIp);
             request.app = app;

@@ -258,7 +258,7 @@ export const InvitesAPI = {
   revoke: (id: string) =>
     api.post(`/invites/${id}/revoke`).then((r) => r.data),
   
-  accept: (data: { token: string; name?: string; password?: string }) =>
+  accept: (data: { token: string; password: string; first_name: string; last_name: string }) =>
     api.post('/invites/accept', data).then((r) => r.data),
 };
 
