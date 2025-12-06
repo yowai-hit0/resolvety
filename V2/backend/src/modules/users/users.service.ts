@@ -111,10 +111,10 @@ export class UsersService {
               },
             },
           },
-          orderBy: {
-            is_primary: 'desc',
-            created_at: 'asc',
-          },
+          orderBy: [
+            { is_primary: 'desc' },
+            { created_at: 'asc' },
+          ],
         },
         _count: {
           select: {
@@ -144,7 +144,7 @@ export class UsersService {
     }
 
     // Handle organization_ids update separately
-    const { organization_ids, ...updateData } = dto as any;
+    const { organization_ids, organization_id, ...updateData } = dto as any;
 
     // If organization_ids is provided, update the relationships
     if (organization_ids !== undefined) {
@@ -177,12 +177,25 @@ export class UsersService {
       }
     }
 
+    // Build update data object with only provided fields
+    const dataToUpdate: any = {
+      updated_by_id: updatedBy,
+    };
+
+    // Only include fields that are actually provided
+    if (dto.first_name !== undefined) {
+      dataToUpdate.first_name = dto.first_name;
+    }
+    if (dto.last_name !== undefined) {
+      dataToUpdate.last_name = dto.last_name;
+    }
+    if (dto.role !== undefined) {
+      dataToUpdate.role = dto.role;
+    }
+
     return this.prisma.user.update({
       where: { id },
-      data: {
-        ...updateData,
-        updated_by_id: updatedBy,
-      },
+      data: dataToUpdate,
       include: {
         user_organizations: {
           include: {
@@ -194,10 +207,10 @@ export class UsersService {
               },
             },
           },
-          orderBy: {
-            is_primary: 'desc',
-            created_at: 'asc',
-          },
+          orderBy: [
+            { is_primary: 'desc' },
+            { created_at: 'asc' },
+          ],
         },
         organization: {
           select: {

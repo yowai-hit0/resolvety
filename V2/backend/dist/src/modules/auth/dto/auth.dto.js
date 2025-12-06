@@ -87,7 +87,7 @@ exports.ResetPasswordDto = ResetPasswordDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Reset token from email' }),
     (0, class_validator_1.IsString)(),
-    IsNotEmpty(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "token", void 0);
 __decorate([

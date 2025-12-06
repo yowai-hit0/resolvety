@@ -141,10 +141,10 @@ let UsersService = class UsersService {
                             },
                         },
                     },
-                    orderBy: {
-                        is_primary: 'desc',
-                        created_at: 'asc',
-                    },
+                    orderBy: [
+                        { is_primary: 'desc' },
+                        { created_at: 'asc' },
+                    ],
                 },
                 _count: {
                     select: {
@@ -168,7 +168,7 @@ let UsersService = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
-        const { organization_ids, ...updateData } = dto;
+        const { organization_ids, organization_id, ...updateData } = dto;
         if (organization_ids !== undefined) {
             if (organization_ids.length > 0) {
                 const orgs = await this.prisma.organization.findMany({
@@ -192,12 +192,21 @@ let UsersService = class UsersService {
                 });
             }
         }
+        const dataToUpdate = {
+            updated_by_id: updatedBy,
+        };
+        if (dto.first_name !== undefined) {
+            dataToUpdate.first_name = dto.first_name;
+        }
+        if (dto.last_name !== undefined) {
+            dataToUpdate.last_name = dto.last_name;
+        }
+        if (dto.role !== undefined) {
+            dataToUpdate.role = dto.role;
+        }
         return this.prisma.user.update({
             where: { id },
-            data: {
-                ...updateData,
-                updated_by_id: updatedBy,
-            },
+            data: dataToUpdate,
             include: {
                 user_organizations: {
                     include: {
@@ -209,10 +218,10 @@ let UsersService = class UsersService {
                             },
                         },
                     },
-                    orderBy: {
-                        is_primary: 'desc',
-                        created_at: 'asc',
-                    },
+                    orderBy: [
+                        { is_primary: 'desc' },
+                        { created_at: 'asc' },
+                    ],
                 },
                 organization: {
                     select: {
