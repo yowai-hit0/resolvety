@@ -70,7 +70,7 @@ export default function TicketDetailPage() {
           CategoriesAPI.list().catch(() => []),
         ]);
         
-        setAgents((usersList.data || usersList || []).filter((u: User) => u.role === 'agent' || u.role === 'admin'));
+        setAgents((usersList.data || usersList || []).filter((u: User) => u.is_active));
         setPriorities(prioritiesList || []);
         setAllCategories(categoriesList || []);
       } catch (error) {
@@ -341,15 +341,14 @@ export default function TicketDetailPage() {
               <button
                 onClick={handleCancel}
                 disabled={saving}
-                className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 text-sm text-gray-700 transition-colors disabled:opacity-50"
+                className="btn btn-secondary text-sm disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                style={{ backgroundColor: '#0f36a5' }}
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
               >
                 {saving ? (
                   <>
@@ -367,8 +366,7 @@ export default function TicketDetailPage() {
           ) : (
             <button
               onClick={() => setEditMode(true)}
-              className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors text-sm font-medium flex items-center gap-2"
-              style={{ backgroundColor: '#0f36a5' }}
+              className="btn btn-primary text-sm font-medium flex items-center gap-2"
             >
               <Icon icon={faEdit} size="sm" />
               Edit Ticket
@@ -423,7 +421,7 @@ export default function TicketDetailPage() {
                   {editMode ? (
                     <select
                       value={editData.priority_id}
-                      onChange={(e) => handleFieldChange('priority_id', e.target.value ? Number(e.target.value) : '')}
+                      onChange={(e) => handleFieldChange('priority_id', e.target.value || '')}
                       disabled={saving}
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     >
@@ -441,7 +439,7 @@ export default function TicketDetailPage() {
                   {editMode ? (
                     <select
                       value={editData.assignee_id}
-                      onChange={(e) => handleFieldChange('assignee_id', e.target.value ? Number(e.target.value) : '')}
+                      onChange={(e) => handleFieldChange('assignee_id', e.target.value || '')}
                       disabled={saving}
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     >
@@ -776,7 +774,7 @@ export default function TicketDetailPage() {
             <div className="flex justify-end mb-2">
               <button
                 onClick={() => setPreviewUrl(null)}
-                className="px-4 py-2 bg-white border border-gray-200 rounded-sm hover:bg-gray-50 text-sm text-gray-700"
+                className="btn btn-secondary text-sm"
               >
                 Close
               </button>

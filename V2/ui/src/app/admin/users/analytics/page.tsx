@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { mockUsers, mockTickets, mockOrganizations } from '@/lib/mockData';
+import { UsersAPI, TicketsAPI, OrganizationsAPI } from '@/lib/api';
+import { User, Ticket, Organization } from '@/types';
 import AreaChart from '@/app/components/charts/AreaChart';
 import BarChart from '@/app/components/charts/BarChart';
 import DonutChart from '@/app/components/charts/DonutChart';
@@ -23,12 +24,32 @@ type TimePeriod = '7d' | '30d' | '90d' | 'all';
 export default function UserAnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
+  const [users, setUsers] = useState<User[]>([]);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch all users, tickets, and organizations
+        const [usersResponse, ticketsResponse, orgsResponse] = await Promise.all([
+          UsersAPI.list({ take: 10000 }).catch(() => ({ data: [] })),
+          TicketsAPI.list({ take: 10000 }).catch(() => ({ data: [] })),
+          OrganizationsAPI.list({ take: 1000 }).catch(() => ({ data: [] })),
+        ]);
+        
+        setUsers(usersResponse.data || usersResponse || []);
+        setTickets(ticketsResponse.data || ticketsResponse || []);
+        setOrganizations(orgsResponse.data || orgsResponse || []);
+      } catch (error) {
+        console.error('Failed to fetch analytics data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   // Calculate date range based on time period
@@ -56,20 +77,20 @@ export default function UserAnalyticsPage() {
 
   // Filter users by date range (users created in this period)
   const filteredUsers = useMemo(() => {
-    return mockUsers.filter(user => {
+    return users.filter(user => {
       const userDate = new Date(user.created_at);
       return userDate >= dateRange.startDate && userDate <= dateRange.endDate;
     });
-  }, [dateRange]);
+  }, [users, dateRange]);
 
   // Calculate statistics
   const stats = useMemo(() => {
-    const totalUsers = mockUsers.length;
-    const activeUsers = mockUsers.filter(u => u.is_active).length;
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.is_active).length;
     const inactiveUsers = totalUsers - activeUsers;
     
     // Users by role
-    const usersByRole = mockUsers.reduce((acc, user) => {
+    const usersByRole = users.reduce((acc, user) => {
       acc[user.role] = (acc[user.role] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
@@ -78,9 +99,9 @@ export default function UserAnalyticsPage() {
     const newUsers = filteredUsers.length;
     
     // Users by organization
-    const usersByOrg = mockUsers.reduce((acc, user) => {
+    const usersByOrg = users.reduce((acc, user) => {
       if (user.organization_id) {
-        const org = mockOrganizations.find(o => o.id === user.organization_id);
+        const org = organizations.find(o => o.id === user.organization_id);
         if (org) {
           acc[org.name] = (acc[org.name] || 0) + 1;
         }
@@ -91,15 +112,15 @@ export default function UserAnalyticsPage() {
     }, {} as Record<string, number>);
 
     // Users with tickets
-    const usersWithTickets = new Set(mockTickets.map(t => t.created_by_id));
+    const usersWithTickets = new Set(tickets.map(t => t.created_by_id));
     const usersWithoutTickets = totalUsers - usersWithTickets.size;
 
     // Average tickets per user
-    const ticketsPerUser = totalUsers > 0 ? Math.round((mockTickets.length / totalUsers) * 10) / 10 : 0;
+    const ticketsPerUser = totalUsers > 0 ? Math.round((tickets.length / totalUsers) * 10) / 10 : 0;
 
     // Users by activity (based on ticket creation)
-    const userActivity = mockUsers.map(user => {
-      const userTickets = mockTickets.filter(t => t.created_by_id === user.id);
+    const userActivity = users.map(user => {
+      const userTickets = tickets.filter(t => t.created_by_id === user.id);
       return {
         user,
         ticketCount: userTickets.length,
@@ -121,7 +142,7 @@ export default function UserAnalyticsPage() {
       ticketsPerUser,
       topActiveUsers,
     };
-  }, [filteredUsers]);
+  }, [users, tickets, organizations, filteredUsers]);
 
   // Users by Role Chart
   const usersByRoleChart = useMemo(() => {

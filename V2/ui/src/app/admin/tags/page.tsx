@@ -252,8 +252,7 @@ export default function AdminTagsPage() {
               <button
                 type="submit"
                 disabled={!tagName.trim()}
-                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                style={{ backgroundColor: '#0f36a5' }}
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
               >
                 <Icon icon={faPlus} size="sm" />
                 Add Category
@@ -286,8 +285,7 @@ export default function AdminTagsPage() {
                         <button
                           onClick={() => handleSaveTag(tag.id)}
                           disabled={!editingTagName.trim()}
-                          className="px-3 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                          style={{ backgroundColor: '#0f36a5' }}
+                          className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
                         >
                           <Icon icon={faCheck} size="sm" />
                           Save
@@ -343,8 +341,7 @@ export default function AdminTagsPage() {
               <button
                 type="submit"
                 disabled={!priorityName.trim()}
-                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                style={{ backgroundColor: '#0f36a5' }}
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
               >
                 <Icon icon={faPlus} size="sm" />
                 Add Priority
@@ -377,8 +374,7 @@ export default function AdminTagsPage() {
                         <button
                           onClick={() => handleSavePriority(priority.id)}
                           disabled={!editingPriorityName.trim()}
-                          className="px-3 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                          style={{ backgroundColor: '#0f36a5' }}
+                          className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
                         >
                           <Icon icon={faCheck} size="sm" />
                           Save

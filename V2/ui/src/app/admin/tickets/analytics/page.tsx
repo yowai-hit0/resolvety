@@ -27,17 +27,34 @@ export default function TicketAnalyticsPage() {
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('30d');
   const [ticketAnalytics, setTicketAnalytics] = useState<any>(null);
   const [ticketStats, setTicketStats] = useState<any>(null);
+  const [generalAnalytics, setGeneralAnalytics] = useState<any>(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [statusTrendData, setStatusTrendData] = useState<any>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [analytics, stats] = await Promise.all([
+        const daysMap: Record<TimePeriod, number> = {
+          '7d': 7,
+          '30d': 30,
+          '90d': 90,
+          'all': 365,
+        };
+        const days = daysMap[timePeriod];
+        
+        const [analytics, stats, general, dashboard, statusTrend] = await Promise.all([
           AdminAPI.ticketAnalytics(),
           TicketsAPI.stats(),
+          AdminAPI.analytics(),
+          AdminAPI.dashboard(),
+          AdminAPI.statusTrend(days),
         ]);
         setTicketAnalytics(analytics);
         setTicketStats(stats);
+        setGeneralAnalytics(general);
+        setDashboardData(dashboard);
+        setStatusTrendData(statusTrend);
       } catch (error: any) {
         console.error('Failed to fetch ticket analytics:', error);
       } finally {
@@ -46,7 +63,7 @@ export default function TicketAnalyticsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [timePeriod]);
 
   // Calculate statistics from API data
   const stats = useMemo(() => {
@@ -82,6 +99,12 @@ export default function TicketAnalyticsPage() {
     const avgResolutionDays = ticketAnalytics.avg_resolution_days?.[0]?.avg_days || 0;
     const avgResolutionTime = Math.round(avgResolutionDays * 24); // Convert days to hours
 
+    // Calculate tickets per day from general analytics
+    const ticketsByDayData = generalAnalytics?.tickets_by_day || [];
+    const totalDays = ticketsByDayData.length || 1;
+    const totalTicketsInPeriod = ticketsByDayData.reduce((sum: number, item: any) => sum + (Number(item.count) || 0), 0);
+    const ticketsPerDay = totalDays > 0 ? Math.round((totalTicketsInPeriod / totalDays) * 100) / 100 : 0;
+
     return {
       totalTickets,
       resolvedTickets,
@@ -91,16 +114,20 @@ export default function TicketAnalyticsPage() {
       avgResponseTime: 0, // Not available from backend yet
       avgResolutionTime,
       resolutionRate,
-      ticketsPerDay: 0, // Can be calculated if needed
+      ticketsPerDay,
       growth: 0, // Can be calculated if needed
     };
-  }, [ticketAnalytics, ticketStats]);
+  }, [ticketAnalytics, ticketStats, generalAnalytics]);
 
-  // Tickets by Day (for area chart) - Use from general analytics if available
+  // Tickets by Day (for area chart) - Use from general analytics
   const ticketsByDay = useMemo(() => {
-    // This would need to be fetched from AdminAPI.analytics() or calculated from ticket list
-    return [];
-  }, []);
+    if (!generalAnalytics?.tickets_by_day) return [];
+    
+    return generalAnalytics.tickets_by_day.map((item: any) => ({
+      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      count: Number(item.count) || 0,
+    }));
+  }, [generalAnalytics]);
 
   // Tickets by Status
   const ticketsByStatus = useMemo(() => {
@@ -112,10 +139,18 @@ export default function TicketAnalyticsPage() {
     }));
   }, [ticketAnalytics]);
 
-  // Tickets by Agent - Would need to fetch from dashboard or separate endpoint
+  // Tickets by Agent - From dashboard data
   const ticketsByAgent = useMemo(() => {
-    return [];
-  }, []);
+    if (!dashboardData?.busiest_agents) return [];
+    
+    return dashboardData.busiest_agents.map((item: any) => {
+      const agent = item.agent || item;
+      return {
+        name: `${agent.first_name || ''} ${agent.last_name || ''}`.trim() || agent.email || 'Unknown',
+        value: Number(item.ticket_count) || 0,
+      };
+    });
+  }, [dashboardData]);
 
   // Tickets by Priority
   const ticketsByPriority = useMemo(() => {
@@ -133,15 +168,34 @@ export default function TicketAnalyticsPage() {
     }));
   }, [ticketAnalytics, ticketStats]);
 
-  // Tickets by Category - Would need to fetch from general analytics
+  // Tickets by Category - From general analytics
   const ticketsByCategory = useMemo(() => {
-    return [];
-  }, []);
+    if (!generalAnalytics?.tickets_by_category) return [];
+    
+    return generalAnalytics.tickets_by_category.map((item: any) => ({
+      name: item.category_name || 'Unknown',
+      value: Number(item.count) || 0,
+    }));
+  }, [generalAnalytics]);
 
-  // Status Trend - Would need to calculate from ticket list or separate endpoint
+  // Status Trend - From API
   const statusTrend = useMemo(() => {
-    return [];
-  }, []);
+    if (!statusTrendData || statusTrendData.length === 0) return [];
+    
+    // Transform API data to chart format
+    // API returns: [{ date: '2024-01-01', New: 5, Assigned: 3, ... }, ...]
+    // Chart needs: [{ date: 'Jan 1', New: 5, Assigned: 3, ... }, ...]
+    return statusTrendData.map((item: any) => ({
+      date: new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      New: Number(item.New) || 0,
+      Assigned: Number(item.Assigned) || 0,
+      In_Progress: Number(item.In_Progress) || 0,
+      On_Hold: Number(item.On_Hold) || 0,
+      Resolved: Number(item.Resolved) || 0,
+      Closed: Number(item.Closed) || 0,
+      Reopened: Number(item.Reopened) || 0,
+    }));
+  }, [statusTrendData]);
 
   if (loading) {
     return (

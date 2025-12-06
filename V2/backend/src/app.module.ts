@@ -12,6 +12,8 @@ import { OrganizationsModule } from './modules/organizations/organizations.modul
 import { AdminModule } from './modules/admin/admin.module';
 import { AgentModule } from './modules/agent/agent.module';
 import { SettingsModule } from './modules/settings/settings.module';
+import { AppsModule } from './modules/apps/apps.module';
+import { PublicApiModule } from './modules/public-api/public-api.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -37,6 +39,8 @@ import { AppController } from './app.controller';
     AdminModule,
     AgentModule,
     SettingsModule,
+    AppsModule,
+    PublicApiModule,
   ],
 })
 export class AppModule {}

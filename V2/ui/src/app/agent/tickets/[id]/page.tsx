@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { mockTickets, mockUsers, mockPriorities, mockTags } from '@/lib/mockData';
-import { Ticket, TicketStatus, Comment, Category, Attachment, TicketEvent } from '@/types';
+import { TicketsAPI, PrioritiesAPI, CategoriesAPI } from '@/lib/api';
+import { useAuthStore } from '@/store/auth';
+import { Ticket, TicketStatus, Comment, Category, Attachment, TicketEvent, TicketPriority } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faFile, faHistory, faFileAlt, faImage, faPlus, faUpload, faTrash } from '@/app/components/Icon';
 import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
@@ -18,146 +19,7 @@ const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = 
   { value: 'Reopened', label: 'Reopened', class: 'status-open' },
 ];
 
-// Mock comments for tickets
-const generateMockComments = (ticketId: string): Comment[] => {
-  const comments: Comment[] = [];
-  const agents = mockUsers.filter(u => u.role === 'agent' || u.role === 'admin');
-  
-  const commentCount = Math.floor(Math.random() * 4) + 2;
-  
-  for (let i = 0; i < commentCount; i++) {
-    const author = agents[Math.floor(Math.random() * agents.length)];
-    const isInternal = Math.random() > 0.6;
-    const date = new Date();
-    date.setDate(date.getDate() - (commentCount - i));
-    
-    comments.push({
-      id: `${ticketId}-comment-${i + 1}`,
-      content: isInternal 
-        ? `Internal note: ${['Following up on this issue', 'Need to escalate', 'Waiting for customer response', 'Resolved internally'][Math.floor(Math.random() * 4)]}`
-        : `Customer response: ${['Thank you for the update', 'This is still an issue', 'Can you provide more details?', 'Issue resolved, thank you!'][Math.floor(Math.random() * 4)]}`,
-      is_internal: isInternal,
-      created_at: date.toISOString(),
-      ticket_id: ticketId,
-      author_id: author.id,
-      author: author,
-    });
-  }
-  
-  return comments.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-};
-
-// Mock tags for tickets
-const generateMockTags = (ticketId: string): Category[] => {
-  const tagCount = Math.floor(Math.random() * 3) + 1;
-  const selectedTags: Category[] = [];
-  const availableTags = mockTags.map(t => ({
-    ...t,
-    id: String(t.id),
-    is_active: true,
-  }));
-  
-  for (let i = 0; i < tagCount && availableTags.length > 0; i++) {
-    const randomIndex = Math.floor(Math.random() * availableTags.length);
-    selectedTags.push(availableTags.splice(randomIndex, 1)[0]);
-  }
-  
-  return selectedTags;
-};
-
-// Mock attachments for tickets
-const generateMockAttachments = (ticketId: string): Attachment[] => {
-  const attachments: Attachment[] = [];
-  const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
-  const fileTypes = [
-    { mime: 'image/jpeg', ext: 'jpg', icon: faImage },
-    { mime: 'image/png', ext: 'png', icon: faImage },
-    { mime: 'audio/mpeg', ext: 'mp3', icon: faFileAlt },
-    { mime: 'video/mp4', ext: 'mp4', icon: faFileAlt },
-    { mime: 'application/pdf', ext: 'pdf', icon: faFileAlt },
-  ];
-
-  const attachmentCount = Math.floor(Math.random() * 3);
-
-  for (let i = 0; i < attachmentCount; i++) {
-    const user = users[Math.floor(Math.random() * users.length)];
-    const fileType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
-    const filename = `file-${ticketId}-${i}.${fileType.ext}`;
-    const size = Math.floor(Math.random() * (5 * 1024 * 1024)) + 100 * 1024;
-    const date = new Date();
-    date.setDate(date.getDate() - (attachmentCount - i));
-
-    attachments.push({
-      id: `${ticketId}-attachment-${i + 1}`,
-      original_filename: filename,
-      stored_filename: `/mock-files/${filename}`,
-      mime_type: fileType.mime,
-      size: size,
-      uploaded_at: date.toISOString(),
-      ticket_id: ticketId,
-      uploaded_by_id: user.id,
-      uploaded_by: user,
-      is_deleted: false,
-    });
-  }
-  return attachments;
-};
-
-// Mock ticket events/history
-const generateMockEvents = (ticket: Ticket): TicketEvent[] => {
-  const events: TicketEvent[] = [];
-  const users = mockUsers.filter(u => u.role === 'admin' || u.role === 'agent');
-  
-  events.push({
-    id: `${ticket.id}-event-1`,
-    ticket_id: ticket.id,
-    user_id: ticket.created_by_id,
-    change_type: 'ticket_created',
-    new_value: ticket.subject,
-    created_at: ticket.created_at,
-    user: ticket.created_by,
-  });
-  
-  const statusChanges: TicketStatus[] = ['Assigned', 'In_Progress', 'Resolved', 'Closed'];
-  let currentStatus = ticket.status;
-  for (let i = 0; i < Math.floor(Math.random() * 3); i++) {
-    const newStatus = statusChanges[Math.floor(Math.random() * statusChanges.length)];
-    if (newStatus !== currentStatus) {
-      const user = users[Math.floor(Math.random() * users.length)];
-      const date = new Date(ticket.created_at);
-      date.setDate(date.getDate() + i + 1);
-      events.push({
-        id: `${ticket.id}-event-${2 + i}`,
-        ticket_id: ticket.id,
-        user_id: user.id,
-        change_type: 'status_changed',
-        old_value: currentStatus,
-        new_value: newStatus,
-        created_at: date.toISOString(),
-        user: user,
-      });
-      currentStatus = newStatus;
-    }
-  }
-
-  if (ticket.assignee_id) {
-    const user = users[Math.floor(Math.random() * users.length)];
-    const date = new Date(ticket.created_at);
-    date.setDate(date.getDate() + 1);
-    events.push({
-      id: `${ticket.id}-event-10`,
-      ticket_id: ticket.id,
-      user_id: user.id,
-      change_type: 'assignee_changed',
-      old_value: 'Unassigned',
-      new_value: ticket.assignee?.first_name + ' ' + ticket.assignee?.last_name,
-      created_at: date.toISOString(),
-      user: user,
-    });
-  }
-  
-  return events.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-};
+// Removed mock data functions - using API data instead
 
 // Helper function to format file size
 const formatFileSize = (bytes: number) => {
@@ -277,12 +139,13 @@ function MediaPreview({ url }: { url: string }) {
 
 export default function AgentTicketDetailPage() {
   const params = useParams();
-  const ticketId = params?.id ? (params.id as string) : null;
-  const [currentAgent, setCurrentAgent] = useState<{ id: string } | null>(null);
+  const router = useRouter();
+  const { user: currentUser } = useAuthStore();
+  const ticketId = params?.id as string | undefined;
   
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
-  const [tags, setTags] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [events, setEvents] = useState<TicketEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -290,6 +153,7 @@ export default function AgentTicketDetailPage() {
   const [saving, setSaving] = useState(false);
   const [showAllComments, setShowAllComments] = useState(false);
   const [comment, setComment] = useState('');
+  const [isInternal, setIsInternal] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -297,171 +161,202 @@ export default function AgentTicketDetailPage() {
   const [editData, setEditData] = useState({
     status: '' as TicketStatus | '',
     priority_id: '' as string | '',
-    tag_ids: [] as string[],
+    category_ids: [] as string[],
   });
 
-  // Get current agent
+  const [priorities, setPriorities] = useState<TicketPriority[]>([]);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+
+  // Fetch priorities and categories
   useEffect(() => {
-    try {
-      const authRaw = sessionStorage.getItem('resolveitAuth');
-      if (authRaw) {
-        const auth = JSON.parse(authRaw) as { id?: string; role?: string } | null;
-        if (auth?.role === 'agent' && auth?.id) {
-          setCurrentAgent({ id: auth.id });
-        }
+    const fetchDropdownData = async () => {
+      try {
+        const [prioritiesList, categoriesList] = await Promise.all([
+          PrioritiesAPI.list().catch(() => []),
+          CategoriesAPI.list().catch(() => []),
+        ]);
+        
+        setPriorities(prioritiesList || []);
+        setAllCategories(categoriesList || []);
+      } catch (error) {
+        console.error('Failed to fetch dropdown data:', error);
       }
-      if (!currentAgent) {
-        const firstAgent = mockUsers.find(u => u.role === 'agent');
-        if (firstAgent) {
-          setCurrentAgent({ id: firstAgent.id });
-        }
-      }
-    } catch (error) {
-      console.error('Error loading agent info', error);
-      const firstAgent = mockUsers.find(u => u.role === 'agent');
-      if (firstAgent) {
-        setCurrentAgent({ id: firstAgent.id });
-      }
-    }
+    };
+    
+    fetchDropdownData();
   }, []);
 
+  // Fetch ticket data
   useEffect(() => {
-    if (!ticketId || !currentAgent) {
+    if (!ticketId) {
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setTimeout(() => {
-      if (!currentAgent) {
-        setLoading(false);
-        return;
-      }
-      const foundTicket = mockTickets.find(t => {
-        const tId = String(t.id);
-        const tAssigneeId = t.assignee_id ? String(t.assignee_id as any) : null;
-        const ticketIdStr = String(ticketId);
-        const agentIdStr = String(currentAgent.id);
-        return tId === ticketIdStr && tAssigneeId === agentIdStr;
-      });
-      if (foundTicket) {
-        setTicket(foundTicket);
-        setComments(generateMockComments(ticketId!));
-        const mockTags = generateMockTags(ticketId!);
-        setTags(mockTags);
-        setAttachments(generateMockAttachments(ticketId!));
-        setEvents(generateMockEvents(foundTicket));
+    const fetchTicket = async () => {
+      setLoading(true);
+      try {
+        const ticketData = await TicketsAPI.get(ticketId);
+        
+        // Verify the ticket is assigned to the current agent
+        if (currentUser && ticketData.assignee_id && String(ticketData.assignee_id) !== String(currentUser.id)) {
+          router.push('/agent/tickets');
+          return;
+        }
+        
+        setTicket(ticketData);
+        setComments(ticketData.comments || []);
+        setCategories(ticketData.categories?.map((tc: any) => tc.category || tc) || []);
+        setAttachments(ticketData.attachments || []);
+        setEvents(ticketData.ticket_events || []);
+        
         setEditData({
-          status: foundTicket.status,
-          priority_id: foundTicket.priority_id ? String(foundTicket.priority_id) : '',
-          tag_ids: mockTags.map(t => t.id),
+          status: ticketData.status,
+          priority_id: ticketData.priority_id || '',
+          category_ids: ticketData.categories?.map((tc: any) => (tc.category || tc).id) || [],
         });
-      } else {
-        setTicket(null);
+      } catch (error) {
+        console.error('Failed to fetch ticket:', error);
+        router.push('/agent/tickets');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 800);
-  }, [ticketId, currentAgent]);
+    };
+    
+    fetchTicket();
+  }, [ticketId, currentUser, router]);
 
   const handleFieldChange = (field: string, value: any) => {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
 
-  const toggleTag = (tagId: string) => {
+  const toggleCategory = (categoryId: string) => {
     setEditData(prev => ({
       ...prev,
-      tag_ids: prev.tag_ids.includes(tagId)
-        ? prev.tag_ids.filter(id => id !== tagId)
-        : [...prev.tag_ids, tagId],
+      category_ids: prev.category_ids.includes(categoryId)
+        ? prev.category_ids.filter(id => id !== categoryId)
+        : [...prev.category_ids, categoryId],
     }));
   };
 
-  const handleSaveChanges = () => {
-    if (!ticket) return;
+  const handleSave = async () => {
+    if (!ticket || !ticketId) return;
+    
     setSaving(true);
     
-    setTimeout(() => {
-      const updatedTicket = {
-        ...ticket,
-        status: editData.status as TicketStatus,
-        priority_id: editData.priority_id,
-        priority: mockPriorities.find(p => String(p.id) === editData.priority_id),
-      };
-      setTicket(updatedTicket);
-      setTags(tags.filter(t => editData.tag_ids.includes(t.id)));
+    try {
+      const updateData: any = {};
+      if (editData.status && editData.status !== ticket.status) {
+        updateData.status = editData.status;
+      }
+      if (editData.priority_id && editData.priority_id !== ticket.priority_id) {
+        updateData.priority_id = editData.priority_id;
+      }
+      if (JSON.stringify(editData.category_ids.sort()) !== JSON.stringify((ticket.categories || []).map((tc: any) => (tc.category || tc).id).sort())) {
+        updateData.category_ids = editData.category_ids;
+      }
+      
+      if (Object.keys(updateData).length > 0) {
+        const updatedTicket = await TicketsAPI.update(ticketId, updateData);
+        setTicket(updatedTicket);
+        setCategories(updatedTicket.categories?.map((tc: any) => tc.category || tc) || []);
+      }
+      
       setEditMode(false);
+    } catch (error) {
+      console.error('Failed to update ticket:', error);
+      alert('Failed to update ticket. Please try again.');
+    } finally {
       setSaving(false);
-    }, 500);
+    }
   };
 
   const handleCancel = () => {
     if (!ticket) return;
     setEditData({
       status: ticket.status,
-      priority_id: ticket.priority_id,
-      tag_ids: tags.map(t => t.id),
+      priority_id: ticket.priority_id || '',
+      category_ids: (ticket.categories || []).map((tc: any) => (tc.category || tc).id),
     });
     setEditMode(false);
   };
 
   const handleAddComment = async () => {
-    if (!comment.trim() || !ticket) return;
+    if (!comment.trim() || !ticket || !ticketId) return;
     
     setSaving(true);
     
-    setTimeout(() => {
-      const newComment: Comment = {
-        id: `${ticketId}-comment-${comments.length + 1}`,
+    try {
+      const newComment = await TicketsAPI.addComment(ticketId, {
         content: comment,
-        is_internal: false, // Agents can only add external comments
-        created_at: new Date().toISOString(),
-        ticket_id: ticket.id,
-        author_id: currentAgent?.id || '',
-        author: mockUsers.find(u => u.id === currentAgent?.id) || mockUsers[0],
-      };
+        is_internal: isInternal,
+      });
       
       setComments(prev => [...prev, newComment]);
       setComment('');
+      setIsInternal(false);
+    } catch (error) {
+      console.error('Failed to add comment:', error);
+      alert('Failed to add comment. Please try again.');
+    } finally {
       setSaving(false);
-    }, 300);
+    }
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+    if (files.length === 0 || !ticket || !ticketId) return;
+    
+    // Validate media files
+    const mediaFiles = files.filter(file => 
+      file.type.startsWith('image/') || 
+      file.type.startsWith('audio/') || 
+      file.type.startsWith('video/')
+    );
+    
+    if (mediaFiles.length !== files.length) {
+      alert('Only image, audio, and video files are allowed');
+      return;
+    }
     
     setUploading(true);
     
-    setTimeout(() => {
-      const newAttachments: Attachment[] = files.map((file, index) => {
-        const type: 'image' | 'audio' | 'video' | 'file' = file.type.startsWith('image/') ? 'image' : 
-                         file.type.startsWith('audio/') ? 'audio' : 
-                         file.type.startsWith('video/') ? 'video' : 'file';
-        const url = URL.createObjectURL(file);
-        return {
-          id: `${ticketId}-attachment-${attachments.length + index + 1}`,
+    try {
+      // Upload files one by one
+      for (const file of mediaFiles) {
+        // For now, we'll need to upload the file to a storage service first
+        // This is a placeholder - actual implementation depends on your file storage setup
+        const attachmentData = {
           original_filename: file.name,
-          stored_filename: url,
+          stored_filename: file.name, // This should be the URL from your storage service
           mime_type: file.type,
           size: file.size,
-          uploaded_at: new Date().toISOString(),
-          ticket_id: ticketId!,
-          uploaded_by_id: currentAgent?.id || '',
-          uploaded_by: mockUsers.find(u => String(u.id) === currentAgent?.id) || mockUsers[0],
-          is_deleted: false,
         };
-      });
-      
-      setAttachments(prev => [...prev, ...newAttachments]);
+        
+        const newAttachment = await TicketsAPI.addAttachment(ticketId, attachmentData);
+        setAttachments(prev => [...prev, newAttachment]);
+      }
+    } catch (error) {
+      console.error('Failed to upload file:', error);
+      alert('Failed to upload file. Please try again.');
+    } finally {
       setUploading(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
-    }, 500);
+    }
   };
 
-  const handleRemoveAttachment = (idToRemove: string) => {
-    setAttachments(prev => prev.filter(att => att.id !== idToRemove));
+  const handleRemoveAttachment = async (attachmentId: string) => {
+    if (!ticketId) return;
+    
+    try {
+      await TicketsAPI.deleteAttachment(attachmentId);
+      setAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } catch (error) {
+      console.error('Failed to remove attachment:', error);
+      alert('Failed to remove attachment. Please try again.');
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -474,7 +369,7 @@ export default function AgentTicketDetailPage() {
     });
   };
 
-  if (loading || !currentAgent) {
+  if (loading || !currentUser) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -521,15 +416,15 @@ export default function AgentTicketDetailPage() {
           {editMode ? (
             <>
               <button 
-                className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors"
+                className="btn btn-secondary text-sm"
                 onClick={handleCancel}
                 disabled={saving}
               >
                 Cancel
               </button>
               <button 
-                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                onClick={handleSaveChanges}
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
+                onClick={handleSave}
                 disabled={saving}
                 style={{ backgroundColor: '#0f36a5' }}
               >
@@ -545,7 +440,7 @@ export default function AgentTicketDetailPage() {
             </>
           ) : (
             <button 
-              className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
+              className="btn btn-secondary text-sm flex items-center gap-2"
               onClick={() => setEditMode(true)}
             >
               <Icon icon={faEdit} size="sm" />
@@ -607,7 +502,7 @@ export default function AgentTicketDetailPage() {
                       className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                     >
                       <option value="">Select Priority</option>
-                      {mockPriorities.map((p) => (
+                      {priorities.map((p) => (
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                     </select>
@@ -629,32 +524,32 @@ export default function AgentTicketDetailPage() {
                 <label className="block text-sm font-medium text-gray-600 mb-1">Categories</label>
                 {editMode ? (
                   <div className="flex flex-wrap gap-2">
-                    {mockTags.map((tag) => (
+                    {allCategories.map((tag) => (
                       <label
                         key={tag.id}
                         className={`px-3 py-1.5 rounded-sm text-sm cursor-pointer transition-colors flex items-center gap-2 ${
-                          editData.tag_ids.includes(String(tag.id))
+                          editData.category_ids.includes(String(tag.id))
                             ? 'text-white border border-primary-500'
                             : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
                         }`}
-                        style={editData.tag_ids.includes(String(tag.id)) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
+                        style={editData.category_ids.includes(String(tag.id)) ? { backgroundColor: '#0f36a5', borderColor: '#0f36a5' } : undefined}
                       >
                         <input
                           type="checkbox"
-                          checked={editData.tag_ids.includes(String(tag.id))}
-                          onChange={() => toggleTag(String(tag.id))}
+                          checked={editData.category_ids.includes(String(tag.id))}
+                          onChange={() => toggleCategory(String(tag.id))}
                           disabled={saving}
                           className="sr-only"
                         />
-                        {editData.tag_ids.includes(String(tag.id)) && <Icon icon={faCheck} size="xs" />}
+                        {editData.category_ids.includes(String(tag.id)) && <Icon icon={faCheck} size="xs" />}
                         {tag.name}
                       </label>
                     ))}
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {tags.length > 0 ? (
-                      tags.map((tag) => (
+                    {categories.length > 0 ? (
+                      categories.map((tag) => (
                         <span key={tag.id} className="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-sm text-sm">
                           {tag.name}
                         </span>
@@ -774,8 +669,7 @@ export default function AgentTicketDetailPage() {
                 <button
                   onClick={handleAddComment}
                   disabled={saving || !comment.trim()}
-                  className="w-full px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-                  style={{ backgroundColor: '#0f36a5' }}
+                  className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
                 >
                   {saving ? (
                     <>

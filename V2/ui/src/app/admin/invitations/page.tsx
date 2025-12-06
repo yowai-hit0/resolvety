@@ -150,7 +150,7 @@ export default function AdminInvitationsPage() {
           <button
             onClick={load}
             disabled={loading}
-            className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
+            className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
           >
             <Icon icon={faRefresh} spin={loading} size="sm" />
             {loading ? 'Refreshing...' : 'Refresh'}
@@ -166,8 +166,7 @@ export default function AdminInvitationsPage() {
           </label>
           <button
             onClick={() => setOpenModal(true)}
-            className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors text-sm font-medium flex items-center gap-2"
-            style={{ backgroundColor: '#0f36a5' }}
+            className="btn btn-primary text-sm font-medium flex items-center gap-2"
           >
             <Icon icon={faPlus} size="sm" />
             Invite User
@@ -475,15 +474,14 @@ export default function AdminInvitationsPage() {
                     type="button"
                     onClick={() => setOpenModal(false)}
                     disabled={submitting}
-                    className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    className="btn btn-secondary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={submitting || !email.trim()}
-                    className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
-                    style={{ backgroundColor: '#0f36a5' }}
+                    className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
                   >
                     {submitting ? (
                       <>

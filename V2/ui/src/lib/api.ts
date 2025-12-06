@@ -276,6 +276,9 @@ export const AdminAPI = {
   
   agentPerformance: () =>
     api.get('/admin/analytics/agent-performance').then((r) => r.data),
+  
+  statusTrend: (days?: number) =>
+    api.get('/admin/analytics/status-trend', { params: days ? { days } : {} }).then((r) => r.data),
 };
 
 // Agent API
@@ -309,5 +312,54 @@ export const SettingsAPI = {
   
   update: (data: any) =>
     api.put('/settings', data).then((r) => r.data),
+};
+
+// Apps API
+export const AppsAPI = {
+  list: (params?: { organization_id?: string; skip?: number; take?: number }) =>
+    api.get('/apps', { params }).then((r) => r.data),
+  
+  get: (id: string) =>
+    api.get(`/apps/${id}`).then((r) => r.data),
+  
+  create: (data: {
+    name: string;
+    description?: string;
+    organization_id: string;
+  }) =>
+    api.post('/apps', data).then((r) => r.data),
+  
+  update: (id: string, data: {
+    name?: string;
+    description?: string;
+    is_active?: boolean;
+  }) =>
+    api.put(`/apps/${id}`, data).then((r) => r.data),
+  
+  delete: (id: string) =>
+    api.delete(`/apps/${id}`).then((r) => r.data),
+  
+  // API Keys
+  createApiKey: (appId: string, data: { name?: string; expires_at?: string }) =>
+    api.post(`/apps/${appId}/api-keys`, data).then((r) => r.data),
+  
+  getApiKeys: (appId: string) =>
+    api.get(`/apps/${appId}/api-keys`).then((r) => r.data),
+  
+  revokeApiKey: (appId: string, keyId: string) =>
+    api.delete(`/apps/${appId}/api-keys/${keyId}`).then((r) => r.data),
+  
+  // IP Whitelist
+  addIpToWhitelist: (appId: string, data: { ip_address: string; description?: string }) =>
+    api.post(`/apps/${appId}/ip-whitelist`, data).then((r) => r.data),
+  
+  getIpWhitelist: (appId: string) =>
+    api.get(`/apps/${appId}/ip-whitelist`).then((r) => r.data),
+  
+  updateIpWhitelist: (appId: string, ipId: string, data: { ip_address?: string; description?: string; is_active?: boolean }) =>
+    api.put(`/apps/${appId}/ip-whitelist/${ipId}`, data).then((r) => r.data),
+  
+  removeIpFromWhitelist: (appId: string, ipId: string) =>
+    api.delete(`/apps/${appId}/ip-whitelist/${ipId}`).then((r) => r.data),
 };
 

@@ -29,12 +29,21 @@ const mockAgents = [
   { first_name: 'TCP', last_name: '' },
 ];
 
+// Helper function to generate UUID-like string
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
 // Mock Users - Note: mockOrganizations must be defined before this
 // We'll assign users to organizations after organizations are created
 export const mockUsers: User[] = [
   // Super Admin (specific user for testing) - no organization
   {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000001',
     email: 'superadmin@resolveit.rw',
     first_name: 'Super',
     last_name: 'Admin',
@@ -46,25 +55,25 @@ export const mockUsers: User[] = [
   },
   // Regular Admin (specific user for testing) - assigned to first org
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000002',
     email: 'admin@resolveit.rw',
     first_name: 'Admin',
     last_name: 'User',
     role: 'admin' as UserRole,
     is_active: true,
-    organization_id: 1, // First organization
+    organization_id: '00000000-0000-0000-0000-000000000101', // First organization
     created_at: randomDate(new Date(2024, 0, 1), new Date()),
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   },
   // Create specific agents first - assign to different organizations
   ...mockAgents.map((agent, i) => ({
-    id: i + 3,
+    id: `00000000-0000-0000-0000-${String(i + 3).padStart(12, '0')}`,
     email: `${agent.first_name.toLowerCase()}@resolveit.rw`,
     first_name: agent.first_name,
     last_name: agent.last_name,
     role: 'agent' as UserRole,
     is_active: true,
-    organization_id: (i % 3) + 1, // Distribute across first 3 orgs
+    organization_id: `00000000-0000-0000-0000-${String((i % 3) + 101).padStart(12, '0')}`, // Distribute across first 3 orgs
     created_at: randomDate(new Date(2024, 0, 1), new Date()),
     updated_at: randomDate(new Date(2024, 0, 1), new Date()),
   })),
@@ -75,10 +84,11 @@ export const mockUsers: User[] = [
     const roles: UserRole[] = ['admin', 'customer'];
     const role = roles[Math.floor(Math.random() * roles.length)];
     // Assign to random organization (1-3) or no organization
-    const orgId = Math.random() > 0.2 ? Math.floor(Math.random() * 3) + 1 : undefined;
+    const orgIndex = Math.random() > 0.2 ? Math.floor(Math.random() * 3) + 1 : undefined;
+    const orgId = orgIndex ? `00000000-0000-0000-0000-${String(orgIndex + 100).padStart(12, '0')}` : undefined;
     
     return {
-      id: mockAgents.length + i + 3,
+      id: generateUUID(),
       email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${i}@resolveit.rw`,
       first_name: firstName,
       last_name: lastName,
@@ -91,24 +101,24 @@ export const mockUsers: User[] = [
   }),
 ];
 
-// Mock Tags
+// Mock Tags (Categories)
 export const mockTags = [
-  { id: 1, name: 'Technical' },
-  { id: 2, name: 'Billing' },
-  { id: 3, name: 'Support' },
-  { id: 4, name: 'Feature Request' },
-  { id: 5, name: 'Bug' },
-  { id: 6, name: 'Urgent' },
-  { id: 7, name: 'Hardware' },
-  { id: 8, name: 'Software' },
+  { id: '00000000-0000-0000-0000-000000000201', name: 'Technical', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000202', name: 'Billing', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000203', name: 'Support', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000204', name: 'Feature Request', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000205', name: 'Bug', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000206', name: 'Urgent', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000207', name: 'Hardware', is_active: true },
+  { id: '00000000-0000-0000-0000-000000000208', name: 'Software', is_active: true },
 ];
 
 // Mock Ticket Priorities
 export const mockPriorities: TicketPriority[] = [
-  { id: 1, name: 'Low' },
-  { id: 2, name: 'Medium' },
-  { id: 3, name: 'High' },
-  { id: 4, name: 'Critical' },
+  { id: '00000000-0000-0000-0000-000000000301', name: 'Low', sort_order: 1, is_active: true },
+  { id: '00000000-0000-0000-0000-000000000302', name: 'Medium', sort_order: 2, is_active: true },
+  { id: '00000000-0000-0000-0000-000000000303', name: 'High', sort_order: 3, is_active: true },
+  { id: '00000000-0000-0000-0000-000000000304', name: 'Critical', sort_order: 4, is_active: true },
 ];
 
 // Mock Invitations
@@ -122,7 +132,7 @@ export const mockInvitations: Invitation[] = Array.from({ length: 15 }, (_, i) =
   const acceptedDate = status === 'ACCEPTED' ? randomDate(new Date(createdDate), new Date()) : undefined;
   
   return {
-    id: i + 1,
+    id: `00000000-0000-0000-0000-${String(i + 401).padStart(12, '0')}`,
     email: `invite${i + 1}@resolveit.rw`,
     role: role,
     token: `token-${i + 1}-${Math.random().toString(36).substring(7)}`,
@@ -181,7 +191,7 @@ export const mockTickets: Ticket[] = Array.from({ length: 200 }, (_, i) => {
   const updatedAt = randomDate(new Date(createdAt), new Date());
   
   return {
-    id: i + 1,
+    id: generateUUID(),
     ticket_code: generateTicketCode(i),
     subject: `${subject} #${i + 1}`,
     description: `Detailed description for ${subject.toLowerCase()}. This is a comprehensive explanation of the issue that needs to be resolved.`,
@@ -248,10 +258,10 @@ export const mockChartData = {
     };
   }).sort((a, b) => b.count - a.count),
   ticketsByPriority: [
-    { name: 'Critical', value: mockTickets.filter(t => t.priority_id === 4).length },
-    { name: 'High', value: mockTickets.filter(t => t.priority_id === 3).length },
-    { name: 'Medium', value: mockTickets.filter(t => t.priority_id === 2).length },
-    { name: 'Low', value: mockTickets.filter(t => t.priority_id === 1).length },
+    { name: 'Critical', value: mockTickets.filter(t => t.priority_id === '00000000-0000-0000-0000-000000000304').length },
+    { name: 'High', value: mockTickets.filter(t => t.priority_id === '00000000-0000-0000-0000-000000000303').length },
+    { name: 'Medium', value: mockTickets.filter(t => t.priority_id === '00000000-0000-0000-0000-000000000302').length },
+    { name: 'Low', value: mockTickets.filter(t => t.priority_id === '00000000-0000-0000-0000-000000000301').length },
   ],
   ticketsByCategory: mockTags.map(tag => {
     // Distribute tickets evenly among tags for visualization
@@ -271,7 +281,7 @@ export const mockChartData = {
 // Mock Organizations - Only 3 organizations including TCP
 export const mockOrganizations: Organization[] = [
   {
-    id: 1,
+    id: '00000000-0000-0000-0000-000000000101',
     name: 'The Commons Project',
     domain: 'thecommonsproject.org',
     email: 'contact@thecommonsproject.org',
@@ -284,7 +294,7 @@ export const mockOrganizations: Organization[] = [
     tickets_count: 150,
   },
   {
-    id: 2,
+    id: '00000000-0000-0000-0000-000000000102',
     name: 'Rwanda ICT Chamber',
     domain: 'rwandaictchamber.rw',
     email: 'contact@rwandaictchamber.rw',
@@ -297,7 +307,7 @@ export const mockOrganizations: Organization[] = [
     tickets_count: 120,
   },
   {
-    id: 3,
+    id: '00000000-0000-0000-0000-000000000103',
     name: 'Hanga Hubs',
     domain: 'hangahubs.rw',
     email: 'contact@hangahubs.rw',

@@ -20,6 +20,7 @@ import Icon, {
   faList,
   faUserPlus,
   faBuilding,
+  faPlug,
 } from './Icon';
 
 interface AdminSidebarProps {
@@ -164,6 +165,11 @@ export default function AdminSidebar({ isOpen, onClose, onCollapsedChange }: Adm
         icon: faTag,
         label: 'Tags',
         href: '/admin/tags',
+      },
+      {
+        icon: faPlug,
+        label: 'Apps',
+        href: '/admin/apps',
       },
       ...(userRole === 'super_admin' ? [{
         icon: faBuilding,

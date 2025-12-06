@@ -21,6 +21,8 @@ const organizations_module_1 = require("./modules/organizations/organizations.mo
 const admin_module_1 = require("./modules/admin/admin.module");
 const agent_module_1 = require("./modules/agent/agent.module");
 const settings_module_1 = require("./modules/settings/settings.module");
+const apps_module_1 = require("./modules/apps/apps.module");
+const public_api_module_1 = require("./modules/public-api/public-api.module");
 const app_controller_1 = require("./app.controller");
 let AppModule = class AppModule {
 };
@@ -49,6 +51,8 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             agent_module_1.AgentModule,
             settings_module_1.SettingsModule,
+            apps_module_1.AppsModule,
+            public_api_module_1.PublicApiModule,
         ],
     })
 ], AppModule);

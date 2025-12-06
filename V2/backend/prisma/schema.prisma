@@ -36,46 +36,50 @@ enum InviteStatus {
 }
 
 model User {
-  id            String       @id @default(uuid()) @db.Uuid
-  email         String       @unique
-  password_hash String       @map("password_hash")
-  first_name    String       @map("first_name")
-  last_name     String       @map("last_name")
-  role          UserRole
-  is_active     Boolean      @default(true) @map("is_active")
-  organization_id String?    @map("organization_id") @db.Uuid
-  created_at    DateTime     @default(now()) @map("created_at")
-  updated_at    DateTime     @updatedAt @map("updated_at")
-  created_by_id String?      @map("created_by_id") @db.Uuid
-  updated_by_id String?      @map("updated_by_id") @db.Uuid
-  last_login_at DateTime?    @map("last_login_at")
-  last_login_ip String?     @map("last_login_ip") @db.Inet
-  
+  id              String    @id @default(uuid()) @db.Uuid
+  email           String    @unique
+  password_hash   String    @map("password_hash")
+  first_name      String    @map("first_name")
+  last_name       String    @map("last_name")
+  role            UserRole
+  is_active       Boolean   @default(true) @map("is_active")
+  organization_id String?   @map("organization_id") @db.Uuid
+  created_at      DateTime  @default(now()) @map("created_at")
+  updated_at      DateTime  @updatedAt @map("updated_at")
+  created_by_id   String?   @map("created_by_id") @db.Uuid
+  updated_by_id   String?   @map("updated_by_id") @db.Uuid
+  last_login_at   DateTime? @map("last_login_at")
+  last_login_ip   String?   @map("last_login_ip") @db.Inet
+
   // Relations
-  organization  Organization? @relation(fields: [organization_id], references: [id], onDelete: SetNull)
-  created_by    User?         @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  updated_by    User?         @relation("UserUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  users_created User[]        @relation("UserCreatedBy")
-  users_updated User[]        @relation("UserUpdatedBy")
-  tickets_created Ticket[] @relation("TicketCreatedBy")
-  tickets_assigned Ticket[] @relation("TicketAssignedTo")
-  tickets_updated Ticket[] @relation("TicketUpdatedBy")
-  comments      Comment[]     @relation("CommentAuthor")
-  comments_updated Comment[]  @relation("CommentUpdatedBy")
-  ticket_events TicketEvent[]
-  attachments   Attachment[]
-  attachments_deleted Attachment[] @relation("AttachmentDeletedBy")
-  organizations_created Organization[] @relation("OrganizationCreatedBy")
-  organizations_updated Organization[] @relation("OrganizationUpdatedBy")
-  categories_created Category[] @relation("CategoryCreatedBy")
-  categories_updated Category[] @relation("CategoryUpdatedBy")
-  priorities_created TicketPriority[] @relation("PriorityCreatedBy")
-  priorities_updated TicketPriority[] @relation("PriorityUpdatedBy")
-  invites_created Invite[] @relation("InviteCreatedBy")
-  invites_updated Invite[] @relation("InviteUpdatedBy")
-  sessions      UserSession[]
-  login_attempts LoginAttempt[]
-  
+  organization          Organization?    @relation(fields: [organization_id], references: [id], onDelete: SetNull)
+  created_by            User?            @relation("UserCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by            User?            @relation("UserUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  users_created         User[]           @relation("UserCreatedBy")
+  users_updated         User[]           @relation("UserUpdatedBy")
+  tickets_created       Ticket[]         @relation("TicketCreatedBy")
+  tickets_assigned      Ticket[]         @relation("TicketAssignedTo")
+  tickets_updated       Ticket[]         @relation("TicketUpdatedBy")
+  comments              Comment[]        @relation("CommentAuthor")
+  comments_updated      Comment[]        @relation("CommentUpdatedBy")
+  ticket_events         TicketEvent[]
+  attachments           Attachment[]
+  attachments_deleted   Attachment[]     @relation("AttachmentDeletedBy")
+  organizations_created Organization[]   @relation("OrganizationCreatedBy")
+  organizations_updated Organization[]   @relation("OrganizationUpdatedBy")
+  categories_created    Category[]       @relation("CategoryCreatedBy")
+  categories_updated    Category[]       @relation("CategoryUpdatedBy")
+  priorities_created    TicketPriority[] @relation("PriorityCreatedBy")
+  priorities_updated    TicketPriority[] @relation("PriorityUpdatedBy")
+  invites_created       Invite[]         @relation("InviteCreatedBy")
+  invites_updated       Invite[]         @relation("InviteUpdatedBy")
+  sessions              UserSession[]
+  login_attempts        LoginAttempt[]
+  apps_created          App[]            @relation("AppCreatedBy")
+  apps_updated          App[]            @relation("AppUpdatedBy")
+  api_keys_created      AppApiKey[]      @relation("ApiKeyCreatedBy")
+  ip_whitelist_created  AppIpWhitelist[] @relation("IpWhitelistCreatedBy")
+
   @@index([email])
   @@index([role])
   @@index([organization_id])
@@ -86,23 +90,24 @@ model User {
 }
 
 model Organization {
-  id            String       @id @default(uuid()) @db.Uuid
+  id            String   @id @default(uuid()) @db.Uuid
   name          String
   domain        String?
   email         String?
   phone         String?
   address       String?
-  is_active     Boolean      @default(true) @map("is_active")
-  created_at    DateTime     @default(now()) @map("created_at")
-  updated_at    DateTime     @updatedAt @map("updated_at")
-  created_by_id String?      @map("created_by_id") @db.Uuid
-  updated_by_id String?      @map("updated_by_id") @db.Uuid
-  
+  is_active     Boolean  @default(true) @map("is_active")
+  created_at    DateTime @default(now()) @map("created_at")
+  updated_at    DateTime @updatedAt @map("updated_at")
+  created_by_id String?  @map("created_by_id") @db.Uuid
+  updated_by_id String?  @map("updated_by_id") @db.Uuid
+
   // Relations
-  users         User[]
-  created_by    User?        @relation("OrganizationCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  updated_by    User?        @relation("OrganizationUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  
+  users      User[]
+  apps       App[]
+  created_by User?  @relation("OrganizationCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by User?  @relation("OrganizationUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   @@index([name])
   @@index([is_active])
   @@index([created_at])
@@ -123,23 +128,23 @@ model Ticket {
   updated_at      DateTime     @updatedAt @map("updated_at")
   resolved_at     DateTime?    @map("resolved_at")
   closed_at       DateTime?    @map("closed_at")
-  
+
   // Foreign keys
-  created_by_id   String       @map("created_by_id") @db.Uuid
-  updated_by_id   String?      @map("updated_by_id") @db.Uuid
-  assignee_id     String?      @map("assignee_id") @db.Uuid
-  priority_id     String       @map("priority_id") @db.Uuid
-  
+  created_by_id String  @map("created_by_id") @db.Uuid
+  updated_by_id String? @map("updated_by_id") @db.Uuid
+  assignee_id   String? @map("assignee_id") @db.Uuid
+  priority_id   String  @map("priority_id") @db.Uuid
+
   // Relations
-  created_by      User         @relation("TicketCreatedBy", fields: [created_by_id], references: [id], onDelete: Cascade)
-  updated_by      User?        @relation("TicketUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  assignee        User?        @relation("TicketAssignedTo", fields: [assignee_id], references: [id], onDelete: SetNull)
-  priority        TicketPriority @relation(fields: [priority_id], references: [id], onDelete: Restrict)
-  comments        Comment[]
-  ticket_events   TicketEvent[]
-  attachments     Attachment[]
-  categories      TicketCategory[]
-  
+  created_by    User             @relation("TicketCreatedBy", fields: [created_by_id], references: [id], onDelete: Cascade)
+  updated_by    User?            @relation("TicketUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  assignee      User?            @relation("TicketAssignedTo", fields: [assignee_id], references: [id], onDelete: SetNull)
+  priority      TicketPriority   @relation(fields: [priority_id], references: [id], onDelete: Restrict)
+  comments      Comment[]
+  ticket_events TicketEvent[]
+  attachments   Attachment[]
+  categories    TicketCategory[]
+
   @@index([status])
   @@index([priority_id])
   @@index([assignee_id])
@@ -150,22 +155,22 @@ model Ticket {
 }
 
 model Comment {
-  id          String    @id @default(uuid()) @db.Uuid
+  id          String   @id @default(uuid()) @db.Uuid
   content     String
-  is_internal Boolean   @default(false) @map("is_internal")
-  created_at  DateTime  @default(now()) @map("created_at")
-  updated_at  DateTime  @updatedAt @map("updated_at")
-  
+  is_internal Boolean  @default(false) @map("is_internal")
+  created_at  DateTime @default(now()) @map("created_at")
+  updated_at  DateTime @updatedAt @map("updated_at")
+
   // Foreign keys
-  ticket_id   String    @map("ticket_id") @db.Uuid
-  author_id  String    @map("author_id") @db.Uuid
+  ticket_id     String  @map("ticket_id") @db.Uuid
+  author_id     String  @map("author_id") @db.Uuid
   updated_by_id String? @map("updated_by_id") @db.Uuid
-  
+
   // Relations
-  ticket      Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  author      User      @relation("CommentAuthor", fields: [author_id], references: [id], onDelete: Cascade)
-  updated_by  User?     @relation("CommentUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  
+  ticket     Ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  author     User   @relation("CommentAuthor", fields: [author_id], references: [id], onDelete: Cascade)
+  updated_by User?  @relation("CommentUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   @@index([ticket_id])
   @@index([author_id])
   @@index([created_at])
@@ -173,21 +178,21 @@ model Comment {
 }
 
 model TicketEvent {
-  id           String    @id @default(uuid()) @db.Uuid
-  change_type  String    @map("change_type")
-  old_value    String?   @map("old_value")
-  new_value    String?   @map("new_value")
-  ip_address   String?   @map("ip_address") @db.Inet
-  created_at   DateTime  @default(now()) @map("created_at")
-  
+  id          String   @id @default(uuid()) @db.Uuid
+  change_type String   @map("change_type")
+  old_value   String?  @map("old_value")
+  new_value   String?  @map("new_value")
+  ip_address  String?  @map("ip_address") @db.Inet
+  created_at  DateTime @default(now()) @map("created_at")
+
   // Foreign keys
-  ticket_id    String    @map("ticket_id") @db.Uuid
-  user_id      String    @map("user_id") @db.Uuid
-  
+  ticket_id String @map("ticket_id") @db.Uuid
+  user_id   String @map("user_id") @db.Uuid
+
   // Relations
-  ticket       Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
+  ticket Ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([ticket_id])
   @@index([user_id])
   @@index([created_at])
@@ -195,24 +200,24 @@ model TicketEvent {
 }
 
 model UserSession {
-  id            String    @id @default(uuid()) @db.Uuid
-  user_id       String    @map("user_id") @db.Uuid
-  device_id     String?   @map("device_id")
-  device_name   String?   @map("device_name")
-  device_type   String?   @map("device_type")
-  os_version    String?   @map("os_version")
-  app_version   String?   @map("app_version")
-  fcm_token     String?   @map("fcm_token")
-  ip_address    String?   @map("ip_address") @db.Inet
-  user_agent    String?   @map("user_agent")
-  is_active     Boolean   @default(true) @map("is_active")
-  last_active_at DateTime @default(now()) @map("last_active_at")
-  created_at    DateTime  @default(now()) @map("created_at")
-  expires_at    DateTime? @map("expires_at")
-  
+  id             String    @id @default(uuid()) @db.Uuid
+  user_id        String    @map("user_id") @db.Uuid
+  device_id      String?   @map("device_id")
+  device_name    String?   @map("device_name")
+  device_type    String?   @map("device_type")
+  os_version     String?   @map("os_version")
+  app_version    String?   @map("app_version")
+  fcm_token      String?   @map("fcm_token")
+  ip_address     String?   @map("ip_address") @db.Inet
+  user_agent     String?   @map("user_agent")
+  is_active      Boolean   @default(true) @map("is_active")
+  last_active_at DateTime  @default(now()) @map("last_active_at")
+  created_at     DateTime  @default(now()) @map("created_at")
+  expires_at     DateTime? @map("expires_at")
+
   // Relations
-  user          User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
   @@index([user_id])
   @@index([is_active])
   @@index([created_at])
@@ -221,18 +226,18 @@ model UserSession {
 }
 
 model LoginAttempt {
-  id            String    @id @default(uuid()) @db.Uuid
-  email         String
-  ip_address    String?   @map("ip_address") @db.Inet
-  user_agent    String?   @map("user_agent")
-  success       Boolean   @default(false)
+  id             String   @id @default(uuid()) @db.Uuid
+  email          String
+  ip_address     String?  @map("ip_address") @db.Inet
+  user_agent     String?  @map("user_agent")
+  success        Boolean  @default(false)
   failure_reason String?  @map("failure_reason")
-  user_id       String?   @map("user_id") @db.Uuid
-  created_at    DateTime  @default(now()) @map("created_at")
-  
+  user_id        String?  @map("user_id") @db.Uuid
+  created_at     DateTime @default(now()) @map("created_at")
+
   // Relations
-  user          User?     @relation(fields: [user_id], references: [id], onDelete: SetNull)
-  
+  user User? @relation(fields: [user_id], references: [id], onDelete: SetNull)
+
   @@index([email])
   @@index([ip_address])
   @@index([success])
@@ -250,17 +255,17 @@ model Attachment {
   is_deleted        Boolean   @default(false) @map("is_deleted")
   uploaded_at       DateTime  @default(now()) @map("uploaded_at")
   deleted_at        DateTime? @map("deleted_at")
-  
+
   // Foreign keys
-  ticket_id         String    @map("ticket_id") @db.Uuid
-  uploaded_by_id   String    @map("uploaded_by_id") @db.Uuid
-  deleted_by_id    String?   @map("deleted_by_id") @db.Uuid
-  
+  ticket_id      String  @map("ticket_id") @db.Uuid
+  uploaded_by_id String  @map("uploaded_by_id") @db.Uuid
+  deleted_by_id  String? @map("deleted_by_id") @db.Uuid
+
   // Relations
-  ticket            Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  uploaded_by       User      @relation(fields: [uploaded_by_id], references: [id], onDelete: Cascade)
-  deleted_by        User?     @relation("AttachmentDeletedBy", fields: [deleted_by_id], references: [id], onDelete: SetNull)
-  
+  ticket      Ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  uploaded_by User   @relation(fields: [uploaded_by_id], references: [id], onDelete: Cascade)
+  deleted_by  User?  @relation("AttachmentDeletedBy", fields: [deleted_by_id], references: [id], onDelete: SetNull)
+
   @@index([ticket_id])
   @@index([uploaded_by_id])
   @@index([is_deleted])
@@ -269,56 +274,56 @@ model Attachment {
 }
 
 model TicketPriority {
-  id            String    @id @default(uuid()) @db.Uuid
-  name          String    @unique
-  is_active     Boolean   @default(true) @map("is_active")
-  sort_order    Int       @default(0) @map("sort_order")
-  created_at    DateTime  @default(now()) @map("created_at")
-  updated_at    DateTime  @updatedAt @map("updated_at")
-  created_by_id String?   @map("created_by_id") @db.Uuid
-  updated_by_id String?   @map("updated_by_id") @db.Uuid
-  
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @unique
+  is_active     Boolean  @default(true) @map("is_active")
+  sort_order    Int      @default(0) @map("sort_order")
+  created_at    DateTime @default(now()) @map("created_at")
+  updated_at    DateTime @updatedAt @map("updated_at")
+  created_by_id String?  @map("created_by_id") @db.Uuid
+  updated_by_id String?  @map("updated_by_id") @db.Uuid
+
   // Relations
-  tickets       Ticket[]
-  created_by    User?     @relation("PriorityCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  updated_by    User?      @relation("PriorityUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  
+  tickets    Ticket[]
+  created_by User?    @relation("PriorityCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by User?    @relation("PriorityUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   @@index([is_active])
   @@index([sort_order])
   @@map("ticket_priority")
 }
 
 model Category {
-  id            String            @id @default(uuid()) @db.Uuid
-  name          String            @unique
-  is_active     Boolean           @default(true) @map("is_active")
-  created_at    DateTime          @default(now()) @map("created_at")
-  updated_at    DateTime          @updatedAt @map("updated_at")
-  created_by_id String?           @map("created_by_id") @db.Uuid
-  updated_by_id String?           @map("updated_by_id") @db.Uuid
-  
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @unique
+  is_active     Boolean  @default(true) @map("is_active")
+  created_at    DateTime @default(now()) @map("created_at")
+  updated_at    DateTime @updatedAt @map("updated_at")
+  created_by_id String?  @map("created_by_id") @db.Uuid
+  updated_by_id String?  @map("updated_by_id") @db.Uuid
+
   // Relations
-  tickets       TicketCategory[]
-  created_by    User?             @relation("CategoryCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  updated_by    User?             @relation("CategoryUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  
+  tickets    TicketCategory[]
+  created_by User?            @relation("CategoryCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by User?            @relation("CategoryUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   @@index([is_active])
   @@index([name])
   @@map("categories")
 }
 
 model TicketCategory {
-  id         String    @id @default(uuid()) @db.Uuid
-  created_at DateTime  @default(now()) @map("created_at")
-  
+  id         String   @id @default(uuid()) @db.Uuid
+  created_at DateTime @default(now()) @map("created_at")
+
   // Foreign keys
-  ticket_id  String    @map("ticket_id") @db.Uuid
-  category_id String   @map("category_id") @db.Uuid
-  
+  ticket_id   String @map("ticket_id") @db.Uuid
+  category_id String @map("category_id") @db.Uuid
+
   // Relations
-  ticket     Ticket    @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
-  category   Category  @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  
+  ticket   Ticket   @relation(fields: [ticket_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
   @@unique([ticket_id, category_id])
   @@index([ticket_id])
   @@index([category_id])
@@ -326,22 +331,22 @@ model TicketCategory {
 }
 
 model Invite {
-  id            String        @id @default(uuid()) @db.Uuid
+  id            String       @id @default(uuid()) @db.Uuid
   email         String
   role          UserRole
-  token         String        @unique
-  expires_at    DateTime      @map("expires_at")
-  status        InviteStatus  @default(PENDING)
-  created_at    DateTime      @default(now()) @map("created_at")
-  updated_at    DateTime      @updatedAt @map("updated_at")
-  accepted_at   DateTime?     @map("accepted_at")
-  created_by_id String?       @map("created_by_id") @db.Uuid
-  updated_by_id String?       @map("updated_by_id") @db.Uuid
-  
+  token         String       @unique
+  expires_at    DateTime     @map("expires_at")
+  status        InviteStatus @default(PENDING)
+  created_at    DateTime     @default(now()) @map("created_at")
+  updated_at    DateTime     @updatedAt @map("updated_at")
+  accepted_at   DateTime?    @map("accepted_at")
+  created_by_id String?      @map("created_by_id") @db.Uuid
+  updated_by_id String?      @map("updated_by_id") @db.Uuid
+
   // Relations
-  created_by    User?         @relation("InviteCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
-  updated_by    User?         @relation("InviteUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
-  
+  created_by User? @relation("InviteCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by User? @relation("InviteUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+
   @@index([email])
   @@index([token])
   @@index([status])
@@ -349,3 +354,69 @@ model Invite {
   @@map("invites")
 }
 
+model App {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  description     String?
+  organization_id String   @map("organization_id") @db.Uuid
+  is_active       Boolean  @default(true) @map("is_active")
+  created_at      DateTime @default(now()) @map("created_at")
+  updated_at      DateTime @updatedAt @map("updated_at")
+  created_by_id   String?  @map("created_by_id") @db.Uuid
+  updated_by_id   String?  @map("updated_by_id") @db.Uuid
+
+  // Relations
+  organization Organization     @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  created_by   User?            @relation("AppCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+  updated_by   User?            @relation("AppUpdatedBy", fields: [updated_by_id], references: [id], onDelete: SetNull)
+  api_keys     AppApiKey[]
+  ip_whitelist AppIpWhitelist[]
+
+  @@index([organization_id])
+  @@index([is_active])
+  @@index([created_at])
+  @@map("apps")
+}
+
+model AppApiKey {
+  id            String    @id @default(uuid()) @db.Uuid
+  app_id        String    @map("app_id") @db.Uuid
+  key_hash      String    @unique @map("key_hash") // Hashed API key
+  key_prefix    String    @map("key_prefix") // First 8 chars for display (e.g., "sk_live_ab")
+  name          String? // Optional name for the key
+  last_used_at  DateTime? @map("last_used_at")
+  last_used_ip  String?   @map("last_used_ip") @db.Inet
+  expires_at    DateTime? @map("expires_at")
+  is_active     Boolean   @default(true) @map("is_active")
+  created_at    DateTime  @default(now()) @map("created_at")
+  created_by_id String?   @map("created_by_id") @db.Uuid
+
+  // Relations
+  app        App   @relation(fields: [app_id], references: [id], onDelete: Cascade)
+  created_by User? @relation("ApiKeyCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+
+  @@index([app_id])
+  @@index([key_hash])
+  @@index([is_active])
+  @@index([expires_at])
+  @@map("app_api_keys")
+}
+
+model AppIpWhitelist {
+  id            String   @id @default(uuid()) @db.Uuid
+  app_id        String   @map("app_id") @db.Uuid
+  ip_address    String   @map("ip_address") @db.Inet // Can be single IP or CIDR (e.g., 192.168.1.0/24)
+  description   String? // Optional description
+  is_active     Boolean  @default(true) @map("is_active")
+  created_at    DateTime @default(now()) @map("created_at")
+  created_by_id String?  @map("created_by_id") @db.Uuid
+
+  // Relations
+  app        App   @relation(fields: [app_id], references: [id], onDelete: Cascade)
+  created_by User? @relation("IpWhitelistCreatedBy", fields: [created_by_id], references: [id], onDelete: SetNull)
+
+  @@index([app_id])
+  @@index([ip_address])
+  @@index([is_active])
+  @@map("app_ip_whitelist")
+}

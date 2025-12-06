@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TicketsAPI, UsersAPI, PrioritiesAPI, CategoriesAPI } from '@/lib/api';
 import { Ticket, TicketStatus, TicketPriority, User, Category } from '@/types';
@@ -230,11 +231,35 @@ function MobileFilterSheet({
 }
 
 export default function AdminTicketsPage() {
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [totalTickets, setTotalTickets] = useState(0);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('');
+  
+  // Helper function to normalize status from URL (e.g., "resolved" -> "Resolved")
+  const normalizeStatus = (status: string | null): TicketStatus | '' => {
+    if (!status) return '';
+    // Handle special cases first
+    const lowerStatus = status.toLowerCase();
+    if (lowerStatus === 'in_progress' || lowerStatus === 'in progress') return 'In_Progress';
+    if (lowerStatus === 'on_hold' || lowerStatus === 'on hold') return 'On_Hold';
+    
+    // Normalize: capitalize first letter, lowercase rest
+    const normalized = status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+    
+    // Check if it's a valid status
+    const validStatuses: TicketStatus[] = ['New', 'Assigned', 'In_Progress', 'On_Hold', 'Resolved', 'Closed', 'Reopened'];
+    return validStatuses.includes(normalized as TicketStatus) ? (normalized as TicketStatus) : '';
+  };
+  
+  // Initialize status filter from URL query parameter
+  const getInitialStatus = (): TicketStatus | '' => {
+    const statusParam = searchParams.get('status');
+    return normalizeStatus(statusParam);
+  };
+  
+  const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>(() => getInitialStatus());
   const [priorityFilter, setPriorityFilter] = useState<string | ''>('');
   const [assigneeFilter, setAssigneeFilter] = useState<string | ''>('');
   const [page, setPage] = useState(1);
@@ -282,12 +307,12 @@ export default function AdminTicketsPage() {
         const [prioritiesData, categoriesData, usersData] = await Promise.all([
           PrioritiesAPI.list().catch(() => []),
           CategoriesAPI.list().catch(() => []),
-          UsersAPI.list({ role: 'agent', take: 100 }).catch(() => ({ data: [] })),
+          UsersAPI.list({ take: 1000 }).catch(() => ({ data: [] })),
         ]);
         
         setPriorities(prioritiesData || []);
         setAvailableCategories(categoriesData || []);
-        setAgents((usersData?.data || []).filter((u: User) => u.role === 'agent' || u.role === 'admin'));
+        setAgents((usersData?.data || []).filter((u: User) => u.is_active));
       } catch (error) {
         console.error('Failed to load initial data:', error);
       }
@@ -295,6 +320,17 @@ export default function AdminTicketsPage() {
     
     loadInitialData();
   }, []);
+
+  // Update status filter when URL parameter changes
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    const normalizedStatus = normalizeStatus(statusParam);
+    if (normalizedStatus !== statusFilter) {
+      setStatusFilter(normalizedStatus);
+      // Reset to page 1 when filter changes
+      setPage(1);
+    }
+  }, [searchParams]);
 
   // Load saved views from localStorage
   useEffect(() => {
@@ -862,8 +898,7 @@ export default function AdminTicketsPage() {
           </div>
           <button
             onClick={() => setCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors text-sm font-medium"
-            style={{ backgroundColor: '#0f36a5' }}
+            className="btn btn-primary flex items-center gap-2 text-sm font-medium"
           >
             <Icon icon={faPlus} size="sm" />
             <span className="hidden sm:inline">Create Ticket</span>
@@ -1037,15 +1072,14 @@ export default function AdminTicketsPage() {
                     setAssignModalOpen(false);
                     setSelectedAssignee('');
                   }}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50"
+                  className="btn btn-secondary text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleBulkAssign}
                   disabled={!selectedAssignee}
-                  className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#0f36a5' }}
+                  className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Assign {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'}
                 </button>
@@ -1093,15 +1127,14 @@ export default function AdminTicketsPage() {
                     setStatusModalOpen(false);
                     setSelectedStatus('');
                   }}
-                  className="px-4 py-2 text-sm border border-gray-300 rounded-sm hover:bg-gray-50"
+                  className="btn btn-secondary text-sm"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleBulkStatus}
                   disabled={!selectedStatus}
-                  className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ backgroundColor: '#0f36a5' }}
+                  className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Update {selectedIds.size} {selectedIds.size === 1 ? 'ticket' : 'tickets'}
                 </button>
@@ -1144,8 +1177,7 @@ export default function AdminTicketsPage() {
                   <button
                     onClick={saveCurrentView}
                     disabled={!newViewName.trim()}
-                    className="px-4 py-2 text-sm bg-primary-500 text-white rounded-sm hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    style={{ backgroundColor: '#0f36a5' }}
+                    className="btn btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     <Icon icon={faSave} size="sm" />
                     Save
@@ -1843,15 +1875,14 @@ export default function AdminTicketsPage() {
               <button
                 type="button"
                 onClick={handleCloseModal}
-                className="px-4 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 text-sm text-gray-700 transition-colors"
+                className="btn btn-secondary text-sm"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={creating || fileUploading}
-                className="px-4 py-2 bg-primary-500 text-white rounded-sm hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
-                style={{ backgroundColor: '#0f36a5' }}
+                className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center justify-center gap-2"
               >
                 {creating ? (
                   <>

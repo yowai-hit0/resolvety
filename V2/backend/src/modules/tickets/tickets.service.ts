@@ -138,92 +138,118 @@ export class TicketsService {
   }
 
   async findOne(id: string) {
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id },
-      include: {
-        created_by: {
-          select: {
-            id: true,
-            email: true,
-            first_name: true,
-            last_name: true,
+    try {
+      const ticket = await this.prisma.ticket.findUnique({
+        where: { id },
+        include: {
+          created_by: {
+            select: {
+              id: true,
+              email: true,
+              first_name: true,
+              last_name: true,
+            },
           },
-        },
-        updated_by: {
-          select: {
-            id: true,
-            email: true,
-            first_name: true,
-            last_name: true,
+          updated_by: {
+            select: {
+              id: true,
+              email: true,
+              first_name: true,
+              last_name: true,
+            },
           },
-        },
-        assignee: {
-          select: {
-            id: true,
-            email: true,
-            first_name: true,
-            last_name: true,
+          assignee: {
+            select: {
+              id: true,
+              email: true,
+              first_name: true,
+              last_name: true,
+            },
           },
-        },
-        priority: true,
-        categories: {
-          include: {
-            category: true,
+          priority: true,
+          categories: {
+            include: {
+              category: true,
+            },
           },
-        },
-        comments: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                email: true,
-                first_name: true,
-                last_name: true,
+          comments: {
+            include: {
+              author: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
+              },
+            },
+            orderBy: {
+              created_at: 'asc',
+            },
+          },
+          attachments: {
+            where: {
+              is_deleted: false,
+            },
+            include: {
+              uploaded_by: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
               },
             },
           },
-          orderBy: {
-            created_at: 'asc',
-          },
-        },
-        attachments: {
-          where: {
-            is_deleted: false,
-          },
-          include: {
-            uploaded_by: {
-              select: {
-                id: true,
-                email: true,
-                first_name: true,
-                last_name: true,
+          ticket_events: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  email: true,
+                  first_name: true,
+                  last_name: true,
+                },
               },
+            },
+            orderBy: {
+              created_at: 'desc',
             },
           },
         },
-        ticket_events: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                first_name: true,
-                last_name: true,
-              },
-            },
-          },
-          orderBy: {
-            created_at: 'desc',
-          },
-        },
-      },
-    });
+      });
 
-    if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      if (!ticket) {
+        throw new NotFoundException('Ticket not found');
+      }
+
+      return ticket;
+    } catch (error: any) {
+      console.error('Error fetching ticket:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta,
+        ticketId: id,
+      });
+      
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      
+      // Handle Prisma errors
+      if (error.code === 'P2025') {
+        throw new NotFoundException('Ticket not found');
+      }
+      
+      // Handle foreign key constraint errors
+      if (error.code === 'P2003' || error.code === 'P2014') {
+        throw new BadRequestException(`Database constraint error: ${error.meta?.field_name || 'unknown field'}`);
+      }
+      
+      throw new BadRequestException(`Failed to fetch ticket: ${error.message || 'Unknown error'}`);
     }
-
-    return ticket;
   }
 
   async create(dto: CreateTicketDto, userId: string) {

@@ -1,5 +1,5 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
@@ -38,6 +38,13 @@ export class AdminController {
   @ApiOperation({ summary: 'Get agent performance metrics' })
   async getAgentPerformance() {
     return this.adminService.getAgentPerformance();
+  }
+
+  @Get('analytics/status-trend')
+  @ApiOperation({ summary: 'Get ticket status trend over time' })
+  async getStatusTrend(@Query('days') days?: string) {
+    const daysNum = days ? parseInt(days, 10) : 30;
+    return this.adminService.getStatusTrend(daysNum);
   }
 }
 

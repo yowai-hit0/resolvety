@@ -135,8 +135,7 @@ function AcceptInviteForm() {
             </p>
             <Link
               href="/auth/login"
-              className="inline-block w-full py-2.5 bg-primary-500 text-white rounded-sm font-medium hover:bg-primary-600 transition-colors text-sm"
-              style={{ backgroundColor: '#0f36a5' }}
+              className="btn btn-primary w-full text-sm"
             >
               Go to Login
             </Link>
@@ -285,8 +284,7 @@ function AcceptInviteForm() {
             <button
               type="submit"
               disabled={submitting || !name || !password || !confirmPassword}
-              className="w-full py-2.5 bg-primary-500 text-white rounded-sm font-medium hover:bg-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-6"
-              style={{ backgroundColor: '#0f36a5' }}
+              className="btn btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm mt-6"
             >
               {submitting ? (
                 <>

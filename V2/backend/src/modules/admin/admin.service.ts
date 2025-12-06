@@ -265,6 +265,72 @@ export class AdminService {
     };
   }
 
+  async getStatusTrend(days: number = 30) {
+    // Get status changes from ticket_events
+    // Use template literal with direct interpolation (days is a controlled number)
+    const statusEvents = await this.prisma.$queryRaw`
+      SELECT 
+        DATE(created_at) as date,
+        new_value as status,
+        COUNT(*)::int as count
+      FROM ticket_events
+      WHERE change_type = 'status'
+        AND created_at >= NOW() - INTERVAL '${days} days'
+        AND new_value IS NOT NULL
+      GROUP BY DATE(created_at), new_value
+      ORDER BY date ASC, status ASC
+    ` as Array<{ date: Date; status: string; count: number }>;
+
+    // Also get initial ticket creation (New status)
+    const newTickets = await this.prisma.$queryRaw`
+      SELECT 
+        DATE(created_at) as date,
+        COUNT(*)::int as count
+      FROM tickets
+      WHERE created_at >= NOW() - INTERVAL '${days} days'
+      GROUP BY DATE(created_at)
+      ORDER BY date ASC
+    ` as Array<{ date: Date; count: number }>;
+
+    // Combine and format the data
+    const dateMap = new Map<string, Record<string, number>>();
+
+    // Add status changes from events
+    statusEvents.forEach((event) => {
+      // DATE() returns a string in format 'YYYY-MM-DD', handle both Date and string
+      const dateKey = typeof event.date === 'string' 
+        ? event.date 
+        : new Date(event.date).toISOString().split('T')[0];
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {});
+      }
+      const status = event.status || 'Unknown';
+      dateMap.get(dateKey)![status] = (dateMap.get(dateKey)![status] || 0) + event.count;
+    });
+
+    // Add new tickets (initial New status)
+    newTickets.forEach((ticket) => {
+      // DATE() returns a string in format 'YYYY-MM-DD', handle both Date and string
+      const dateKey = typeof ticket.date === 'string' 
+        ? ticket.date 
+        : new Date(ticket.date).toISOString().split('T')[0];
+      if (!dateMap.has(dateKey)) {
+        dateMap.set(dateKey, {});
+      }
+      dateMap.get(dateKey)!['New'] = (dateMap.get(dateKey)!['New'] || 0) + ticket.count;
+    });
+
+    // Convert to array format
+    const result = Array.from(dateMap.entries())
+      .map(([date, statuses]) => ({
+        date,
+        ...statuses,
+      }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    return result;
+  }
+
   async getUserAnalytics() {
     const [
       byRole,

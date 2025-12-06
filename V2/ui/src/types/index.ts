@@ -113,6 +113,52 @@ export interface TicketEvent {
 
 export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'REVOKED' | 'EXPIRED';
 
+export interface App {
+  id: string; // UUID
+  name: string;
+  description?: string;
+  organization_id: string; // UUID
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by_id?: string; // UUID
+  updated_by_id?: string; // UUID
+  organization?: Organization;
+  created_by?: User;
+  updated_by?: User;
+  _count?: {
+    api_keys: number;
+    ip_whitelist: number;
+  };
+}
+
+export interface AppApiKey {
+  id: string; // UUID
+  app_id: string; // UUID
+  key_prefix: string; // First 8 chars for display
+  name?: string;
+  last_used_at?: string;
+  last_used_ip?: string;
+  expires_at?: string;
+  is_active: boolean;
+  created_at: string;
+  created_by_id?: string; // UUID
+  created_by?: User;
+  // Only returned when creating a new key
+  key?: string; // Full key (only shown once)
+}
+
+export interface AppIpWhitelist {
+  id: string; // UUID
+  app_id: string; // UUID
+  ip_address: string; // Can be single IP or CIDR
+  description?: string;
+  is_active: boolean;
+  created_at: string;
+  created_by_id?: string; // UUID
+  created_by?: User;
+}
+
 export interface Invitation {
   id: string; // UUID
   email: string;
