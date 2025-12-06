@@ -16,6 +16,24 @@ let TicketsService = class TicketsService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async generateTicketCode() {
+        const ticketCount = await this.prisma.ticket.count();
+        let ticketNumber = ticketCount + 1;
+        let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+        let attempts = 0;
+        while (attempts < 10) {
+            const existing = await this.prisma.ticket.findUnique({
+                where: { ticket_code: ticketCode },
+            });
+            if (!existing) {
+                return ticketCode;
+            }
+            ticketNumber++;
+            ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+            attempts++;
+        }
+        return `TKT-${Date.now().toString().slice(-8)}`;
+    }
     async findAll(skip = 0, take = 10, filters) {
         const where = {};
         if (filters?.status) {
@@ -231,7 +249,7 @@ let TicketsService = class TicketsService {
         }
     }
     async create(dto, userId) {
-        const ticketCode = `RES-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const ticketCode = await this.generateTicketCode();
         const ticket = await this.prisma.ticket.create({
             data: {
                 ticket_code: ticketCode,

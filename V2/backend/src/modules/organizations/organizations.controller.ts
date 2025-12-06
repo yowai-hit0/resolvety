@@ -1,23 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Query, Body, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiBody, ApiQuery } from '@nestjs/swagger';
 import { OrganizationsService } from './organizations.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
-class CreateOrganizationDto {
-  name: string;
-  domain?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-}
-
-class UpdateOrganizationDto {
-  name?: string;
-  domain?: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-}
+import { CreateOrganizationDto, UpdateOrganizationDto } from './dto/organization.dto';
 
 @ApiTags('Organizations')
 @Controller('organizations')
@@ -31,10 +16,18 @@ export class OrganizationsController {
   @ApiQuery({ name: 'skip', required: false, type: Number })
   @ApiQuery({ name: 'take', required: false, type: Number })
   async findAll(@Query('skip') skip?: string, @Query('take') take?: string) {
-    return this.organizationsService.findAll(
-      skip ? parseInt(skip) : 0,
-      take ? parseInt(take) : 10,
-    );
+    try {
+      return await this.organizationsService.findAll(
+        skip ? parseInt(skip) : 0,
+        take ? parseInt(take) : 10,
+      );
+    } catch (error: any) {
+      console.error('Error in organizations findAll controller:', error);
+      throw new HttpException(
+        error?.message || 'Failed to fetch organizations',
+        error?.status || HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
   @Get(':id')

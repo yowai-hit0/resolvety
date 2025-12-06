@@ -8,6 +8,37 @@ import * as crypto from 'crypto';
 export class PublicApiService {
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Generate a short, human-readable ticket code
+   * Format: TKT-12345 (5-digit sequential number)
+   */
+  private async generateTicketCode(): Promise<string> {
+    // Get total count of tickets to generate sequential number
+    const ticketCount = await this.prisma.ticket.count();
+    let ticketNumber = ticketCount + 1;
+    let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+    
+    // Ensure uniqueness (handle edge cases where count might be off)
+    let attempts = 0;
+    while (attempts < 10) {
+      const existing = await this.prisma.ticket.findUnique({
+        where: { ticket_code: ticketCode },
+      });
+      
+      if (!existing) {
+        return ticketCode;
+      }
+      
+      // If code exists, try next number
+      ticketNumber++;
+      ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+      attempts++;
+    }
+    
+    // Fallback to timestamp-based if all sequential attempts fail
+    return `TKT-${Date.now().toString().slice(-8)}`;
+  }
+
   async registerUser(dto: ApiRegisterUserDto, app: any) {
     // If email is provided, check if user already exists
     if (dto.email) {
@@ -109,8 +140,8 @@ export class PublicApiService {
       throw new NotFoundException('Priority not found');
     }
 
-    // Generate ticket code
-    const ticketCode = `RES-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+    // Generate short, human-readable ticket code
+    const ticketCode = await this.generateTicketCode();
 
     // Try to get phone from user's most recent ticket, otherwise use placeholder
     let requesterPhone = '';

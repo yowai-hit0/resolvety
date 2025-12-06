@@ -3,6 +3,7 @@ import { ApiRegisterUserDto, ApiCreateTicketDto } from './dto/public-api.dto';
 export declare class PublicApiService {
     private prisma;
     constructor(prisma: PrismaService);
+    private generateTicketCode;
     registerUser(dto: ApiRegisterUserDto, app: any): Promise<{
         id: string;
         email: string;

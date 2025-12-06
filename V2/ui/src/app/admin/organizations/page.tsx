@@ -38,20 +38,25 @@ export default function AdminOrganizationsPage() {
         const response = await OrganizationsAPI.list(params);
         
         // Handle both array response and object with data property
-        const orgs = Array.isArray(response) ? response : (response.data || []);
-        const total = response.total || response.count || orgs.length;
+        const orgs = Array.isArray(response) ? response : (response?.data || []);
+        const total = response?.total || response?.count || orgs.length;
         
-        // Map _count.users to users_count and add tickets_count
-        const mappedOrgs = orgs.map((org: any) => ({
+        // Map _count.users to users_count and use tickets_count from backend
+        const mappedOrgs = (orgs || []).map((org: any) => ({
           ...org,
           users_count: org._count?.users || 0,
-          tickets_count: 0, // Backend doesn't provide this yet
+          tickets_count: org.tickets_count ?? 0,
         }));
         
         setOrganizations(mappedOrgs);
-        setTotalOrganizations(total);
+        setTotalOrganizations(total || 0);
       } catch (error: any) {
-        show(error?.response?.data?.message || 'Failed to fetch organizations', 'error');
+        console.error('Error fetching organizations:', error);
+        const errorMessage = error?.response?.data?.message || error?.message || 'Failed to fetch organizations';
+        show(errorMessage, 'error');
+        // Set empty state on error
+        setOrganizations([]);
+        setTotalOrganizations(0);
       } finally {
         setLoading(false);
       }
@@ -161,7 +166,7 @@ export default function AdminOrganizationsPage() {
       const mappedOrgs = orgs.map((org: any) => ({
         ...org,
         users_count: org._count?.users || 0,
-        tickets_count: 0,
+        tickets_count: org.tickets_count || 0,
       }));
       
       setOrganizations(mappedOrgs);
@@ -182,13 +187,22 @@ export default function AdminOrganizationsPage() {
     if (!selectedOrg) return;
 
     try {
-      await OrganizationsAPI.update(selectedOrg.id, {
+      const updateData: {
+        name?: string;
+        domain?: string;
+        email?: string;
+        phone?: string;
+        address?: string;
+        is_active?: boolean;
+      } = {
         name: formData.name,
         domain: formData.domain || undefined,
         email: formData.email || undefined,
         phone: formData.phone || undefined,
         address: formData.address || undefined,
-      });
+        is_active: formData.is_active,
+      };
+      await OrganizationsAPI.update(selectedOrg.id, updateData);
 
       // Refresh the list
       const skip = (page - 1) * pageSize;
@@ -200,7 +214,7 @@ export default function AdminOrganizationsPage() {
       const mappedOrgs = orgs.map((org: any) => ({
         ...org,
         users_count: org._count?.users || 0,
-        tickets_count: 0,
+        tickets_count: org.tickets_count || 0,
       }));
       
       setOrganizations(mappedOrgs);
@@ -229,7 +243,7 @@ export default function AdminOrganizationsPage() {
       const mappedOrgs = orgs.map((org: any) => ({
         ...org,
         users_count: org._count?.users || 0,
-        tickets_count: 0,
+        tickets_count: org.tickets_count || 0,
       }));
       
       setOrganizations(mappedOrgs);

@@ -240,6 +240,7 @@ export const OrganizationsAPI = {
     email?: string;
     phone?: string;
     address?: string;
+    is_active?: boolean;
   }) =>
     api.put(`/organizations/${id}`, data).then((r) => r.data),
   

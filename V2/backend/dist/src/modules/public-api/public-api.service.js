@@ -50,6 +50,24 @@ let PublicApiService = class PublicApiService {
     constructor(prisma) {
         this.prisma = prisma;
     }
+    async generateTicketCode() {
+        const ticketCount = await this.prisma.ticket.count();
+        let ticketNumber = ticketCount + 1;
+        let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+        let attempts = 0;
+        while (attempts < 10) {
+            const existing = await this.prisma.ticket.findUnique({
+                where: { ticket_code: ticketCode },
+            });
+            if (!existing) {
+                return ticketCode;
+            }
+            ticketNumber++;
+            ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+            attempts++;
+        }
+        return `TKT-${Date.now().toString().slice(-8)}`;
+    }
     async registerUser(dto, app) {
         if (dto.email) {
             const existingUser = await this.prisma.user.findUnique({
@@ -127,7 +145,7 @@ let PublicApiService = class PublicApiService {
         if (!priority) {
             throw new common_1.NotFoundException('Priority not found');
         }
-        const ticketCode = `RES-${Date.now()}${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const ticketCode = await this.generateTicketCode();
         let requesterPhone = '';
         const recentTicket = await this.prisma.ticket.findFirst({
             where: {

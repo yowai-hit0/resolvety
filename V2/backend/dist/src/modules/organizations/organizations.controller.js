@@ -17,16 +17,19 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const organizations_service_1 = require("./organizations.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-class CreateOrganizationDto {
-}
-class UpdateOrganizationDto {
-}
+const organization_dto_1 = require("./dto/organization.dto");
 let OrganizationsController = class OrganizationsController {
     constructor(organizationsService) {
         this.organizationsService = organizationsService;
     }
     async findAll(skip, take) {
-        return this.organizationsService.findAll(skip ? parseInt(skip) : 0, take ? parseInt(take) : 10);
+        try {
+            return await this.organizationsService.findAll(skip ? parseInt(skip) : 0, take ? parseInt(take) : 10);
+        }
+        catch (error) {
+            console.error('Error in organizations findAll controller:', error);
+            throw new common_1.HttpException(error?.message || 'Failed to fetch organizations', error?.status || common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
     async findOne(id) {
         return this.organizationsService.findOne(id);
@@ -89,23 +92,23 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new organization' }),
-    (0, swagger_1.ApiBody)({ type: CreateOrganizationDto }),
+    (0, swagger_1.ApiBody)({ type: organization_dto_1.CreateOrganizationDto }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [CreateOrganizationDto, Object]),
+    __metadata("design:paramtypes", [organization_dto_1.CreateOrganizationDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrganizationsController.prototype, "create", null);
 __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update organization' }),
     (0, swagger_1.ApiParam)({ name: 'id', type: String }),
-    (0, swagger_1.ApiBody)({ type: UpdateOrganizationDto }),
+    (0, swagger_1.ApiBody)({ type: organization_dto_1.UpdateOrganizationDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, UpdateOrganizationDto, Object]),
+    __metadata("design:paramtypes", [String, organization_dto_1.UpdateOrganizationDto, Object]),
     __metadata("design:returntype", Promise)
 ], OrganizationsController.prototype, "update", null);
 __decorate([

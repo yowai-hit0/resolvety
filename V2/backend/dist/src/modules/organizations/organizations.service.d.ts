@@ -3,28 +3,29 @@ export declare class OrganizationsService {
     private prisma;
     constructor(prisma: PrismaService);
     findAll(skip?: number, take?: number): Promise<{
-        data: ({
-            _count: {
-                users: number;
-            };
-        } & {
+        data: {
             id: string;
-            email: string | null;
+            name: string;
+            domain: string;
+            email: string;
+            phone: string;
+            address: string;
             is_active: boolean;
             created_at: Date;
             updated_at: Date;
-            created_by_id: string | null;
-            updated_by_id: string | null;
-            name: string;
-            domain: string | null;
-            phone: string | null;
-            address: string | null;
-        })[];
+            created_by_id: string;
+            updated_by_id: string;
+            _count: {
+                users: number;
+            };
+            tickets_count: number;
+        }[];
         total: number;
         skip: number;
         take: number;
     }>;
     findOne(id: string): Promise<{
+        tickets_count: number;
         user_organizations: ({
             user: {
                 id: string;
@@ -54,7 +55,6 @@ export declare class OrganizationsService {
             role: import(".prisma/client").$Enums.UserRole;
             is_active: boolean;
         }[];
-    } & {
         id: string;
         email: string | null;
         is_active: boolean;

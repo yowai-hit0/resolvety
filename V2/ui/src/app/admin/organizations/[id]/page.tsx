@@ -59,11 +59,11 @@ export default function OrganizationDetailPage() {
         // Fetch organization details
         const org = await OrganizationsAPI.get(orgId);
         
-        // Map _count.users to users_count
+        // Map _count.users to users_count and use tickets_count from backend
         const mappedOrg = {
           ...org,
           users_count: org._count?.users || 0,
-          tickets_count: 0, // Backend doesn't provide this yet
+          tickets_count: org.tickets_count || 0,
         };
         
         setOrganization(mappedOrg);

@@ -3,6 +3,7 @@ import { CreateTicketDto, UpdateTicketDto, AddCommentDto, BulkAssignDto, BulkSta
 export declare class TicketsService {
     private prisma;
     constructor(prisma: PrismaService);
+    private generateTicketCode;
     findAll(skip?: number, take?: number, filters?: {
         status?: string;
         priority?: string;
