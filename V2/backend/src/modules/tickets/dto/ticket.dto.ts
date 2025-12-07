@@ -1,6 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsArray, IsUUID, IsEmail, IsNotEmpty } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsArray, IsUUID, IsEmail, IsNotEmpty, ValidateIf } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Exclude } from 'class-transformer';
 import { TicketStatus } from '@prisma/client';
 
 export class CreateTicketDto {
@@ -40,12 +40,16 @@ export class CreateTicketDto {
   priority_id: string;
 
   @ApiPropertyOptional()
+  @IsOptional()
   @Transform(({ value }) => {
     // Convert empty strings, null, or undefined to undefined
     // This allows @IsOptional() to properly skip validation
-    return (value === '' || value === null || value === undefined) ? undefined : value;
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
   })
-  @IsOptional()
+  @ValidateIf((o) => o.assignee_id !== undefined && o.assignee_id !== null && o.assignee_id !== '')
   @IsUUID()
   assignee_id?: string;
 
@@ -73,12 +77,16 @@ export class UpdateTicketDto {
   status?: TicketStatus;
 
   @ApiPropertyOptional()
+  @IsOptional()
   @Transform(({ value }) => {
     // Convert empty strings, null, or undefined to undefined
     // This allows @IsOptional() to properly skip validation
-    return (value === '' || value === null || value === undefined) ? undefined : value;
+    if (value === '' || value === null || value === undefined) {
+      return undefined;
+    }
+    return value;
   })
-  @IsOptional()
+  @ValidateIf((o) => o.assignee_id !== undefined && o.assignee_id !== null && o.assignee_id !== '')
   @IsUUID()
   assignee_id?: string;
 

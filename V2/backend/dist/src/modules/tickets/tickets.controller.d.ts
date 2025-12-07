@@ -66,8 +66,8 @@ export declare class TicketsController {
             requester_phone: string;
             location: string | null;
             priority_id: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
             assignee_id: string | null;
+            status: import(".prisma/client").$Enums.TicketStatus;
             ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
@@ -212,6 +212,12 @@ export declare class TicketsController {
             first_name: string;
             last_name: string;
         };
+        assignee: {
+            id: string;
+            email: string;
+            first_name: string;
+            last_name: string;
+        };
         priority: {
             id: string;
             is_active: boolean;
@@ -251,8 +257,8 @@ export declare class TicketsController {
         requester_phone: string;
         location: string | null;
         priority_id: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
         assignee_id: string | null;
+        status: import(".prisma/client").$Enums.TicketStatus;
         ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
@@ -309,8 +315,8 @@ export declare class TicketsController {
         requester_phone: string;
         location: string | null;
         priority_id: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
         assignee_id: string | null;
+        status: import(".prisma/client").$Enums.TicketStatus;
         ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
