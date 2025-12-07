@@ -49,8 +49,8 @@ export declare class AgentController {
             requester_phone: string;
             location: string | null;
             priority_id: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
             assignee_id: string | null;
+            status: import(".prisma/client").$Enums.TicketStatus;
             ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
@@ -101,8 +101,8 @@ export declare class AgentController {
             requester_phone: string;
             location: string | null;
             priority_id: string;
-            status: import(".prisma/client").$Enums.TicketStatus;
             assignee_id: string | null;
+            status: import(".prisma/client").$Enums.TicketStatus;
             ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
@@ -151,8 +151,8 @@ export declare class AgentController {
         requester_phone: string;
         location: string | null;
         priority_id: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
         assignee_id: string | null;
+        status: import(".prisma/client").$Enums.TicketStatus;
         ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
@@ -181,8 +181,8 @@ export declare class AgentController {
         requester_phone: string;
         location: string | null;
         priority_id: string;
-        status: import(".prisma/client").$Enums.TicketStatus;
         assignee_id: string | null;
+        status: import(".prisma/client").$Enums.TicketStatus;
         ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;

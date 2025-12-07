@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AddAttachmentDto = exports.BulkStatusDto = exports.BulkAssignDto = exports.AddCommentDto = exports.UpdateTicketDto = exports.CreateTicketDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
 const client_1 = require("@prisma/client");
 class CreateTicketDto {
 }
@@ -59,10 +60,23 @@ __decorate([
     __metadata("design:type", String)
 ], CreateTicketDto.prototype, "priority_id", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ type: [String] }),
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === '' || value === null || value === undefined) {
+            return undefined;
+        }
+        return value;
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.assignee_id !== undefined && o.assignee_id !== null && o.assignee_id !== ''),
+    (0, class_validator_1.IsUUID)(),
+    __metadata("design:type", String)
+], CreateTicketDto.prototype, "assignee_id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ type: [String] }),
     (0, class_validator_1.IsArray)(),
     (0, class_validator_1.IsUUID)('4', { each: true }),
-    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", Array)
 ], CreateTicketDto.prototype, "category_ids", void 0);
 class UpdateTicketDto {
@@ -88,8 +102,15 @@ __decorate([
 ], UpdateTicketDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsUUID)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_transformer_1.Transform)(({ value }) => {
+        if (value === '' || value === null || value === undefined) {
+            return undefined;
+        }
+        return value;
+    }),
+    (0, class_validator_1.ValidateIf)((o) => o.assignee_id !== undefined && o.assignee_id !== null && o.assignee_id !== ''),
+    (0, class_validator_1.IsUUID)(),
     __metadata("design:type", String)
 ], UpdateTicketDto.prototype, "assignee_id", void 0);
 __decorate([
