@@ -159,6 +159,33 @@ export class PublicApiService {
       requesterPhone = 'N/A';
     }
 
+    // Validate and deduplicate category IDs if provided
+    let categoryIdsToCreate: string[] | undefined = undefined;
+    if (dto.category_ids && dto.category_ids.length > 0) {
+      // Remove duplicates and filter out empty values
+      const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+      
+      if (uniqueCategoryIds.length > 0) {
+        // Verify all categories exist and are active
+        const categories = await this.prisma.category.findMany({
+          where: {
+            id: { in: uniqueCategoryIds },
+            is_active: true,
+          },
+        });
+
+        if (categories.length !== uniqueCategoryIds.length) {
+          const foundIds = new Set(categories.map(c => c.id));
+          const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+          throw new BadRequestException(
+            `Invalid or inactive category IDs: ${missingIds.join(', ')}`
+          );
+        }
+
+        categoryIdsToCreate = uniqueCategoryIds;
+      }
+    }
+
     // Create ticket with user as creator
     const ticket = await this.prisma.ticket.create({
       data: {
@@ -172,8 +199,8 @@ export class PublicApiService {
         priority_id: dto.priority_id,
         created_by_id: user.id,
         updated_by_id: user.id,
-        categories: dto.category_ids ? {
-          create: dto.category_ids.map(catId => ({
+        categories: categoryIdsToCreate && categoryIdsToCreate.length > 0 ? {
+          create: categoryIdsToCreate.map(catId => ({
             category_id: catId,
           })),
         } : undefined,

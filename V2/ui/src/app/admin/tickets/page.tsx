@@ -532,11 +532,25 @@ export default function AdminTicketsPage() {
       if (formData.requester_email && formData.requester_email.trim()) {
         ticketData.requester_email = formData.requester_email.trim();
       }
-      if (formData.requester_name) ticketData.requester_name = formData.requester_name;
-      if (formData.location) ticketData.location = formData.location;
-      if (formData.assignee_id) ticketData.assignee_id = formData.assignee_id;
-      // Category is mandatory, always include it
-      ticketData.category_ids = formData.category_ids;
+      if (formData.requester_name && formData.requester_name.trim()) {
+        ticketData.requester_name = formData.requester_name.trim();
+      }
+      if (formData.location && formData.location.trim()) {
+        ticketData.location = formData.location.trim();
+      }
+      // Only include assignee_id if it's provided and not empty
+      if (formData.assignee_id && formData.assignee_id.trim() !== '') {
+        ticketData.assignee_id = formData.assignee_id;
+      }
+      // Category is mandatory, remove duplicates and ensure array is not empty
+      const uniqueCategoryIds = [...new Set(formData.category_ids.filter(id => id && id.trim() !== ''))];
+      if (uniqueCategoryIds.length === 0) {
+        toast.error('At least one category is required');
+        setFormErrors({ category_ids: 'At least one category is required' });
+        setCreating(false);
+        return;
+      }
+      ticketData.category_ids = uniqueCategoryIds;
       
       const newTicket = await TicketsAPI.create(ticketData);
       

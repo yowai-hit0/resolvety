@@ -147,7 +147,9 @@ export default function TicketDetailPage() {
         updateData.assignee_id = editData.assignee_id || undefined;
       }
       if (JSON.stringify(editData.category_ids.sort()) !== JSON.stringify((ticket.categories || []).map((tc: any) => (tc.category || tc).id).sort())) {
-        updateData.category_ids = editData.category_ids;
+        // Remove duplicates before sending
+        const uniqueCategoryIds = [...new Set(editData.category_ids.filter(id => id && id.length > 0))];
+        updateData.category_ids = uniqueCategoryIds;
       }
       
       if (Object.keys(updateData).length > 0) {

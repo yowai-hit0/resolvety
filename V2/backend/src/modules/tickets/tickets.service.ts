@@ -329,6 +329,31 @@ export class TicketsService {
       }
     }
 
+    // Validate and deduplicate category IDs
+    if (dto.category_ids && dto.category_ids.length > 0) {
+      // Remove duplicates and filter out empty values
+      const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+      
+      // Verify all categories exist and are active
+      const categories = await this.prisma.category.findMany({
+        where: {
+          id: { in: uniqueCategoryIds },
+          is_active: true,
+        },
+      });
+
+      if (categories.length !== uniqueCategoryIds.length) {
+        const foundIds = new Set(categories.map(c => c.id));
+        const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+        throw new BadRequestException(
+          `Invalid or inactive category IDs: ${missingIds.join(', ')}`
+        );
+      }
+
+      // Use deduplicated array
+      dto.category_ids = uniqueCategoryIds;
+    }
+
     // Create ticket
     const ticket = await this.prisma.ticket.create({
       data: {
@@ -343,7 +368,7 @@ export class TicketsService {
         assignee_id: dto.assignee_id,
         created_by_id: userId,
         updated_by_id: userId,
-        categories: dto.category_ids ? {
+        categories: dto.category_ids && dto.category_ids.length > 0 ? {
           create: dto.category_ids.map(catId => ({
             category_id: catId,
           })),
@@ -386,12 +411,37 @@ export class TicketsService {
 
     // Update categories if provided
     if (dto.category_ids !== undefined) {
+      // Remove duplicates and filter out empty values
+      const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+      
+      // Validate categories if any are provided
+      if (uniqueCategoryIds.length > 0) {
+        // Verify all categories exist and are active
+        const categories = await this.prisma.category.findMany({
+          where: {
+            id: { in: uniqueCategoryIds },
+            is_active: true,
+          },
+        });
+
+        if (categories.length !== uniqueCategoryIds.length) {
+          const foundIds = new Set(categories.map(c => c.id));
+          const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+          throw new BadRequestException(
+            `Invalid or inactive category IDs: ${missingIds.join(', ')}`
+          );
+        }
+      }
+
+      // Delete existing categories
       await this.prisma.ticketCategory.deleteMany({
         where: { ticket_id: id },
       });
-      if (dto.category_ids.length > 0) {
+      
+      // Create new categories if any are provided
+      if (uniqueCategoryIds.length > 0) {
         await this.prisma.ticketCategory.createMany({
-          data: dto.category_ids.map(catId => ({
+          data: uniqueCategoryIds.map(catId => ({
             ticket_id: id,
             category_id: catId,
           })),
