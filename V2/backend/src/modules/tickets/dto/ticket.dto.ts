@@ -1,5 +1,6 @@
 import { IsString, IsOptional, IsEnum, IsArray, IsUUID, IsEmail, IsNotEmpty } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { TicketStatus } from '@prisma/client';
 
 export class CreateTicketDto {
@@ -39,6 +40,7 @@ export class CreateTicketDto {
   priority_id: string;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsUUID()
   @IsOptional()
   assignee_id?: string;
@@ -67,6 +69,7 @@ export class UpdateTicketDto {
   status?: TicketStatus;
 
   @ApiPropertyOptional()
+  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
   @IsUUID()
   @IsOptional()
   assignee_id?: string;
