@@ -59,18 +59,18 @@ export declare class TicketsController {
             updated_at: Date;
             created_by_id: string;
             updated_by_id: string | null;
-            ticket_code: string;
-            subject: string;
             description: string;
+            subject: string;
             requester_email: string | null;
             requester_name: string | null;
             requester_phone: string;
             location: string | null;
+            priority_id: string;
             status: import(".prisma/client").$Enums.TicketStatus;
+            assignee_id: string | null;
+            ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
-            assignee_id: string | null;
-            priority_id: string;
         })[];
         total: number;
         skip: number;
@@ -162,9 +162,9 @@ export declare class TicketsController {
             created_at: Date;
             updated_at: Date;
             updated_by_id: string | null;
-            ticket_id: string;
             content: string;
             is_internal: boolean;
+            ticket_id: string;
             author_id: string;
         })[];
         attachments: ({
@@ -176,11 +176,11 @@ export declare class TicketsController {
             };
         } & {
             id: string;
-            ticket_id: string;
             original_filename: string;
             stored_filename: string;
             mime_type: string;
             size: bigint;
+            ticket_id: string;
             is_deleted: boolean;
             uploaded_at: Date;
             deleted_at: Date | null;
@@ -198,11 +198,11 @@ export declare class TicketsController {
             id: string;
             created_at: Date;
             user_id: string;
+            ip_address: string | null;
             ticket_id: string;
             change_type: string;
             old_value: string | null;
             new_value: string | null;
-            ip_address: string | null;
         })[];
     }>;
     create(dto: CreateTicketDto, req: any): Promise<{
@@ -244,18 +244,18 @@ export declare class TicketsController {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     update(id: string, dto: UpdateTicketDto, req: any): Promise<{
         created_by: {
@@ -302,18 +302,18 @@ export declare class TicketsController {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     addComment(id: string, dto: AddCommentDto, req: any): Promise<{
         author: {
@@ -327,9 +327,9 @@ export declare class TicketsController {
         created_at: Date;
         updated_at: Date;
         updated_by_id: string | null;
-        ticket_id: string;
         content: string;
         is_internal: boolean;
+        ticket_id: string;
         author_id: string;
     }>;
     bulkAssign(dto: BulkAssignDto, req: any): Promise<{
@@ -347,11 +347,11 @@ export declare class TicketsController {
         };
     } & {
         id: string;
-        ticket_id: string;
         original_filename: string;
         stored_filename: string;
         mime_type: string;
         size: bigint;
+        ticket_id: string;
         is_deleted: boolean;
         uploaded_at: Date;
         deleted_at: Date | null;

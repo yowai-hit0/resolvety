@@ -55,37 +55,43 @@ let AuthService = class AuthService {
         this.configService = configService;
     }
     async login(dto, ipAddress) {
-        const user = await this.prisma.user.findUnique({
-            where: { email: dto.email },
-        });
-        if (!user || !user.password_hash) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { email: dto.email },
+            });
+            if (!user || !user.password_hash) {
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
+            if (!isPasswordValid) {
+                throw new common_1.UnauthorizedException('Invalid credentials');
+            }
+            if (!user.is_active) {
+                throw new common_1.UnauthorizedException('Account is inactive');
+            }
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: {
+                    last_login_at: new Date(),
+                    last_login_ip: ipAddress || null,
+                },
+            });
+            const tokens = await this.generateTokens(user.id, user.email);
+            return {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    first_name: user.first_name,
+                    last_name: user.last_name,
+                    role: user.role,
+                },
+                ...tokens,
+            };
         }
-        const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
-        if (!isPasswordValid) {
-            throw new common_1.UnauthorizedException('Invalid credentials');
+        catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-        if (!user.is_active) {
-            throw new common_1.UnauthorizedException('Account is inactive');
-        }
-        await this.prisma.user.update({
-            where: { id: user.id },
-            data: {
-                last_login_at: new Date(),
-                last_login_ip: ipAddress || null,
-            },
-        });
-        const tokens = await this.generateTokens(user.id, user.email);
-        return {
-            user: {
-                id: user.id,
-                email: user.email,
-                first_name: user.first_name,
-                last_name: user.last_name,
-                role: user.role,
-            },
-            ...tokens,
-        };
     }
     async register(dto) {
         const existingUser = await this.prisma.user.findUnique({
@@ -255,20 +261,31 @@ let AuthService = class AuthService {
         return { message: 'Password has been reset successfully. You can now login with your new password.' };
     }
     async generateTokens(userId, email) {
-        const payload = { sub: userId, email };
-        const [accessToken, refreshToken] = await Promise.all([
-            this.jwtService.signAsync(payload, {
-                expiresIn: this.configService.get('JWT_EXPIRATION') || '15m',
-            }),
-            this.jwtService.signAsync(payload, {
-                secret: this.configService.get('JWT_REFRESH_SECRET') || this.configService.get('JWT_SECRET'),
-                expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION') || '7d',
-            }),
-        ]);
-        return {
-            accessToken,
-            refreshToken,
-        };
+        try {
+            const payload = { sub: userId, email };
+            const jwtSecret = this.configService.get('JWT_SECRET');
+            if (!jwtSecret) {
+                console.error('JWT_SECRET is not set!');
+                throw new Error('JWT_SECRET is not configured');
+            }
+            const [accessToken, refreshToken] = await Promise.all([
+                this.jwtService.signAsync(payload, {
+                    expiresIn: this.configService.get('JWT_EXPIRATION') || '15m',
+                }),
+                this.jwtService.signAsync(payload, {
+                    secret: this.configService.get('JWT_REFRESH_SECRET') || jwtSecret,
+                    expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION') || '7d',
+                }),
+            ]);
+            return {
+                accessToken,
+                refreshToken,
+            };
+        }
+        catch (error) {
+            console.error('Token generation error:', error);
+            throw error;
+        }
     }
 };
 exports.AuthService = AuthService;

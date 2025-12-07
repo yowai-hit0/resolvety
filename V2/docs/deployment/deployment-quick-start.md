@@ -5,7 +5,7 @@
 Run this from your local machine:
 
 ```bash
-cd /Applications/AMPPS/www/resolveit/V2
+cd /Applications/AMPPS/www/resolveit/v2
 ./scripts/deployment/deploy-to-server.sh
 ```
 

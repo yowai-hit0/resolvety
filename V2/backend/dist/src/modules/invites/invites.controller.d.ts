@@ -23,9 +23,9 @@ export declare class InvitesController {
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
-            status: import(".prisma/client").$Enums.InviteStatus;
             token: string;
             expires_at: Date;
+            status: import(".prisma/client").$Enums.InviteStatus;
             accepted_at: Date | null;
         }[];
         total: number;
@@ -40,9 +40,9 @@ export declare class InvitesController {
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
-        status: import(".prisma/client").$Enums.InviteStatus;
         token: string;
         expires_at: Date;
+        status: import(".prisma/client").$Enums.InviteStatus;
         accepted_at: Date | null;
     }>;
     resend(id: string, req: any): Promise<{
@@ -55,9 +55,9 @@ export declare class InvitesController {
             updated_at: Date;
             created_by_id: string | null;
             updated_by_id: string | null;
-            status: import(".prisma/client").$Enums.InviteStatus;
             token: string;
             expires_at: Date;
+            status: import(".prisma/client").$Enums.InviteStatus;
             accepted_at: Date | null;
         };
     }>;
@@ -69,9 +69,9 @@ export declare class InvitesController {
         updated_at: Date;
         created_by_id: string | null;
         updated_by_id: string | null;
-        status: import(".prisma/client").$Enums.InviteStatus;
         token: string;
         expires_at: Date;
+        status: import(".prisma/client").$Enums.InviteStatus;
         accepted_at: Date | null;
     }>;
     accept(dto: AcceptInviteDto): Promise<{

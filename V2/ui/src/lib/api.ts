@@ -30,12 +30,18 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Clear auth and redirect to login
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        sessionStorage.removeItem('auth_token');
-        sessionStorage.removeItem('resolveitAuth');
-        window.location.href = '/auth/login';
+      // Don't redirect if we're already on login page or if it's a login request
+      const isLoginRequest = error.config?.url?.includes('/auth/login');
+      const isOnLoginPage = typeof window !== 'undefined' && window.location.pathname === '/auth/login';
+      
+      if (!isLoginRequest && !isOnLoginPage) {
+        // Clear auth and redirect to login only if not already there
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth_token');
+          sessionStorage.removeItem('auth_token');
+          sessionStorage.removeItem('resolveitAuth');
+          window.location.href = '/auth/login';
+        }
       }
     }
     return Promise.reject(error);

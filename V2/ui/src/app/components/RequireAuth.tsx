@@ -25,7 +25,8 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
       
       try {
         // Wait a bit for localStorage to be available and token to initialize
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Increased delay to ensure token is stored after login redirect
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Get fresh token from store (which reads from localStorage)
         const currentToken = useAuthStore.getState().token || 
@@ -59,7 +60,23 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
               return;
             }
             // For other errors, log but don't redirect (might be network issue)
-            console.error('Error loading user:', error);
+            // Give it another try after a short delay
+            console.error('Error loading user, retrying:', error);
+            try {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              await loadUser();
+              currentUser = useAuthStore.getState().user;
+            } catch (retryError: any) {
+              console.error('Retry also failed:', retryError);
+              // Only redirect if it's an auth error
+              if (retryError?.response?.status === 401 || retryError?.response?.status === 403) {
+                useAuthStore.getState().logout();
+                sessionStorage.setItem('redirect_after_login', pathname);
+                router.push('/auth/login');
+                setLoading(false);
+                return;
+              }
+            }
           }
         }
 

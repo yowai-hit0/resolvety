@@ -31,7 +31,7 @@ All documentation is in the [`/docs/`](./docs/) folder:
 ## 📁 Project Structure
 
 ```
-V2/
+v2/
 ├── backend/          # NestJS Backend API
 ├── ui/              # Next.js Frontend
 ├── docs/            # All documentation

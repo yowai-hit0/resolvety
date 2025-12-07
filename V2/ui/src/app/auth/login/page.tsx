@@ -45,6 +45,10 @@ export default function LoginPage() {
         return;
       }
 
+      // Ensure token is stored and user is set before redirecting
+      // Small delay to ensure state is fully updated
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       // Redirect based on role
       const role = result.user.role;
       if (role === 'admin' || role === 'super_admin') {

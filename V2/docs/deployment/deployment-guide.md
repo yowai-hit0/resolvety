@@ -20,7 +20,7 @@ The application consists of three Docker containers:
 ### 1. Clone and Navigate to Project
 
 ```bash
-cd /path/to/resolveit/V2
+cd /path/to/resolveit/v2
 ```
 
 ### 2. Configure Environment Variables

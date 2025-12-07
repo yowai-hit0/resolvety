@@ -42,18 +42,18 @@ export declare class AgentController {
             updated_at: Date;
             created_by_id: string;
             updated_by_id: string | null;
-            ticket_code: string;
-            subject: string;
             description: string;
+            subject: string;
             requester_email: string | null;
             requester_name: string | null;
             requester_phone: string;
             location: string | null;
+            priority_id: string;
             status: import(".prisma/client").$Enums.TicketStatus;
+            assignee_id: string | null;
+            ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
-            assignee_id: string | null;
-            priority_id: string;
         })[];
     }>;
     getTickets(req: any, skip?: string, take?: string, status?: string, priority?: string, search?: string, sortBy?: string, sortOrder?: 'asc' | 'desc'): Promise<{
@@ -94,18 +94,18 @@ export declare class AgentController {
             updated_at: Date;
             created_by_id: string;
             updated_by_id: string | null;
-            ticket_code: string;
-            subject: string;
             description: string;
+            subject: string;
             requester_email: string | null;
             requester_name: string | null;
             requester_phone: string;
             location: string | null;
+            priority_id: string;
             status: import(".prisma/client").$Enums.TicketStatus;
+            assignee_id: string | null;
+            ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
-            assignee_id: string | null;
-            priority_id: string;
         })[];
         total: number;
         skip: number;
@@ -144,18 +144,18 @@ export declare class AgentController {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     updateTicketPriority(id: string, dto: UpdateTicketPriorityDto, req: any): Promise<{
         priority: {
@@ -174,18 +174,18 @@ export declare class AgentController {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     getPerformance(req: any): Promise<{
         total_assigned: number;
@@ -195,8 +195,8 @@ export declare class AgentController {
         recent_activity: {
             id: string;
             created_at: Date;
-            ticket_code: string;
             subject: string;
+            ticket_code: string;
             resolved_at: Date;
         }[];
     }>;

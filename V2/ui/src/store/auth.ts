@@ -26,14 +26,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await AuthAPI.login(email, password);
+      console.log('Login response:', response); // Debug log
+      
       const token = response.accessToken || response.token;
       const user = response.user || response.data?.user || response.data;
 
-      if (!token || !user) {
-        throw new Error('Invalid response from server');
+      if (!token) {
+        console.error('No token in response:', response);
+        throw new Error('Invalid response from server: No token received');
       }
 
-      // Store token
+      if (!user) {
+        console.error('No user in response:', response);
+        throw new Error('Invalid response from server: No user data received');
+      }
+
+      // Store token immediately
       if (typeof window !== 'undefined') {
         localStorage.setItem('auth_token', token);
         // Also store in sessionStorage for backward compatibility
@@ -42,9 +50,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         sessionStorage.setItem('adminName', `${user.first_name} ${user.last_name}`);
       }
 
+      // Update store with user and token
       set({ user, token, loading: false, error: null });
+      
+      // Verify token was stored
+      if (typeof window !== 'undefined') {
+        const storedToken = localStorage.getItem('auth_token');
+        if (storedToken !== token) {
+          console.error('Token storage mismatch!');
+        }
+      }
+      
       return { user, token };
     } catch (error: any) {
+      console.error('Login error:', error);
       const errorMessage = error?.response?.data?.message || error?.message || 'Login failed';
       set({ error: errorMessage, loading: false });
       return { error: errorMessage };

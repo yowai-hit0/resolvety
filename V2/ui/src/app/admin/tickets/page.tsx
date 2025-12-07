@@ -436,6 +436,10 @@ export default function AdminTicketsPage() {
       errors.subject = 'Subject is required';
     }
     
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    }
+    
     if (!formData.priority_id) {
       errors.priority_id = 'Priority is required';
     }
@@ -1796,14 +1800,19 @@ export default function AdminTicketsPage() {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm min-h-[120px] resize-y"
+                  className={`w-full px-3 py-2 bg-gray-50 border rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm min-h-[120px] resize-y ${
+                    formErrors.description ? 'border-red-500' : 'border-gray-200'
+                  }`}
                   placeholder="Describe the issue in detail..."
                 />
+                {formErrors.description && (
+                  <p className="text-xs text-red-500 mt-1">{formErrors.description}</p>
+                )}
               </div>
 
               {/* File Uploads */}

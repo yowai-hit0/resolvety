@@ -14,47 +14,52 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, ipAddress?: string) {
-    // Find user
-    const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
+    try {
+      // Find user
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
 
-    if (!user || !user.password_hash) {
-      throw new UnauthorizedException('Invalid credentials');
+      if (!user || !user.password_hash) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      // Verify password
+      const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
+      if (!isPasswordValid) {
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
+      if (!user.is_active) {
+        throw new UnauthorizedException('Account is inactive');
+      }
+
+      // Update last login
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          last_login_at: new Date(),
+          last_login_ip: ipAddress || null,
+        },
+      });
+
+      // Generate tokens
+      const tokens = await this.generateTokens(user.id, user.email);
+
+      return {
+        user: {
+          id: user.id,
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          role: user.role,
+        },
+        ...tokens,
+      };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password_hash);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.is_active) {
-      throw new UnauthorizedException('Account is inactive');
-    }
-
-    // Update last login
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        last_login_at: new Date(),
-        last_login_ip: ipAddress || null,
-      },
-    });
-
-    // Generate tokens
-    const tokens = await this.generateTokens(user.id, user.email);
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role,
-      },
-      ...tokens,
-    };
   }
 
   async register(dto: RegisterDto) {
@@ -280,22 +285,33 @@ export class AuthService {
   }
 
   private async generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+    try {
+      const payload = { sub: userId, email };
+      const jwtSecret = this.configService.get('JWT_SECRET');
+      
+      if (!jwtSecret) {
+        console.error('JWT_SECRET is not set!');
+        throw new Error('JWT_SECRET is not configured');
+      }
 
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload, {
-        expiresIn: this.configService.get('JWT_EXPIRATION') || '15m',
-      }),
-      this.jwtService.signAsync(payload, {
-        secret: this.configService.get('JWT_REFRESH_SECRET') || this.configService.get('JWT_SECRET'),
-        expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION') || '7d',
-      }),
-    ]);
+      const [accessToken, refreshToken] = await Promise.all([
+        this.jwtService.signAsync(payload, {
+          expiresIn: this.configService.get('JWT_EXPIRATION') || '15m',
+        }),
+        this.jwtService.signAsync(payload, {
+          secret: this.configService.get('JWT_REFRESH_SECRET') || jwtSecret,
+          expiresIn: this.configService.get('JWT_REFRESH_EXPIRATION') || '7d',
+        }),
+      ]);
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+      return {
+        accessToken,
+        refreshToken,
+      };
+    } catch (error) {
+      console.error('Token generation error:', error);
+      throw error;
+    }
   }
 }
 

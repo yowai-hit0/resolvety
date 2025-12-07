@@ -58,18 +58,18 @@ export declare class PublicApiService {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     getUserTickets(app: any, userId: string, status?: string, skip?: number, take?: number): Promise<{
         data: ({
@@ -97,9 +97,9 @@ export declare class PublicApiService {
                 created_at: Date;
                 updated_at: Date;
                 updated_by_id: string | null;
-                ticket_id: string;
                 content: string;
                 is_internal: boolean;
+                ticket_id: string;
                 author_id: string;
             })[];
             ticket_events: ({
@@ -113,11 +113,11 @@ export declare class PublicApiService {
                 id: string;
                 created_at: Date;
                 user_id: string;
+                ip_address: string | null;
                 ticket_id: string;
                 change_type: string;
                 old_value: string | null;
                 new_value: string | null;
-                ip_address: string | null;
             })[];
             attachments: ({
                 uploaded_by: {
@@ -128,11 +128,11 @@ export declare class PublicApiService {
                 };
             } & {
                 id: string;
-                ticket_id: string;
                 original_filename: string;
                 stored_filename: string;
                 mime_type: string;
                 size: bigint;
+                ticket_id: string;
                 is_deleted: boolean;
                 uploaded_at: Date;
                 deleted_at: Date | null;
@@ -177,18 +177,18 @@ export declare class PublicApiService {
             updated_at: Date;
             created_by_id: string;
             updated_by_id: string | null;
-            ticket_code: string;
-            subject: string;
             description: string;
+            subject: string;
             requester_email: string | null;
             requester_name: string | null;
             requester_phone: string;
             location: string | null;
+            priority_id: string;
             status: import(".prisma/client").$Enums.TicketStatus;
+            assignee_id: string | null;
+            ticket_code: string;
             resolved_at: Date | null;
             closed_at: Date | null;
-            assignee_id: string | null;
-            priority_id: string;
         })[];
         total: number;
         skip: number;
@@ -225,9 +225,9 @@ export declare class PublicApiService {
             created_at: Date;
             updated_at: Date;
             updated_by_id: string | null;
-            ticket_id: string;
             content: string;
             is_internal: boolean;
+            ticket_id: string;
             author_id: string;
         })[];
         ticket_events: ({
@@ -241,11 +241,11 @@ export declare class PublicApiService {
             id: string;
             created_at: Date;
             user_id: string;
+            ip_address: string | null;
             ticket_id: string;
             change_type: string;
             old_value: string | null;
             new_value: string | null;
-            ip_address: string | null;
         })[];
         attachments: ({
             uploaded_by: {
@@ -256,11 +256,11 @@ export declare class PublicApiService {
             };
         } & {
             id: string;
-            ticket_id: string;
             original_filename: string;
             stored_filename: string;
             mime_type: string;
             size: bigint;
+            ticket_id: string;
             is_deleted: boolean;
             uploaded_at: Date;
             deleted_at: Date | null;
@@ -305,18 +305,18 @@ export declare class PublicApiService {
         updated_at: Date;
         created_by_id: string;
         updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
         description: string;
+        subject: string;
         requester_email: string | null;
         requester_name: string | null;
         requester_phone: string;
         location: string | null;
+        priority_id: string;
         status: import(".prisma/client").$Enums.TicketStatus;
+        assignee_id: string | null;
+        ticket_code: string;
         resolved_at: Date | null;
         closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
     }>;
     getCategories(app: any): Promise<{
         id: string;

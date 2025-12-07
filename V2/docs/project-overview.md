@@ -5,7 +5,7 @@ Complete ticket management system with role-based access control for admins, age
 ## 📁 Project Structure
 
 ```
-V2/
+v2/
 ├── backend/          # NestJS Backend API
 ├── ui/              # Next.js Frontend
 ├── docs/            # Documentation

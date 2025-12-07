@@ -344,7 +344,7 @@ Get a specific ticket with all details for a user.
 
 ### Using the Test Script
 ```bash
-cd V2/backend
+cd v2/backend
 ./scripts/test-public-api.sh <YOUR_API_KEY>
 ```
 
