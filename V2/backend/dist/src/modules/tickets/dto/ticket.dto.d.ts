@@ -7,7 +7,8 @@ export declare class CreateTicketDto {
     requester_phone: string;
     location?: string;
     priority_id: string;
-    category_ids?: string[];
+    assignee_id?: string;
+    category_ids: string[];
 }
 export declare class UpdateTicketDto {
     subject?: string;
