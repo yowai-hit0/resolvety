@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Loader from './components/Loader';
 
 export default function Home() {
   const router = useRouter();
@@ -36,15 +37,10 @@ export default function Home() {
 
   // Always show loading state to avoid hydration mismatch
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-          <span className="text-white font-bold text-2xl">R</span>
-        </div>
-        <p className="text-gray-600">
-          {redirecting ? 'Redirecting...' : 'Loading...'}
-        </p>
-      </div>
-    </div>
+    <Loader
+      size="lg"
+      message={redirecting ? 'Redirecting...' : 'Loading...'}
+      fullScreen={true}
+    />
   );
 }

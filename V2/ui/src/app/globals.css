@@ -440,6 +440,16 @@ p, .body {
   }
 }
 
+/* Google-style smooth spinner animation */
+@keyframes google-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease-out forwards;
 }

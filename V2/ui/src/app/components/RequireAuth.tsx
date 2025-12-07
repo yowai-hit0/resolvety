@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
+import Loader from './Loader';
 
 interface RequireAuthProps {
   children: React.ReactNode;
@@ -126,16 +127,7 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
   }, [mounted, router, pathname, allowedRoles]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-16 h-16 bg-accent rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-2xl">R</span>
-          </div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <Loader size="lg" message="Loading..." fullScreen={true} />;
   }
 
   if (!isAuthorized) {
