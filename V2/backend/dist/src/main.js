@@ -18,21 +18,28 @@ async function bootstrap() {
     }));
     const allowedOrigins = process.env.CORS_ORIGIN
         ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
-        : ['http://localhost:3001', 'http://localhost:3000', 'http://159.198.65.38:3001'];
+        : ['http://localhost:3001', 'http://localhost:3000', 'http://159.198.65.38:3001', 'http://159.198.65.38:3000'];
+    console.log('🌐 CORS Allowed Origins:', allowedOrigins);
     app.enableCors({
         origin: (origin, callback) => {
-            if (!origin)
+            if (!origin) {
+                console.log('✅ CORS: Allowing request with no origin');
                 return callback(null, true);
+            }
             if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+                console.log(`✅ CORS: Allowing origin: ${origin}`);
                 callback(null, true);
             }
             else {
-                callback(new Error('Not allowed by CORS'));
+                console.log(`❌ CORS: Blocking origin: ${origin}`);
+                console.log(`   Allowed origins: ${allowedOrigins.join(', ')}`);
+                callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
             }
         },
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
+        exposedHeaders: ['Content-Type', 'Authorization'],
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
