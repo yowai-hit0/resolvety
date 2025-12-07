@@ -102,6 +102,7 @@ export const TicketsAPI = {
     requester_email?: string;
     requester_name?: string;
     location?: string;
+    assignee_id?: string;
     category_ids?: string[];
   }) =>
     api.post('/tickets', data).then((r) => r.data),
