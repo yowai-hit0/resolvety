@@ -9,18 +9,27 @@ export class PublicApiService {
   constructor(private prisma: PrismaService) {}
 
   /**
-   * Generate a short, human-readable ticket code
-   * Format: TKT-12345 (5-digit sequential number)
+   * Generate a short, random, unique ticket code
+   * Format: TKT-A3B7C (prefix + 5 random alphanumeric characters)
    */
   private async generateTicketCode(): Promise<string> {
-    // Get total count of tickets to generate sequential number
-    const ticketCount = await this.prisma.ticket.count();
-    let ticketNumber = ticketCount + 1;
-    let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+    const prefix = 'TKT-';
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Exclude confusing chars (0, O, I, 1)
+    const codeLength = 5;
     
-    // Ensure uniqueness (handle edge cases where count might be off)
     let attempts = 0;
-    while (attempts < 10) {
+    const maxAttempts = 50;
+    
+    while (attempts < maxAttempts) {
+      // Generate random code
+      let randomCode = '';
+      for (let i = 0; i < codeLength; i++) {
+        randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      
+      const ticketCode = `${prefix}${randomCode}`;
+      
+      // Check if code already exists
       const existing = await this.prisma.ticket.findUnique({
         where: { ticket_code: ticketCode },
       });
@@ -29,14 +38,13 @@ export class PublicApiService {
         return ticketCode;
       }
       
-      // If code exists, try next number
-      ticketNumber++;
-      ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
       attempts++;
     }
     
-    // Fallback to timestamp-based if all sequential attempts fail
-    return `TKT-${Date.now().toString().slice(-8)}`;
+    // Fallback: use timestamp + random if all attempts fail (extremely unlikely)
+    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+    const random = Math.random().toString(36).toUpperCase().slice(2, 4);
+    return `${prefix}${timestamp}${random}`;
   }
 
   async registerUser(dto: ApiRegisterUserDto, app: any) {
