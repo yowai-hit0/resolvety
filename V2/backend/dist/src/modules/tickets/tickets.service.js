@@ -17,22 +17,28 @@ let TicketsService = class TicketsService {
         this.prisma = prisma;
     }
     async generateTicketCode() {
-        const ticketCount = await this.prisma.ticket.count();
-        let ticketNumber = ticketCount + 1;
-        let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+        const prefix = 'TKT-';
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const codeLength = 5;
         let attempts = 0;
-        while (attempts < 10) {
+        const maxAttempts = 50;
+        while (attempts < maxAttempts) {
+            let randomCode = '';
+            for (let i = 0; i < codeLength; i++) {
+                randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const ticketCode = `${prefix}${randomCode}`;
             const existing = await this.prisma.ticket.findUnique({
                 where: { ticket_code: ticketCode },
             });
             if (!existing) {
                 return ticketCode;
             }
-            ticketNumber++;
-            ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
             attempts++;
         }
-        return `TKT-${Date.now().toString().slice(-8)}`;
+        const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+        const random = Math.random().toString(36).toUpperCase().slice(2, 4);
+        return `${prefix}${timestamp}${random}`;
     }
     async findAll(skip = 0, take = 10, filters) {
         const where = {};
@@ -276,6 +282,32 @@ let TicketsService = class TicketsService {
     }
     async create(dto, userId) {
         const ticketCode = await this.generateTicketCode();
+        if (dto.assignee_id) {
+            const assignee = await this.prisma.user.findUnique({
+                where: { id: dto.assignee_id },
+            });
+            if (!assignee) {
+                throw new common_1.NotFoundException('Assignee not found');
+            }
+            if (!assignee.is_active) {
+                throw new common_1.BadRequestException('Assignee is not active');
+            }
+        }
+        if (dto.category_ids && dto.category_ids.length > 0) {
+            const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+            const categories = await this.prisma.category.findMany({
+                where: {
+                    id: { in: uniqueCategoryIds },
+                    is_active: true,
+                },
+            });
+            if (categories.length !== uniqueCategoryIds.length) {
+                const foundIds = new Set(categories.map(c => c.id));
+                const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+                throw new common_1.BadRequestException(`Invalid or inactive category IDs: ${missingIds.join(', ')}`);
+            }
+            dto.category_ids = uniqueCategoryIds;
+        }
         const ticket = await this.prisma.ticket.create({
             data: {
                 ticket_code: ticketCode,
@@ -286,9 +318,10 @@ let TicketsService = class TicketsService {
                 requester_phone: dto.requester_phone,
                 location: dto.location,
                 priority_id: dto.priority_id,
+                assignee_id: dto.assignee_id,
                 created_by_id: userId,
                 updated_by_id: userId,
-                categories: dto.category_ids ? {
+                categories: dto.category_ids && dto.category_ids.length > 0 ? {
                     create: dto.category_ids.map(catId => ({
                         category_id: catId,
                     })),
@@ -296,6 +329,14 @@ let TicketsService = class TicketsService {
             },
             include: {
                 created_by: {
+                    select: {
+                        id: true,
+                        email: true,
+                        first_name: true,
+                        last_name: true,
+                    },
+                },
+                assignee: {
                     select: {
                         id: true,
                         email: true,
@@ -319,12 +360,26 @@ let TicketsService = class TicketsService {
             throw new common_1.NotFoundException('Ticket not found');
         }
         if (dto.category_ids !== undefined) {
+            const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+            if (uniqueCategoryIds.length > 0) {
+                const categories = await this.prisma.category.findMany({
+                    where: {
+                        id: { in: uniqueCategoryIds },
+                        is_active: true,
+                    },
+                });
+                if (categories.length !== uniqueCategoryIds.length) {
+                    const foundIds = new Set(categories.map(c => c.id));
+                    const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+                    throw new common_1.BadRequestException(`Invalid or inactive category IDs: ${missingIds.join(', ')}`);
+                }
+            }
             await this.prisma.ticketCategory.deleteMany({
                 where: { ticket_id: id },
             });
-            if (dto.category_ids.length > 0) {
+            if (uniqueCategoryIds.length > 0) {
                 await this.prisma.ticketCategory.createMany({
-                    data: dto.category_ids.map(catId => ({
+                    data: uniqueCategoryIds.map(catId => ({
                         ticket_id: id,
                         category_id: catId,
                     })),
