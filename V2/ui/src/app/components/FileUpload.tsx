@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback } from 'react';
 import Icon, { faUpload, faTimes, faImage, faFileAlt } from './Icon';
+import { toast } from './Toaster';
 
 export interface UploadedFile {
   url: string;
@@ -65,7 +66,7 @@ export default function FileUpload({
     if (maxSize) {
       const oversizedFiles = fileArray.filter(f => f.size > maxSize);
       if (oversizedFiles.length > 0) {
-        alert(`Some files exceed the maximum size of ${formatFileSize(maxSize)}`);
+        toast.warning(`Some files exceed the maximum size of ${formatFileSize(maxSize)}`);
         return;
       }
     }

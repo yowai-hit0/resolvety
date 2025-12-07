@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { TicketsAPI, UsersAPI, PrioritiesAPI, CategoriesAPI } from '@/lib/api';
 import { Ticket, TicketStatus, TicketPriority, User, Category } from '@/types';
 import Icon, { faSearch, faArrowsUpDown, faArrowUp, faArrowDown, faFilter, faPlus, faTable, faTh, faTimes, faDownload, faSave, faBookmark, faCheck, faX } from '@/app/components/Icon';
+import { toast } from '@/app/components/Toaster';
 import { TableSkeleton, TicketCardSkeleton, Skeleton } from '@/app/components/Skeleton';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
@@ -444,12 +445,15 @@ export default function AdminTicketsPage() {
       errors.priority_id = 'Priority is required';
     }
     
-    if (formData.requester_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.requester_email)) {
-      errors.requester_email = 'Invalid email format';
+    // Require phone number
+    if (!phoneLocal || phoneLocal.trim() === '') {
+      errors.requester_phone = 'Phone number is required';
+    } else if (!/^7\d{8}$/.test(phoneLocal)) {
+      errors.requester_phone = 'Phone must be 9 digits starting with 7';
     }
     
-    if (phoneLocal && !/^7\d{8}$/.test(phoneLocal)) {
-      errors.requester_phone = 'Phone must be 9 digits starting with 7';
+    if (formData.requester_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.requester_email)) {
+      errors.requester_email = 'Invalid email format';
     }
     
     if (formData.location && !RW_DISTRICTS.includes(formData.location)) {
@@ -497,21 +501,25 @@ export default function AdminTicketsPage() {
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Update phone number
-    const fullPhone = phoneLocal ? `+250${phoneLocal}` : '';
-    const finalFormData = { ...formData, requester_phone: fullPhone };
-    
+    // Validate form first
     if (!validateForm()) {
       return;
     }
     
+    // Update phone number - ensure it's not empty after validation
+    if (!phoneLocal || phoneLocal.trim() === '') {
+      setFormErrors({ requester_phone: 'Phone number is required' });
+      return;
+    }
+    
+    const fullPhone = `+250${phoneLocal}`;
     setCreating(true);
     setFormErrors({});
     
     try {
       const ticketData: any = {
-        subject: formData.subject,
-        description: formData.description,
+        subject: formData.subject.trim(),
+        description: formData.description.trim(),
         requester_phone: fullPhone,
         priority_id: formData.priority_id,
       };
@@ -522,7 +530,7 @@ export default function AdminTicketsPage() {
       if (formData.assignee_id) ticketData.assignee_id = formData.assignee_id;
       if (formData.category_ids.length > 0) ticketData.category_ids = formData.category_ids;
       
-      await TicketsAPI.create(ticketData);
+      const newTicket = await TicketsAPI.create(ticketData);
       
       // Reset form
       setFormData({
@@ -544,6 +552,9 @@ export default function AdminTicketsPage() {
       setNewCategoryName('');
       setCreateModalOpen(false);
       
+      // Show success toast
+      toast.success(`Ticket "${ticketData.subject}" created successfully!`);
+      
       // Reload tickets
       const params: any = {
         skip: (page - 1) * pageSize,
@@ -558,8 +569,10 @@ export default function AdminTicketsPage() {
       setTotalTickets(response.total || 0);
     } catch (error: any) {
       console.error('Failed to create ticket:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to create ticket';
+      toast.error(Array.isArray(errorMessage) ? errorMessage.join(', ') : errorMessage);
       setFormErrors({ 
-        submit: error?.response?.data?.message || 'Failed to create ticket' 
+        submit: errorMessage
       });
     } finally {
       setCreating(false);
@@ -645,6 +658,7 @@ export default function AdminTicketsPage() {
       setSelectedIds(new Set());
       setAssignModalOpen(false);
       setSelectedAssignee('');
+      toast.success(`Successfully assigned ${selectedIds.size} ticket(s)`);
       // Reload tickets
       const params: any = {
         skip: (page - 1) * pageSize,
@@ -656,8 +670,10 @@ export default function AdminTicketsPage() {
       if (assigneeFilter) params.assignee = assigneeFilter;
       const response = await TicketsAPI.list(params);
       setTickets(response.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to bulk assign:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to assign tickets. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
@@ -672,6 +688,7 @@ export default function AdminTicketsPage() {
       setSelectedIds(new Set());
       setStatusModalOpen(false);
       setSelectedStatus('');
+      toast.success(`Successfully updated status for ${selectedIds.size} ticket(s)`);
       // Reload tickets
       const params: any = {
         skip: (page - 1) * pageSize,
@@ -683,8 +700,10 @@ export default function AdminTicketsPage() {
       if (assigneeFilter) params.assignee = assigneeFilter;
       const response = await TicketsAPI.list(params);
       setTickets(response.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to bulk update status:', error);
+      const errorMessage = error?.response?.data?.message || 'Failed to update ticket status. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
@@ -1909,3 +1928,4 @@ export default function AdminTicketsPage() {
     </div>
   );
 }
+

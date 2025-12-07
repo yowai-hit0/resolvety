@@ -7,6 +7,7 @@ import { TicketsAPI, PrioritiesAPI, CategoriesAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Ticket, TicketStatus, Comment, Category, Attachment, TicketEvent, TicketPriority } from '@/types';
 import Icon, { faArrowLeft, faEdit, faCheck, faTimes, faLock, faFile, faHistory, faFileAlt, faImage, faPlus, faUpload, faTrash } from '@/app/components/Icon';
+import { toast } from '@/app/components/Toaster';
 import { TicketDetailSkeleton } from '@/app/components/Skeleton';
 
 const STATUS_OPTIONS: { value: TicketStatus; label: string; class: string }[] = [
@@ -260,12 +261,16 @@ export default function AgentTicketDetailPage() {
         const updatedTicket = await TicketsAPI.update(ticketId, updateData);
         setTicket(updatedTicket);
         setCategories(updatedTicket.categories?.map((tc: any) => tc.category || tc) || []);
+        toast.success('Ticket updated successfully!');
+      } else {
+        toast.info('No changes to save');
       }
       
       setEditMode(false);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update ticket:', error);
-      alert('Failed to update ticket. Please try again.');
+      const errorMessage = error?.response?.data?.message || 'Failed to update ticket. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -295,9 +300,11 @@ export default function AgentTicketDetailPage() {
       setComments(prev => [...prev, newComment]);
       setComment('');
       setIsInternal(false);
-    } catch (error) {
+      toast.success(isInternal ? 'Internal comment added successfully' : 'Comment added successfully');
+    } catch (error: any) {
       console.error('Failed to add comment:', error);
-      alert('Failed to add comment. Please try again.');
+      const errorMessage = error?.response?.data?.message || 'Failed to add comment. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }
@@ -315,7 +322,7 @@ export default function AgentTicketDetailPage() {
     );
     
     if (mediaFiles.length !== files.length) {
-      alert('Only image, audio, and video files are allowed');
+      toast.warning('Only image, audio, and video files are allowed');
       return;
     }
     
@@ -336,9 +343,11 @@ export default function AgentTicketDetailPage() {
         const newAttachment = await TicketsAPI.addAttachment(ticketId, attachmentData);
         setAttachments(prev => [...prev, newAttachment]);
       }
-    } catch (error) {
+      toast.success(`Successfully uploaded ${mediaFiles.length} file(s)`);
+    } catch (error: any) {
       console.error('Failed to upload file:', error);
-      alert('Failed to upload file. Please try again.');
+      const errorMessage = error?.response?.data?.message || 'Failed to upload file. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -353,9 +362,11 @@ export default function AgentTicketDetailPage() {
     try {
       await TicketsAPI.deleteAttachment(attachmentId);
       setAttachments(prev => prev.filter(a => a.id !== attachmentId));
-    } catch (error) {
+      toast.success('Attachment deleted successfully');
+    } catch (error: any) {
       console.error('Failed to remove attachment:', error);
-      alert('Failed to remove attachment. Please try again.');
+      const errorMessage = error?.response?.data?.message || 'Failed to remove attachment. Please try again.';
+      toast.error(errorMessage);
     }
   };
 

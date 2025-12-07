@@ -38,6 +38,11 @@ export class CreateTicketDto {
   @IsNotEmpty()
   priority_id: string;
 
+  @ApiPropertyOptional()
+  @IsUUID()
+  @IsOptional()
+  assignee_id?: string;
+
   @ApiPropertyOptional({ type: [String] })
   @IsArray()
   @IsUUID('4', { each: true })

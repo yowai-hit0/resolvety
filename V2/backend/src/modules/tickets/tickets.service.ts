@@ -314,6 +314,21 @@ export class TicketsService {
     // Generate short, human-readable ticket code
     const ticketCode = await this.generateTicketCode();
 
+    // If assignee_id is provided, verify the user exists and is active
+    if (dto.assignee_id) {
+      const assignee = await this.prisma.user.findUnique({
+        where: { id: dto.assignee_id },
+      });
+
+      if (!assignee) {
+        throw new NotFoundException('Assignee not found');
+      }
+
+      if (!assignee.is_active) {
+        throw new BadRequestException('Assignee is not active');
+      }
+    }
+
     // Create ticket
     const ticket = await this.prisma.ticket.create({
       data: {
@@ -325,6 +340,7 @@ export class TicketsService {
         requester_phone: dto.requester_phone,
         location: dto.location,
         priority_id: dto.priority_id,
+        assignee_id: dto.assignee_id,
         created_by_id: userId,
         updated_by_id: userId,
         categories: dto.category_ids ? {
@@ -335,6 +351,14 @@ export class TicketsService {
       },
       include: {
         created_by: {
+          select: {
+            id: true,
+            email: true,
+            first_name: true,
+            last_name: true,
+          },
+        },
+        assignee: {
           select: {
             id: true,
             email: true,

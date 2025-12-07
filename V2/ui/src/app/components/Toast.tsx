@@ -45,32 +45,40 @@ export default function Toast({ toast, onDismiss }: ToastProps) {
     switch (toast.type) {
       case 'success':
         return {
-          bg: 'bg-green-50',
-          border: 'border-green-200',
-          text: 'text-green-800',
+          bg: 'bg-gradient-to-r from-green-50 to-green-100',
+          border: 'border-green-300',
+          text: 'text-green-900',
           icon: 'text-green-600',
+          iconBg: 'bg-green-100',
+          shadow: 'shadow-green-200/50',
         };
       case 'error':
         return {
-          bg: 'bg-red-50',
-          border: 'border-red-200',
-          text: 'text-red-800',
+          bg: 'bg-gradient-to-r from-red-50 to-red-100',
+          border: 'border-red-300',
+          text: 'text-red-900',
           icon: 'text-red-600',
+          iconBg: 'bg-red-100',
+          shadow: 'shadow-red-200/50',
         };
       case 'warning':
         return {
-          bg: 'bg-yellow-50',
-          border: 'border-yellow-200',
-          text: 'text-yellow-800',
+          bg: 'bg-gradient-to-r from-yellow-50 to-yellow-100',
+          border: 'border-yellow-300',
+          text: 'text-yellow-900',
           icon: 'text-yellow-600',
+          iconBg: 'bg-yellow-100',
+          shadow: 'shadow-yellow-200/50',
         };
       case 'info':
       default:
         return {
-          bg: 'bg-blue-50',
-          border: 'border-blue-200',
-          text: 'text-blue-800',
+          bg: 'bg-gradient-to-r from-blue-50 to-blue-100',
+          border: 'border-blue-300',
+          text: 'text-blue-900',
           icon: 'text-blue-600',
+          iconBg: 'bg-blue-100',
+          shadow: 'shadow-blue-200/50',
         };
     }
   };
@@ -81,18 +89,21 @@ export default function Toast({ toast, onDismiss }: ToastProps) {
     <div
       className={`
         ${colors.bg} ${colors.border} ${colors.text}
-        border rounded-sm p-4 shadow-lg min-w-[300px] max-w-md
-        flex items-start gap-3
+        border-l-4 rounded-lg p-4 shadow-xl min-w-[320px] max-w-md
+        flex items-start gap-3 backdrop-blur-sm
         transform transition-all duration-300 ease-out
-        translate-x-0 opacity-100
+        translate-x-0 opacity-100 hover:shadow-2xl
+        ${colors.shadow}
       `}
       role="alert"
     >
-      <Icon icon={getIcon()} className={`${colors.icon} flex-shrink-0 mt-0.5`} size="sm" />
-      <div className="flex-1 text-sm font-medium">{toast.message}</div>
+      <div className={`${colors.iconBg} rounded-full p-2 flex-shrink-0`}>
+        <Icon icon={getIcon()} className={colors.icon} size="sm" />
+      </div>
+      <div className="flex-1 text-sm font-semibold leading-relaxed">{toast.message}</div>
       <button
         onClick={() => onDismiss(toast.id)}
-        className={`${colors.icon} hover:opacity-70 transition-opacity flex-shrink-0`}
+        className={`${colors.icon} hover:opacity-70 transition-opacity flex-shrink-0 p-1 rounded hover:bg-white/50`}
         aria-label="Dismiss notification"
       >
         <Icon icon={faTimes} size="sm" />
