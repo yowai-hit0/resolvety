@@ -51,22 +51,28 @@ let PublicApiService = class PublicApiService {
         this.prisma = prisma;
     }
     async generateTicketCode() {
-        const ticketCount = await this.prisma.ticket.count();
-        let ticketNumber = ticketCount + 1;
-        let ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
+        const prefix = 'TKT-';
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        const codeLength = 5;
         let attempts = 0;
-        while (attempts < 10) {
+        const maxAttempts = 50;
+        while (attempts < maxAttempts) {
+            let randomCode = '';
+            for (let i = 0; i < codeLength; i++) {
+                randomCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            const ticketCode = `${prefix}${randomCode}`;
             const existing = await this.prisma.ticket.findUnique({
                 where: { ticket_code: ticketCode },
             });
             if (!existing) {
                 return ticketCode;
             }
-            ticketNumber++;
-            ticketCode = `TKT-${String(ticketNumber).padStart(5, '0')}`;
             attempts++;
         }
-        return `TKT-${Date.now().toString().slice(-8)}`;
+        const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+        const random = Math.random().toString(36).toUpperCase().slice(2, 4);
+        return `${prefix}${timestamp}${random}`;
     }
     async registerUser(dto, app) {
         if (dto.email) {
@@ -160,6 +166,24 @@ let PublicApiService = class PublicApiService {
         else {
             requesterPhone = 'N/A';
         }
+        let categoryIdsToCreate = undefined;
+        if (dto.category_ids && dto.category_ids.length > 0) {
+            const uniqueCategoryIds = [...new Set(dto.category_ids.filter(id => id && typeof id === 'string' && id.length > 0))];
+            if (uniqueCategoryIds.length > 0) {
+                const categories = await this.prisma.category.findMany({
+                    where: {
+                        id: { in: uniqueCategoryIds },
+                        is_active: true,
+                    },
+                });
+                if (categories.length !== uniqueCategoryIds.length) {
+                    const foundIds = new Set(categories.map(c => c.id));
+                    const missingIds = uniqueCategoryIds.filter(id => !foundIds.has(id));
+                    throw new common_1.BadRequestException(`Invalid or inactive category IDs: ${missingIds.join(', ')}`);
+                }
+                categoryIdsToCreate = uniqueCategoryIds;
+            }
+        }
         const ticket = await this.prisma.ticket.create({
             data: {
                 ticket_code: ticketCode,
@@ -172,8 +196,8 @@ let PublicApiService = class PublicApiService {
                 priority_id: dto.priority_id,
                 created_by_id: user.id,
                 updated_by_id: user.id,
-                categories: dto.category_ids ? {
-                    create: dto.category_ids.map(catId => ({
+                categories: categoryIdsToCreate && categoryIdsToCreate.length > 0 ? {
+                    create: categoryIdsToCreate.map(catId => ({
                         category_id: catId,
                     })),
                 } : undefined,
