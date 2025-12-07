@@ -12,7 +12,7 @@ const oldDbClient = new Client({
 const newDb = new client_1.PrismaClient({
     datasources: {
         db: {
-            url: process.env.DATABASE_URL || 'postgresql://admin:Zoea2025Secure@172.16.40.61:5432/resolveit',
+            url: process.env.DATABASE_URL || 'postgresql://devslab_admin:devslab_secure_password_2024@devslab-postgres:5432/resolveit_db',
         },
     },
 });
@@ -34,28 +34,44 @@ async function migrateData() {
         console.log('📊 Step 1: Migrating Ticket Priorities...');
         const prioritiesResult = await oldDbClient.query('SELECT * FROM ticket_priority ORDER BY id');
         for (const oldPriority of prioritiesResult.rows) {
-            const newPriority = await newDb.ticketPriority.create({
-                data: {
-                    name: oldPriority.name,
-                    is_active: true,
-                    sort_order: 0,
-                },
+            let newPriority = await newDb.ticketPriority.findUnique({
+                where: { name: oldPriority.name },
             });
+            if (!newPriority) {
+                newPriority = await newDb.ticketPriority.create({
+                    data: {
+                        name: oldPriority.name,
+                        is_active: true,
+                        sort_order: 0,
+                    },
+                });
+                console.log(`  ✅ Created priority: ${oldPriority.name} (${oldPriority.id} -> ${newPriority.id})`);
+            }
+            else {
+                console.log(`  ℹ️  Priority already exists: ${oldPriority.name} (${oldPriority.id} -> ${newPriority.id})`);
+            }
             priorityIdMap[oldPriority.id] = newPriority.id;
-            console.log(`  ✅ Migrated priority: ${oldPriority.name} (${oldPriority.id} -> ${newPriority.id})`);
         }
         console.log(`  📈 Total priorities migrated: ${prioritiesResult.rows.length}\n`);
         console.log('📊 Step 2: Migrating Tags to Categories...');
         const tagsResult = await oldDbClient.query('SELECT * FROM tags ORDER BY id');
         for (const oldTag of tagsResult.rows) {
-            const newCategory = await newDb.category.create({
-                data: {
-                    name: oldTag.name,
-                    is_active: true,
-                },
+            let newCategory = await newDb.category.findUnique({
+                where: { name: oldTag.name },
             });
+            if (!newCategory) {
+                newCategory = await newDb.category.create({
+                    data: {
+                        name: oldTag.name,
+                        is_active: true,
+                    },
+                });
+                console.log(`  ✅ Created category: ${oldTag.name} (${oldTag.id} -> ${newCategory.id})`);
+            }
+            else {
+                console.log(`  ℹ️  Category already exists: ${oldTag.name} (${oldTag.id} -> ${newCategory.id})`);
+            }
             tagIdMap[oldTag.id] = newCategory.id;
-            console.log(`  ✅ Migrated tag to category: ${oldTag.name} (${oldTag.id} -> ${newCategory.id})`);
         }
         console.log(`  📈 Total categories migrated: ${tagsResult.rows.length}\n`);
         console.log('📊 Step 3: Creating default organization...');

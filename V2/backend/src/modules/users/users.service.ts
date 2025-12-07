@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UpdateUserDto, UpdateUserStatusDto, CreateUserDto } from './dto/user.dto';
 import * as bcrypt from 'bcrypt';
@@ -143,8 +143,27 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    // Get the user making the update to check permissions
+    const updater = await this.prisma.user.findUnique({ where: { id: updatedBy } });
+    if (!updater) {
+      throw new NotFoundException('Updater not found');
+    }
+
+    // Check if updater is admin or super_admin for role/organization updates
+    const isAdmin = updater.role === 'admin' || updater.role === 'super_admin';
+    
+    // Only allow role updates by admin/super_admin
+    if (dto.role !== undefined && !isAdmin) {
+      throw new ForbiddenException('Only admins can update user roles');
+    }
+
     // Handle organization_ids update separately
     const { organization_ids, organization_id, ...updateData } = dto as any;
+    
+    // Only allow organization updates by admin/super_admin
+    if ((organization_ids !== undefined || organization_id !== undefined) && !isAdmin) {
+      throw new ForbiddenException('Only admins can update user organizations');
+    }
 
     // If organization_ids is provided, update the relationships
     if (organization_ids !== undefined) {

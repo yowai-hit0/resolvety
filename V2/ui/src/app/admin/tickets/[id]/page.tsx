@@ -735,7 +735,10 @@ export default function TicketDetailPage() {
                         <div className="absolute left-2 top-6 bottom-0 w-0.5 bg-gray-200"></div>
                       )}
                       {/* Timeline dot */}
-                      <div className="absolute left-0 top-1.5 w-4 h-4 bg-primary-500 rounded-full border-2 border-white"></div>
+                      <div 
+                        className="absolute left-0 top-1.5 w-4 h-4 rounded-full border-2 border-white"
+                        style={{ backgroundColor: '#0f36a5' }}
+                      ></div>
                       {/* Event content */}
                       <div>
                         <div className="flex items-center gap-2 mb-1">

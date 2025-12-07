@@ -3,23 +3,52 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { UsersAPI, TicketsAPI } from '@/lib/api';
-import { User } from '@/types';
-import Icon, { faArrowLeft, faCheck, faTimes } from '@/app/components/Icon';
+import { UsersAPI, TicketsAPI, OrganizationsAPI } from '@/lib/api';
+import { User, UserRole, Organization } from '@/types';
+import Icon, { faArrowLeft, faCheck, faTimes, faEdit } from '@/app/components/Icon';
 import { DetailPageSkeleton } from '@/app/components/Skeleton';
+import { useToast } from '@/app/components/Toaster';
+import { useAuthStore } from '@/store/auth';
 
 export default function UserDetailPage() {
   const params = useParams();
   const userId = params?.id as string | undefined;
+  const { show } = useToast();
+  const { user: currentUser } = useAuthStore();
   
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [formData, setFormData] = useState({
+    first_name: '',
+    last_name: '',
+    role: '' as UserRole | '',
+    organization_ids: [] as string[],
+  });
   const [userStats, setUserStats] = useState<{
     totalTickets: number;
     assignedTickets: number;
     createdTickets: number;
   } | null>(null);
+
+  // Check if current user can edit (admin or super_admin)
+  const canEdit = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
+
+  // Fetch organizations for dropdown
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        const response = await OrganizationsAPI.list({ take: 1000 });
+        const orgs = Array.isArray(response) ? response : (response?.data || []);
+        setOrganizations(orgs);
+      } catch (error) {
+        console.error('Failed to fetch organizations:', error);
+      }
+    };
+    fetchOrganizations();
+  }, []);
 
   // Fetch user data
   useEffect(() => {
@@ -33,6 +62,15 @@ export default function UserDetailPage() {
       try {
         const userData = await UsersAPI.get(userId);
         setUser(userData);
+        
+        // Initialize form data
+        setFormData({
+          first_name: userData.first_name || '',
+          last_name: userData.last_name || '',
+          role: userData.role || '',
+          organization_ids: userData.user_organizations?.map((uo: any) => uo.organization_id) || 
+                          (userData.organization_id ? [userData.organization_id] : []),
+        });
 
         // Fetch user statistics
         try {
@@ -68,9 +106,47 @@ export default function UserDetailPage() {
     try {
       await UsersAPI.updateStatus(user.id, { is_active: !user.is_active });
       setUser(prev => prev ? { ...prev, is_active: !prev.is_active } : null);
+      show('User status updated successfully', 'success');
     } catch (error: any) {
       console.error('Failed to update user status:', error);
-      alert('Failed to update user status. Please try again.');
+      show(error?.response?.data?.message || 'Failed to update user status', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveEdit = async () => {
+    if (!user) return;
+    
+    if (!formData.first_name.trim() || !formData.last_name.trim()) {
+      show('First name and last name are required', 'error');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updateData: any = {
+        first_name: formData.first_name.trim(),
+        last_name: formData.last_name.trim(),
+      };
+
+      // Only allow role and organization updates for admin/super_admin
+      if (canEdit) {
+        if (formData.role) {
+          updateData.role = formData.role;
+        }
+        if (formData.organization_ids !== undefined) {
+          updateData.organization_ids = formData.organization_ids;
+        }
+      }
+
+      const updatedUser = await UsersAPI.update(user.id, updateData);
+      setUser(updatedUser);
+      setShowEditModal(false);
+      show('User updated successfully', 'success');
+    } catch (error: any) {
+      console.error('Failed to update user:', error);
+      show(error?.response?.data?.message || 'Failed to update user', 'error');
     } finally {
       setSaving(false);
     }
@@ -121,18 +197,30 @@ export default function UserDetailPage() {
             <p className="text-sm text-gray-600 mt-1">{user.email}</p>
           </div>
         </div>
-        <button
-          onClick={handleToggleStatus}
-          disabled={saving}
-          className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
-            user.is_active
-              ? 'bg-red-50 border border-red-200 text-red-700 hover:bg-red-100'
-              : 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100'
-          }`}
-        >
-          <Icon icon={user.is_active ? faTimes : faCheck} size="sm" />
-          {saving ? 'Updating...' : user.is_active ? 'Deactivate' : 'Activate'}
-        </button>
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <button
+              onClick={() => setShowEditModal(true)}
+              className="px-4 py-2 text-white rounded-sm text-sm font-medium hover:opacity-90 transition-colors flex items-center gap-2 border border-primary-600"
+              style={{ backgroundColor: '#0f36a5' }}
+            >
+              <Icon icon={faEdit} size="sm" />
+              Edit
+            </button>
+          )}
+          <button
+            onClick={handleToggleStatus}
+            disabled={saving}
+            className={`px-4 py-2 rounded-sm text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 ${
+              user.is_active
+                ? 'bg-red-50 border border-red-200 text-red-700 hover:bg-red-100'
+                : 'bg-green-50 border border-green-200 text-green-700 hover:bg-green-100'
+            }`}
+          >
+            <Icon icon={user.is_active ? faTimes : faCheck} size="sm" />
+            {saving ? 'Updating...' : user.is_active ? 'Deactivate' : 'Activate'}
+          </button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -256,6 +344,123 @@ export default function UserDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div 
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={() => setShowEditModal(false)}
+        >
+          <div 
+            className="bg-white rounded-sm border border-gray-200 w-full max-w-md max-h-[90vh] overflow-y-auto shadow-lg"
+            onClick={(e) => e.stopPropagation()}
+            style={{ zIndex: 51 }}
+          >
+            <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
+              <h2 className="text-xl font-bold text-gray-900">Edit User</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1 hover:bg-gray-100 rounded-sm transition-colors"
+                aria-label="Close modal"
+              >
+                <Icon icon={faTimes} size="sm" className="text-gray-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {canEdit && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Role
+                    </label>
+                    <select
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      <option value="customer">Customer</option>
+                      <option value="agent">Agent</option>
+                      <option value="admin">Admin</option>
+                      {currentUser?.role === 'super_admin' && (
+                        <option value="super_admin">Super Admin</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Organizations
+                    </label>
+                    <select
+                      multiple
+                      value={formData.organization_ids}
+                      onChange={(e) => {
+                        const selected = Array.from(e.target.selectedOptions, option => option.value);
+                        setFormData({ ...formData, organization_ids: selected });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 min-h-[100px]"
+                      size={5}
+                    >
+                      {organizations.map((org) => (
+                        <option key={org.id} value={org.id}>
+                          {org.name}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Hold Ctrl/Cmd to select multiple organizations. First selected is primary.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-sm hover:bg-gray-50 transition-colors"
+                disabled={saving}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={saving}
+                className="px-4 py-2 text-sm font-medium text-white rounded-sm hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-primary-600"
+                style={{ backgroundColor: '#0f36a5' }}
+              >
+                {saving ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

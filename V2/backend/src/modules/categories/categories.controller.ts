@@ -1,15 +1,8 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, UseGuards, Request, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiBody } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
-class CreateCategoryDto {
-  name: string;
-}
-
-class UpdateCategoryDto {
-  name: string;
-}
+import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 
 @ApiTags('Categories')
 @Controller('categories')
@@ -43,6 +36,10 @@ export class CategoriesController {
   @ApiParam({ name: 'id', type: String })
   @ApiBody({ type: UpdateCategoryDto })
   async update(@Param('id') id: string, @Body() dto: UpdateCategoryDto, @Request() req) {
+    console.log('Update category request:', { id, dto, userId: req.user?.id });
+    if (!dto || !dto.name) {
+      throw new BadRequestException('Category name is required');
+    }
     return this.categoriesService.update(id, dto.name, req.user.id);
   }
 

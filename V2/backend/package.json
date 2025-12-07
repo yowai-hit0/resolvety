@@ -13,7 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "ts-node prisma/seed.ts",
-    "migrate:data": "ts-node --transpile-only scripts/migrate-data.ts"
+    "migrate:data": "ts-node --transpile-only ../scripts/migration/migrate-data.ts"
   },
   "keywords": [
     "nestjs",

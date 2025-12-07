@@ -89,6 +89,23 @@ export declare class TicketsController {
         recent_7_days: number;
     }>;
     findOne(id: string): Promise<{
+        id: string;
+        ticket_code: string;
+        subject: string;
+        description: string;
+        requester_email: string;
+        requester_name: string;
+        requester_phone: string;
+        location: string;
+        status: import(".prisma/client").$Enums.TicketStatus;
+        created_at: Date;
+        updated_at: Date;
+        resolved_at: Date;
+        closed_at: Date;
+        created_by_id: string;
+        updated_by_id: string;
+        assignee_id: string;
+        priority_id: string;
         created_by: {
             id: string;
             email: string;
@@ -101,60 +118,6 @@ export declare class TicketsController {
             first_name: string;
             last_name: string;
         };
-        comments: ({
-            author: {
-                id: string;
-                email: string;
-                first_name: string;
-                last_name: string;
-            };
-        } & {
-            id: string;
-            created_at: Date;
-            updated_at: Date;
-            updated_by_id: string | null;
-            ticket_id: string;
-            content: string;
-            is_internal: boolean;
-            author_id: string;
-        })[];
-        ticket_events: ({
-            user: {
-                id: string;
-                email: string;
-                first_name: string;
-                last_name: string;
-            };
-        } & {
-            id: string;
-            created_at: Date;
-            user_id: string;
-            ticket_id: string;
-            change_type: string;
-            old_value: string | null;
-            new_value: string | null;
-            ip_address: string | null;
-        })[];
-        attachments: ({
-            uploaded_by: {
-                id: string;
-                email: string;
-                first_name: string;
-                last_name: string;
-            };
-        } & {
-            id: string;
-            ticket_id: string;
-            original_filename: string;
-            stored_filename: string;
-            mime_type: string;
-            size: bigint;
-            is_deleted: boolean;
-            uploaded_at: Date;
-            deleted_at: Date | null;
-            uploaded_by_id: string;
-            deleted_by_id: string | null;
-        })[];
         assignee: {
             id: string;
             email: string;
@@ -187,24 +150,60 @@ export declare class TicketsController {
             ticket_id: string;
             category_id: string;
         })[];
-    } & {
-        id: string;
-        created_at: Date;
-        updated_at: Date;
-        created_by_id: string;
-        updated_by_id: string | null;
-        ticket_code: string;
-        subject: string;
-        description: string;
-        requester_email: string | null;
-        requester_name: string | null;
-        requester_phone: string;
-        location: string | null;
-        status: import(".prisma/client").$Enums.TicketStatus;
-        resolved_at: Date | null;
-        closed_at: Date | null;
-        assignee_id: string | null;
-        priority_id: string;
+        comments: ({
+            author: {
+                id: string;
+                email: string;
+                first_name: string;
+                last_name: string;
+            };
+        } & {
+            id: string;
+            created_at: Date;
+            updated_at: Date;
+            updated_by_id: string | null;
+            ticket_id: string;
+            content: string;
+            is_internal: boolean;
+            author_id: string;
+        })[];
+        attachments: ({
+            uploaded_by: {
+                id: string;
+                email: string;
+                first_name: string;
+                last_name: string;
+            };
+        } & {
+            id: string;
+            ticket_id: string;
+            original_filename: string;
+            stored_filename: string;
+            mime_type: string;
+            size: bigint;
+            is_deleted: boolean;
+            uploaded_at: Date;
+            deleted_at: Date | null;
+            uploaded_by_id: string;
+            deleted_by_id: string | null;
+        })[];
+        ticket_events: ({
+            user: {
+                id: string;
+                email: string;
+                first_name: string;
+                last_name: string;
+            };
+        } & {
+            id: string;
+            created_at: Date;
+            user_id: string;
+            ticket_id: string;
+            change_type: string;
+            old_value: string | null;
+            new_value: string | null;
+            ip_address: string | null;
+        })[];
     }>;
     create(dto: CreateTicketDto, req: any): Promise<{
         created_by: {

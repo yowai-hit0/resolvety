@@ -1,0 +1,58 @@
+version: '3.8'
+
+# ResolveIt Application - Uses shared DevLabs PostgreSQL
+services:
+  # Backend API (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resolveit-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      # Connect to shared DevLabs PostgreSQL
+      DATABASE_URL: ${DATABASE_URL:-postgresql://devslab_admin:devslab_secure_password_2024@devslab-postgres:5432/resolveit_db}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001,http://localhost:3000,http://159.198.65.38:3001}
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    networks:
+      - devslab-network
+    volumes:
+      - ./backend/prisma:/app/prisma:ro
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 10 &&
+        npx prisma migrate deploy &&
+        node dist/src/main.js
+      "
+
+  # Frontend UI (Next.js)
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3000/api}
+    container_name: resolveit-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3000/api}
+    ports:
+      - "${FRONTEND_PORT:-3001}:3001"
+    depends_on:
+      - backend
+    networks:
+      - devslab-network
+
+networks:
+  devslab-network:
+    external: true
+    name: devslab-network
+

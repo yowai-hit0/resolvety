@@ -16,14 +16,31 @@ async function bootstrap() {
         contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: false,
     }));
+    const allowedOrigins = process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+        : ['http://localhost:3001', 'http://localhost:3000', 'http://159.198.65.38:3001'];
     app.enableCors({
-        origin: process.env.CORS_ORIGIN || '*',
+        origin: (origin, callback) => {
+            if (!origin)
+                return callback(null, true);
+            if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+                callback(null, true);
+            }
+            else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
         credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
     });
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,
         transform: true,
         forbidNonWhitelisted: true,
+        transformOptions: {
+            enableImplicitConversion: true,
+        },
     }));
     app.setGlobalPrefix('api');
     const config = new swagger_1.DocumentBuilder()

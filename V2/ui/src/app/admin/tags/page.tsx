@@ -7,19 +7,19 @@ import Icon, { faEdit, faTrash, faCheck, faTimes, faPlus } from '@/app/component
 import { TableSkeleton, Skeleton } from '@/app/components/Skeleton';
 import { useToast } from '@/app/components/Toaster';
 
-type TabType = 'tags' | 'priorities';
+type TabType = 'categories' | 'priorities';
 
 export default function AdminTagsPage() {
   const { show } = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>('tags');
-  const [tags, setTags] = useState<Category[]>([]);
+  const [activeTab, setActiveTab] = useState<TabType>('categories');
+  const [categories, setCategories] = useState<Category[]>([]);
   const [priorities, setPriorities] = useState<TicketPriority[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Tags state
-  const [tagName, setTagName] = useState('');
-  const [editingTagId, setEditingTagId] = useState<string | null>(null);
-  const [editingTagName, setEditingTagName] = useState('');
+  // Categories state
+  const [categoryName, setCategoryName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
   
   // Priorities state
   const [priorityName, setPriorityName] = useState('');
@@ -36,7 +36,7 @@ export default function AdminTagsPage() {
           PrioritiesAPI.list(),
         ]);
         
-        setTags(categoriesData || []);
+        setCategories(categoriesData || []);
         setPriorities(prioritiesData || []);
       } catch (error) {
         console.error('Failed to fetch data:', error);
@@ -49,15 +49,15 @@ export default function AdminTagsPage() {
     fetchData();
   }, [show]);
 
-  // Tags handlers
-  const handleCreateTag = async (e: React.FormEvent) => {
+  // Categories handlers
+  const handleCreateCategory = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tagName.trim()) return;
+    if (!categoryName.trim()) return;
     
     try {
-      const newTag = await CategoriesAPI.create({ name: tagName.trim() });
-      setTags(prev => [...prev, newTag]);
-      setTagName('');
+      const newCategory = await CategoriesAPI.create({ name: categoryName.trim() });
+      setCategories(prev => [...prev, newCategory]);
+      setCategoryName('');
       show('Category created successfully', 'success');
     } catch (error) {
       console.error('Failed to create category:', error);
@@ -65,42 +65,44 @@ export default function AdminTagsPage() {
     }
   };
 
-  const handleEditTag = (tagId: string) => {
-    const tag = tags.find(t => t.id === tagId);
-    if (tag) {
-      setEditingTagId(tagId);
-      setEditingTagName(tag.name);
+  const handleEditCategory = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (category) {
+      setEditingCategoryId(categoryId);
+      setEditingCategoryName(category.name);
     }
   };
 
-  const handleSaveTag = async (tagId: string) => {
-    if (!editingTagName.trim()) return;
+  const handleSaveCategory = async (categoryId: string) => {
+    if (!editingCategoryName.trim()) return;
     
     try {
-      const updatedTag = await CategoriesAPI.update(tagId, { name: editingTagName.trim() });
-      setTags(prev => prev.map(t => 
-        t.id === tagId ? updatedTag : t
+      const updatedCategory = await CategoriesAPI.update(categoryId, { name: editingCategoryName.trim() });
+      setCategories(prev => prev.map(c => 
+        c.id === categoryId ? updatedCategory : c
       ));
-      setEditingTagId(null);
-      setEditingTagName('');
+      setEditingCategoryId(null);
+      setEditingCategoryName('');
       show('Category updated successfully', 'success');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update category:', error);
-      show('Failed to update category', 'error');
+      console.error('Error response:', error?.response?.data);
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to update category';
+      show(errorMessage, 'error');
     }
   };
 
-  const handleCancelTagEdit = () => {
-    setEditingTagId(null);
-    setEditingTagName('');
+  const handleCancelCategoryEdit = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName('');
   };
 
-  const handleDeleteTag = async (tagId: string) => {
+  const handleDeleteCategory = async (categoryId: string) => {
     if (!confirm('Are you sure you want to delete this category?')) return;
     
     try {
-      await CategoriesAPI.delete(tagId);
-      setTags(prev => prev.filter(t => t.id !== tagId));
+      await CategoriesAPI.delete(categoryId);
+      setCategories(prev => prev.filter(c => c.id !== categoryId));
       show('Category deleted successfully', 'success');
     } catch (error) {
       console.error('Failed to delete category:', error);
@@ -212,13 +214,13 @@ export default function AdminTagsPage() {
       <div className="border-b border-gray-200">
         <div className="flex gap-1">
           <button
-            onClick={() => setActiveTab('tags')}
+            onClick={() => setActiveTab('categories')}
             className={`px-4 py-2 font-medium text-sm transition-colors ${
-              activeTab === 'tags'
+              activeTab === 'categories'
                 ? 'border-b-2 border-primary-500 text-primary-500'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
-            style={activeTab === 'tags' ? { borderColor: '#0f36a5', color: '#0f36a5' } : undefined}
+            style={activeTab === 'categories' ? { borderColor: '#0f36a5', color: '#0f36a5' } : undefined}
           >
             Categories
           </button>
@@ -237,21 +239,21 @@ export default function AdminTagsPage() {
       </div>
 
       {/* Categories Tab */}
-      {activeTab === 'tags' && (
+      {activeTab === 'categories' && (
         <div className="space-y-6">
-          {/* Create Tag Form */}
+          {/* Create Category Form */}
           <div className="bg-white border border-gray-200 rounded-sm p-4">
-            <form onSubmit={handleCreateTag} className="flex gap-2">
+            <form onSubmit={handleCreateCategory} className="flex gap-2">
               <input
                 type="text"
-                value={tagName}
-                onChange={(e) => setTagName(e.target.value)}
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
                 placeholder="New category name"
                 className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
               />
               <button
                 type="submit"
-                disabled={!tagName.trim()}
+                disabled={!categoryName.trim()}
                 className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
               >
                 <Icon icon={faPlus} size="sm" />
@@ -260,38 +262,38 @@ export default function AdminTagsPage() {
             </form>
           </div>
 
-          {/* Tags List */}
+          {/* Categories List */}
           <div className="bg-white border border-gray-200 rounded-sm overflow-hidden">
             <div className="p-6 border-b border-gray-200">
               <h2 className="font-semibold text-gray-900">Categories</h2>
             </div>
             <div className="divide-y divide-gray-200">
-              {tags.length === 0 ? (
+              {categories.length === 0 ? (
                 <div className="p-12 text-center text-gray-500">
                   No categories created yet
                 </div>
               ) : (
-                tags.map((tag) => (
-                  <div key={tag.id} className="p-4 flex items-center gap-3">
-                    {editingTagId === tag.id ? (
+                categories.map((category) => (
+                  <div key={category.id} className="p-4 flex items-center gap-3">
+                    {editingCategoryId === category.id ? (
                       <>
                         <input
                           type="text"
-                          value={editingTagName}
-                          onChange={(e) => setEditingTagName(e.target.value)}
+                          value={editingCategoryName}
+                          onChange={(e) => setEditingCategoryName(e.target.value)}
                           className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-sm text-gray-900 focus:outline-none focus:bg-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
                           autoFocus
                         />
                         <button
-                          onClick={() => handleSaveTag(tag.id)}
-                          disabled={!editingTagName.trim()}
+                          onClick={() => handleSaveCategory(category.id)}
+                          disabled={!editingCategoryName.trim()}
                           className="btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center gap-2"
                         >
                           <Icon icon={faCheck} size="sm" />
                           Save
                         </button>
                         <button
-                          onClick={handleCancelTagEdit}
+                          onClick={handleCancelCategoryEdit}
                           className="px-3 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 text-sm text-gray-700 transition-colors flex items-center gap-2"
                         >
                           <Icon icon={faTimes} size="sm" />
@@ -300,16 +302,16 @@ export default function AdminTagsPage() {
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 font-medium text-gray-900">{tag.name}</span>
+                        <span className="flex-1 font-medium text-gray-900">{category.name}</span>
                         <button
-                          onClick={() => handleEditTag(tag.id)}
+                          onClick={() => handleEditCategory(category.id)}
                           className="px-3 py-2 border border-gray-300 rounded-sm hover:bg-gray-50 text-sm text-gray-700 transition-colors flex items-center gap-2"
                         >
                           <Icon icon={faEdit} size="sm" />
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteTag(tag.id)}
+                          onClick={() => handleDeleteCategory(category.id)}
                           className="px-3 py-2 bg-red-50 border border-red-200 rounded-sm hover:bg-red-100 text-sm text-red-700 transition-colors flex items-center gap-2"
                         >
                           <Icon icon={faTrash} size="sm" />

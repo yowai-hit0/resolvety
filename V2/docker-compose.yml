@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: resolveit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-resolveit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-resolveit_password}
+      POSTGRES_DB: ${POSTGRES_DB:-resolveit_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Use a non-standard port to avoid conflicts with existing Laravel app
+      - "${POSTGRES_PORT:-5433}:5432"
+    networks:
+      - resolveit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resolveit}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API (NestJS)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: resolveit-backend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resolveit}:${POSTGRES_PASSWORD:-resolveit_password}@postgres:5432/${POSTGRES_DB:-resolveit_db}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3001}
+    ports:
+      # Use port 3000 for backend API
+      - "${BACKEND_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - resolveit-network
+    volumes:
+      # Mount prisma schema for migrations
+      - ./backend/prisma:/app/prisma:ro
+    command: >
+      sh -c "
+        echo 'Waiting for database...' &&
+        sleep 5 &&
+        npx prisma migrate deploy &&
+        node dist/main.js
+      "
+
+  # Frontend UI (Next.js)
+  frontend:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3000/api}
+    container_name: resolveit-frontend
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:3000/api}
+    ports:
+      # Use port 3001 for frontend
+      - "${FRONTEND_PORT:-3001}:3001"
+    depends_on:
+      - backend
+    networks:
+      - resolveit-network
+
+networks:
+  resolveit-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+

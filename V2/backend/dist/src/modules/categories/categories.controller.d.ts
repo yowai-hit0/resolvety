@@ -1,10 +1,5 @@
 import { CategoriesService } from './categories.service';
-declare class CreateCategoryDto {
-    name: string;
-}
-declare class UpdateCategoryDto {
-    name: string;
-}
+import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 export declare class CategoriesController {
     private categoriesService;
     constructor(categoriesService: CategoriesService);
@@ -58,4 +53,3 @@ export declare class CategoriesController {
         name: string;
     }>;
 }
-export {};

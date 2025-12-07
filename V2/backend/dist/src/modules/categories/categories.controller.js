@@ -17,10 +17,7 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const categories_service_1 = require("./categories.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
-class CreateCategoryDto {
-}
-class UpdateCategoryDto {
-}
+const category_dto_1 = require("./dto/category.dto");
 let CategoriesController = class CategoriesController {
     constructor(categoriesService) {
         this.categoriesService = categoriesService;
@@ -35,6 +32,10 @@ let CategoriesController = class CategoriesController {
         return this.categoriesService.create(dto.name, req.user.id);
     }
     async update(id, dto, req) {
+        console.log('Update category request:', { id, dto, userId: req.user?.id });
+        if (!dto || !dto.name) {
+            throw new common_1.BadRequestException('Category name is required');
+        }
         return this.categoriesService.update(id, dto.name, req.user.id);
     }
     async delete(id, req) {
@@ -61,23 +62,23 @@ __decorate([
 __decorate([
     (0, common_1.Post)(),
     (0, swagger_1.ApiOperation)({ summary: 'Create a new category' }),
-    (0, swagger_1.ApiBody)({ type: CreateCategoryDto }),
+    (0, swagger_1.ApiBody)({ type: category_dto_1.CreateCategoryDto }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [CreateCategoryDto, Object]),
+    __metadata("design:paramtypes", [category_dto_1.CreateCategoryDto, Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "create", null);
 __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update category' }),
     (0, swagger_1.ApiParam)({ name: 'id', type: String }),
-    (0, swagger_1.ApiBody)({ type: UpdateCategoryDto }),
+    (0, swagger_1.ApiBody)({ type: category_dto_1.UpdateCategoryDto }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, common_1.Request)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, UpdateCategoryDto, Object]),
+    __metadata("design:paramtypes", [String, category_dto_1.UpdateCategoryDto, Object]),
     __metadata("design:returntype", Promise)
 ], CategoriesController.prototype, "update", null);
 __decorate([

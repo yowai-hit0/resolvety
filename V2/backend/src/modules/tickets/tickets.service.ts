@@ -255,7 +255,34 @@ export class TicketsService {
         throw new NotFoundException('Ticket not found');
       }
 
-      return ticket;
+      // Return a clean serializable object (Prisma objects have non-serializable properties)
+      return {
+        id: ticket.id,
+        ticket_code: ticket.ticket_code,
+        subject: ticket.subject,
+        description: ticket.description,
+        requester_email: ticket.requester_email,
+        requester_name: ticket.requester_name,
+        requester_phone: ticket.requester_phone,
+        location: ticket.location,
+        status: ticket.status,
+        created_at: ticket.created_at,
+        updated_at: ticket.updated_at,
+        resolved_at: ticket.resolved_at,
+        closed_at: ticket.closed_at,
+        created_by_id: ticket.created_by_id,
+        updated_by_id: ticket.updated_by_id,
+        assignee_id: ticket.assignee_id,
+        priority_id: ticket.priority_id,
+        created_by: ticket.created_by,
+        updated_by: ticket.updated_by,
+        assignee: ticket.assignee,
+        priority: ticket.priority,
+        categories: ticket.categories,
+        comments: ticket.comments,
+        attachments: ticket.attachments,
+        ticket_events: ticket.ticket_events,
+      };
     } catch (error: any) {
       console.error('Error fetching ticket:', error);
       console.error('Error details:', {

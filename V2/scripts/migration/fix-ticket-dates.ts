@@ -1,17 +1,28 @@
+/**
+ * ⚠️ MIGRATION COMPLETE - This script is kept for historical reference only.
+ * 
+ * The application now uses only one database on the production server:
+ * - Server: 159.198.65.38
+ * - Database: resolveit_db
+ * - Container: devslab-postgres
+ */
+
 import { PrismaClient } from '@prisma/client';
 import pg from 'pg';
 
 const { Client } = pg;
 
 // Initialize database connections
+// NOTE: OLD_DATABASE_URL is no longer used - migration is complete
 const oldDbClient = new Client({
   connectionString: process.env.OLD_DATABASE_URL || 'postgresql://neondb_owner:npg_Smq0sbr4eKGN@ep-damp-bread-agyxow1t.c-2.eu-central-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require',
 });
 
+// Current production database (159.198.65.38)
 const newDb = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL || 'postgresql://admin:Zoea2025Secure@172.16.40.61:5432/resolveit',
+      url: process.env.DATABASE_URL || 'postgresql://devslab_admin:devslab_secure_password_2024@devslab-postgres:5432/resolveit_db',
     },
   },
 });

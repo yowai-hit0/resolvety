@@ -17,7 +17,11 @@ export const metadata: Metadata = {
   publisher: "ResolveIt",
   icons: {
     icon: [
+      { url: "/favicon.png", type: "image/png" },
       { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: [
+      { url: "/favicon.png", type: "image/png" },
     ],
   },
   openGraph: {
@@ -48,7 +52,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap"
           rel="stylesheet"
         />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <AuthInitializer />

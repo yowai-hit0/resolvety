@@ -168,7 +168,18 @@ let UsersService = class UsersService {
         if (!user) {
             throw new common_1.NotFoundException('User not found');
         }
+        const updater = await this.prisma.user.findUnique({ where: { id: updatedBy } });
+        if (!updater) {
+            throw new common_1.NotFoundException('Updater not found');
+        }
+        const isAdmin = updater.role === 'admin' || updater.role === 'super_admin';
+        if (dto.role !== undefined && !isAdmin) {
+            throw new common_1.ForbiddenException('Only admins can update user roles');
+        }
         const { organization_ids, organization_id, ...updateData } = dto;
+        if ((organization_ids !== undefined || organization_id !== undefined) && !isAdmin) {
+            throw new common_1.ForbiddenException('Only admins can update user organizations');
+        }
         if (organization_ids !== undefined) {
             if (organization_ids.length > 0) {
                 const orgs = await this.prisma.organization.findMany({
