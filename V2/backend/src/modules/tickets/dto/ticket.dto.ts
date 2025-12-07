@@ -43,11 +43,11 @@ export class CreateTicketDto {
   @IsOptional()
   assignee_id?: string;
 
-  @ApiPropertyOptional({ type: [String] })
+  @ApiProperty({ type: [String] })
   @IsArray()
   @IsUUID('4', { each: true })
-  @IsOptional()
-  category_ids?: string[];
+  @IsNotEmpty()
+  category_ids: string[];
 }
 
 export class UpdateTicketDto {

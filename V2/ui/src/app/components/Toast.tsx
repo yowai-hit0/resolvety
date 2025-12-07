@@ -45,40 +45,36 @@ export default function Toast({ toast, onDismiss }: ToastProps) {
     switch (toast.type) {
       case 'success':
         return {
-          bg: 'bg-gradient-to-r from-green-50 to-green-100',
-          border: 'border-green-300',
+          bg: 'bg-white',
+          border: 'border-green-500',
           text: 'text-green-900',
           icon: 'text-green-600',
-          iconBg: 'bg-green-100',
-          shadow: 'shadow-green-200/50',
+          iconBg: 'bg-white',
         };
       case 'error':
         return {
-          bg: 'bg-gradient-to-r from-red-50 to-red-100',
-          border: 'border-red-300',
+          bg: 'bg-white',
+          border: 'border-red-500',
           text: 'text-red-900',
           icon: 'text-red-600',
-          iconBg: 'bg-red-100',
-          shadow: 'shadow-red-200/50',
+          iconBg: 'bg-white',
         };
       case 'warning':
         return {
-          bg: 'bg-gradient-to-r from-yellow-50 to-yellow-100',
-          border: 'border-yellow-300',
+          bg: 'bg-white',
+          border: 'border-yellow-500',
           text: 'text-yellow-900',
           icon: 'text-yellow-600',
-          iconBg: 'bg-yellow-100',
-          shadow: 'shadow-yellow-200/50',
+          iconBg: 'bg-white',
         };
       case 'info':
       default:
         return {
-          bg: 'bg-gradient-to-r from-blue-50 to-blue-100',
-          border: 'border-blue-300',
+          bg: 'bg-white',
+          border: 'border-blue-500',
           text: 'text-blue-900',
           icon: 'text-blue-600',
-          iconBg: 'bg-blue-100',
-          shadow: 'shadow-blue-200/50',
+          iconBg: 'bg-white',
         };
     }
   };
@@ -89,11 +85,10 @@ export default function Toast({ toast, onDismiss }: ToastProps) {
     <div
       className={`
         ${colors.bg} ${colors.border} ${colors.text}
-        border-l-4 rounded-lg p-4 shadow-xl min-w-[320px] max-w-md
-        flex items-start gap-3 backdrop-blur-sm
+        border rounded-lg p-4 min-w-[320px] max-w-md
+        flex items-start gap-3
         transform transition-all duration-300 ease-out
-        translate-x-0 opacity-100 hover:shadow-2xl
-        ${colors.shadow}
+        translate-x-0 opacity-100
       `}
       role="alert"
     >
@@ -103,7 +98,7 @@ export default function Toast({ toast, onDismiss }: ToastProps) {
       <div className="flex-1 text-sm font-semibold leading-relaxed">{toast.message}</div>
       <button
         onClick={() => onDismiss(toast.id)}
-        className={`${colors.icon} hover:opacity-70 transition-opacity flex-shrink-0 p-1 rounded hover:bg-white/50`}
+        className={`${colors.icon} hover:opacity-70 transition-opacity flex-shrink-0 p-1 rounded hover:bg-gray-50`}
         aria-label="Dismiss notification"
       >
         <Icon icon={faTimes} size="sm" />

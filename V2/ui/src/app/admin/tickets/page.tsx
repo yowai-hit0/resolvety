@@ -445,6 +445,11 @@ export default function AdminTicketsPage() {
       errors.priority_id = 'Priority is required';
     }
     
+    // Require at least one category
+    if (!formData.category_ids || formData.category_ids.length === 0) {
+      errors.category_ids = 'At least one category is required';
+    }
+    
     // Require phone number
     if (!phoneLocal || phoneLocal.trim() === '') {
       errors.requester_phone = 'Phone number is required';
@@ -524,11 +529,14 @@ export default function AdminTicketsPage() {
         priority_id: formData.priority_id,
       };
       
-      if (formData.requester_email) ticketData.requester_email = formData.requester_email;
+      if (formData.requester_email && formData.requester_email.trim()) {
+        ticketData.requester_email = formData.requester_email.trim();
+      }
       if (formData.requester_name) ticketData.requester_name = formData.requester_name;
       if (formData.location) ticketData.location = formData.location;
       if (formData.assignee_id) ticketData.assignee_id = formData.assignee_id;
-      if (formData.category_ids.length > 0) ticketData.category_ids = formData.category_ids;
+      // Category is mandatory, always include it
+      ticketData.category_ids = formData.category_ids;
       
       const newTicket = await TicketsAPI.create(ticketData);
       
