@@ -40,9 +40,13 @@ export class CreateTicketDto {
   priority_id: string;
 
   @ApiPropertyOptional()
-  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
-  @IsUUID()
+  @Transform(({ value }) => {
+    // Convert empty strings, null, or undefined to undefined
+    // This allows @IsOptional() to properly skip validation
+    return (value === '' || value === null || value === undefined) ? undefined : value;
+  })
   @IsOptional()
+  @IsUUID()
   assignee_id?: string;
 
   @ApiProperty({ type: [String] })
@@ -69,9 +73,13 @@ export class UpdateTicketDto {
   status?: TicketStatus;
 
   @ApiPropertyOptional()
-  @Transform(({ value }) => (value === '' || value === null ? undefined : value))
-  @IsUUID()
+  @Transform(({ value }) => {
+    // Convert empty strings, null, or undefined to undefined
+    // This allows @IsOptional() to properly skip validation
+    return (value === '' || value === null || value === undefined) ? undefined : value;
+  })
   @IsOptional()
+  @IsUUID()
   assignee_id?: string;
 
   @ApiPropertyOptional()

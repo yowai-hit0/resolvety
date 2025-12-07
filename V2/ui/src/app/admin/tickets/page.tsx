@@ -538,9 +538,9 @@ export default function AdminTicketsPage() {
       if (formData.location && formData.location.trim()) {
         ticketData.location = formData.location.trim();
       }
-      // Only include assignee_id if it's provided and not empty
-      if (formData.assignee_id && formData.assignee_id.trim() !== '') {
-        ticketData.assignee_id = formData.assignee_id;
+      // Only include assignee_id if it's provided and not empty (valid UUID)
+      if (formData.assignee_id && formData.assignee_id.trim() !== '' && formData.assignee_id !== 'null' && formData.assignee_id !== 'undefined') {
+        ticketData.assignee_id = formData.assignee_id.trim();
       }
       // Category is mandatory, remove duplicates and ensure array is not empty
       const uniqueCategoryIds = [...new Set(formData.category_ids.filter(id => id && id.trim() !== ''))];
